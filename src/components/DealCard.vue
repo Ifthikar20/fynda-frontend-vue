@@ -3,14 +3,31 @@
     <div class="card-image">
       <img :src="deal.image_url" :alt="deal.title" loading="lazy" />
       <div class="card-overlay">
+        <button 
+          class="action-btn upvote-btn" 
+          :class="{ 'upvoted': isUpvoted }"
+          @click.stop="handleUpvote"
+          title="Upvote this deal"
+        >
+          <img 
+            :src="upvoteLogo" 
+            alt="Upvote" 
+            class="upvote-icon"
+          />
+          <span v-if="upvoteCount > 0" class="upvote-count">{{ formatUpvotes(upvoteCount) }}</span>
+        </button>
         <button class="action-btn" @click.stop="handleFavorite">
-          <span>❤️</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
         </button>
         <button class="action-btn" @click.stop="handleShare">
-          <span>↗️</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>
+          </svg>
         </button>
       </div>
-      <span class="source-badge">{{ deal.source }}</span>
+      <span class="source-badge">{{ deal.merchant_name || deal.source }}</span>
       <span v-if="deal.discount_percent >= 15" class="discount-badge">
         -{{ deal.discount_percent }}%
       </span>
@@ -28,7 +45,7 @@
       
       <div class="card-meta">
         <span class="card-rating" v-if="deal.rating">
-          ⭐ {{ deal.rating }}
+          {{ deal.rating }}
         </span>
         <span class="card-reviews" v-if="deal.reviews_count">
           ({{ formatReviews(deal.reviews_count) }})
@@ -36,7 +53,9 @@
       </div>
       
       <div class="card-shipping" v-if="deal.shipping">
-        <span class="shipping-icon">📦</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        </svg>
         {{ deal.shipping }}
       </div>
       
@@ -54,7 +73,9 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue'
 import { eventBus, Events } from '../events/eventBus'
+import upvoteLogo from '../assets/upvote-logo.png'
 
 const props = defineProps({
   deal: {
@@ -63,13 +84,86 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['click'])
+const emit = defineEmits(['click', 'upvote'])
+
+// Upvote state
+const isUpvoted = ref(false)
+const upvoteCount = ref(0)
+
+// Load upvote state from localStorage
+onMounted(() => {
+  const dealId = props.deal.id
+  const upvotedDeals = JSON.parse(localStorage.getItem('upvotedDeals') || '{}')
+  const dealUpvotes = JSON.parse(localStorage.getItem('dealUpvotes') || '{}')
+  
+  isUpvoted.value = !!upvotedDeals[dealId]
+  upvoteCount.value = dealUpvotes[dealId] || props.deal.upvotes || 0
+})
 
 const formatReviews = (count) => {
   if (count >= 1000) {
     return (count / 1000).toFixed(1) + 'k'
   }
   return count
+}
+
+const formatUpvotes = (count) => {
+  if (count >= 1000) {
+    return (count / 1000).toFixed(1) + 'k'
+  }
+  return count
+}
+
+const handleUpvote = () => {
+  const dealId = props.deal.id
+  const merchantName = props.deal.merchant_name || props.deal.source || 'unknown'
+  
+  // Toggle upvote state
+  isUpvoted.value = !isUpvoted.value
+  
+  // Update count
+  if (isUpvoted.value) {
+    upvoteCount.value++
+  } else {
+    upvoteCount.value = Math.max(0, upvoteCount.value - 1)
+  }
+  
+  // Persist to localStorage
+  const upvotedDeals = JSON.parse(localStorage.getItem('upvotedDeals') || '{}')
+  const dealUpvotes = JSON.parse(localStorage.getItem('dealUpvotes') || '{}')
+  const brandUpvotes = JSON.parse(localStorage.getItem('brandUpvotes') || '{}')
+  
+  if (isUpvoted.value) {
+    upvotedDeals[dealId] = true
+    dealUpvotes[dealId] = upvoteCount.value
+    
+    // Track brand-level upvotes
+    brandUpvotes[merchantName] = (brandUpvotes[merchantName] || 0) + 1
+  } else {
+    delete upvotedDeals[dealId]
+    dealUpvotes[dealId] = upvoteCount.value
+    
+    // Decrease brand upvotes
+    brandUpvotes[merchantName] = Math.max(0, (brandUpvotes[merchantName] || 1) - 1)
+  }
+  
+  localStorage.setItem('upvotedDeals', JSON.stringify(upvotedDeals))
+  localStorage.setItem('dealUpvotes', JSON.stringify(dealUpvotes))
+  localStorage.setItem('brandUpvotes', JSON.stringify(brandUpvotes))
+  
+  // Emit event for global ranking updates
+  eventBus.emit(Events.DEAL_UPVOTE || 'deal:upvote', {
+    deal: props.deal,
+    upvoted: isUpvoted.value,
+    upvoteCount: upvoteCount.value,
+    merchantName,
+  })
+  
+  emit('upvote', {
+    dealId,
+    upvoted: isUpvoted.value,
+    count: upvoteCount.value,
+  })
 }
 
 const handleFavorite = () => {
@@ -150,6 +244,56 @@ const handleShare = () => {
 .action-btn:hover {
   transform: scale(1.1);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Upvote Button Styles */
+.upvote-btn {
+  position: relative;
+  flex-direction: column;
+  width: 48px;
+  height: 48px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.upvote-btn:hover {
+  background: #fff;
+}
+
+.upvote-btn.upvoted {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+}
+
+.upvote-btn.upvoted .upvote-icon {
+  filter: brightness(0) invert(1);
+}
+
+.upvote-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  transition: all 0.2s ease;
+}
+
+.upvote-btn:hover .upvote-icon {
+  transform: translateY(-2px);
+}
+
+.upvote-btn.upvoted:hover .upvote-icon {
+  transform: translateY(-3px);
+}
+
+.upvote-count {
+  font-size: 10px;
+  font-weight: 700;
+  color: #666;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.upvote-btn.upvoted .upvote-count {
+  color: #fff;
 }
 
 .source-badge {
