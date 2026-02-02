@@ -1,18 +1,7 @@
 <template>
   <div class="product-detail-page">
-    <!-- Header -->
-    <header class="header">
-      <router-link to="/" class="logo-link">
-        <img src="../assets/fynda-png-1.png" alt="Fynda" class="logo" />
-      </router-link>
-      <nav class="nav-links">
-        <router-link to="/?q=women">Women</router-link>
-        <router-link to="/?q=men">Men</router-link>
-        <router-link to="/?q=home">Home</router-link>
-        <router-link to="/?q=beauty">Beauty</router-link>
-      </nav>
-      <router-link to="/login" class="login-link" v-if="!isAuthenticated">Sign In</router-link>
-    </header>
+    <!-- NavBar -->
+    <NavBar />
 
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
@@ -33,16 +22,11 @@
             <div class="upvote-container">
               <button 
                 class="upvote-btn" 
-                :class="{ active: isUpvoted, 'show-count': upvoteCount > 0 || isUpvoted }" 
+                :class="{ active: isUpvoted }" 
                 @click="handleUpvote" 
                 title="Upvote this deal"
               >
-                <!-- Show icon when not upvoted and no count -->
-                <img v-if="!isUpvoted && upvoteCount === 0" :src="upvoteLogo" alt="Upvote" class="upvote-icon" />
-                <!-- Show count when upvoted or has upvotes -->
-                <span v-else class="upvote-number">
-                  {{ upvoteCount }}
-                </span>
+                <span class="upvote-number">{{ upvoteCount }}</span>
               </button>
               <span class="upvote-label" :class="{ active: isUpvoted }">
                 <template v-if="upvoteCount === 0 && !isUpvoted">Be the first!</template>
@@ -94,12 +78,15 @@
               Shop item
             </a>
             
-            <!-- Create Outfit Button -->
-            <button class="outfit-btn" @click="goToOutfitLab">
+            <!-- Add to Fashion Board Button -->
+            <button class="outfit-btn" @click="goToFashionBoard">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 3v18M5 12h14"/>
+                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="7" height="7" rx="1"/>
               </svg>
-              Add to Outfit Studio
+              Add to Fashion Board
             </button>
           </div>
         </div>
@@ -143,14 +130,6 @@
           >
             <div class="similar-image-container">
               <img :src="item.image_url" :alt="item.title" class="similar-image" />
-              <button 
-                class="card-upvote-btn"
-                :class="{ active: upvotedProducts[item.id] }"
-                @click.stop="toggleProductUpvote(item.id)"
-                title="Upvote"
-              >
-                <img :src="upvoteLogo" alt="Upvote" class="card-upvote-icon" />
-              </button>
               <span 
                 class="brand-overlay"
                 @click.stop="goToBrand(item.brand || item.source)"
@@ -175,7 +154,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../stores/authStore'
 import api from '../utils/api'
-import upvoteLogo from '../assets/upvote-logo.png'
+import NavBar from './NavBar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -286,9 +265,9 @@ const goToProduct = (id) => {
   router.push(`/product/${id}`)
 }
 
-const goToOutfitLab = () => {
+const goToFashionBoard = () => {
   router.push({
-    path: '/outfit-lab',
+    path: '/storyboard',
     query: { product: JSON.stringify(product.value) }
   })
 }

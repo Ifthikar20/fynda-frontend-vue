@@ -1,18 +1,7 @@
 <template>
   <div class="brand-page">
-    <!-- Header -->
-    <header class="header">
-      <router-link to="/" class="logo-link">
-        <img src="../assets/fynda-png-1.png" alt="Fynda" class="logo" />
-      </router-link>
-      <nav class="nav-links">
-        <router-link to="/?q=women">Women</router-link>
-        <router-link to="/?q=men">Men</router-link>
-        <router-link to="/?q=home">Home</router-link>
-        <router-link to="/?q=beauty">Beauty</router-link>
-      </nav>
-      <router-link to="/login" class="login-link" v-if="!isAuthenticated">Sign In</router-link>
-    </header>
+    <!-- NavBar -->
+    <NavBar />
 
     <!-- Hero Banner with curved edges -->
     <section class="brand-hero">
@@ -20,7 +9,7 @@
         <div class="hero-overlay"></div>
         <!-- Save button in corner -->
         <button class="save-corner-btn" @click="handleSave" :class="{ saved: isSaved }">
-          {{ isSaved ? '✓' : '☆' }}
+          {{ isSaved ? 'Saved' : 'Save' }}
         </button>
         <div class="hero-content">
           <h1 class="brand-name">{{ displayBrandName }}</h1>
@@ -62,10 +51,7 @@
         >
           <div class="trending-image-container">
             <img :src="product.image_url" :alt="product.title" class="trending-image" />
-            <div class="upvote-badge">
-              <span class="upvote-icon">▲</span>
-              <span class="upvote-count">{{ product.upvotes || Math.floor(Math.random() * 500) + 50 }}</span>
-            </div>
+            <span class="upvote-count-badge">{{ product.upvotes }}</span>
           </div>
           <div class="trending-info">
             <p class="trending-title">{{ product.title }}</p>
@@ -109,6 +95,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../stores/authStore'
 import api from '../utils/api'
+import NavBar from './NavBar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -261,13 +248,15 @@ onMounted(() => {
 
 .hero-banner {
   position: relative;
-  height: 280px;
+  height: 260px;
   background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
-  border-radius: 0 0 24px 24px;
+  border-radius: 24px;
+  margin: 0 1rem;
   overflow: hidden;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
+  padding-bottom: 2rem;
 }
 
 .hero-overlay {
@@ -281,17 +270,14 @@ onMounted(() => {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  width: 44px;
-  height: 44px;
+  padding: 0.5rem 1rem;
   background: rgba(255, 255, 255, 0.95);
   border: none;
-  border-radius: 50%;
-  font-size: 1.25rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
   z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: all 0.25s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -319,6 +305,7 @@ onMounted(() => {
   z-index: 10;
   text-align: center;
   color: #fff;
+  margin-bottom: 0;
 }
 
 .brand-name {
@@ -561,23 +548,22 @@ onMounted(() => {
   object-fit: cover;
 }
 
-.upvote-badge {
+.upvote-count-badge {
   position: absolute;
-  bottom: 0.5rem;
-  left: 0.5rem;
+  top: 0.5rem;
+  right: 0.5rem;
+  min-width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  background: rgba(0, 0, 0, 0.8);
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
   color: #fff;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-.upvote-icon {
-  color: #10b981;
+  padding: 0 0.5rem;
+  border-radius: 18px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .trending-info {

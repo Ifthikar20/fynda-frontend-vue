@@ -3,7 +3,7 @@ import HomePage from '../components/HomePage.vue'
 import LoginPage from '../components/LoginPage.vue'
 import RegisterPage from '../components/RegisterPage.vue'
 import ProductDetailPage from '../components/ProductDetailPage.vue'
-import OutfitLabPage from '../components/OutfitLabPage.vue'
+import StoryboardPage from '../components/StoryboardPage.vue'
 import ProfilePage from '../components/ProfilePage.vue'
 import BrandPage from '../components/BrandPage.vue'
 
@@ -24,6 +24,7 @@ const isAuthenticated = () => {
 }
 
 const routes = [
+    // Public routes - no auth required
     {
         path: '/',
         name: 'Home',
@@ -41,15 +42,34 @@ const routes = [
         component: RegisterPage,
         meta: { guest: true }
     },
+    // Public shared storyboard route
+    {
+        path: '/share/:token',
+        name: 'SharedStoryboard',
+        component: () => import('../components/SharedStoryboardPage.vue'),
+        meta: { public: true }
+    },
+    // Protected routes - require auth
     {
         path: '/product/:id',
         name: 'ProductDetail',
-        component: ProductDetailPage
+        component: ProductDetailPage,
+        meta: { requiresAuth: true }
     },
     {
+        // Redirect legacy outfit routes to storyboard
         path: '/outfit-lab',
-        name: 'OutfitStudio',
-        component: OutfitLabPage
+        redirect: '/storyboard'
+    },
+    {
+        path: '/outfit-studio',
+        redirect: '/storyboard'
+    },
+    {
+        path: '/storyboard',
+        name: 'Storyboard',
+        component: StoryboardPage,
+        meta: { requiresAuth: true }
     },
     {
         path: '/profile',
@@ -57,19 +77,21 @@ const routes = [
         component: ProfilePage,
         meta: { requiresAuth: true }
     },
-    // Brand pages
+    // Brand pages - require auth
     {
         path: '/brand/:brand',
         name: 'Brand',
-        component: BrandPage
+        component: BrandPage,
+        meta: { requiresAuth: true }
     },
-    // Shop category pages
+    // Shop category pages - require auth
     {
         path: '/shop/:category',
         name: 'ShopCategory',
-        component: CategoryPage
+        component: CategoryPage,
+        meta: { requiresAuth: true }
     },
-    // Company pages
+    // Company pages - public
     {
         path: '/about',
         name: 'About',
@@ -80,7 +102,7 @@ const routes = [
         name: 'Careers',
         component: CareersPage
     },
-    // Support pages
+    // Support pages - public
     {
         path: '/help',
         name: 'HelpCenter',

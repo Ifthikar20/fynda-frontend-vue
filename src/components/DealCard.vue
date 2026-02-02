@@ -9,12 +9,7 @@
           @click.stop="handleUpvote"
           title="Upvote this deal"
         >
-          <img 
-            :src="upvoteLogo" 
-            alt="Upvote" 
-            class="upvote-icon"
-          />
-          <span v-if="upvoteCount > 0" class="upvote-count">{{ formatUpvotes(upvoteCount) }}</span>
+          <span class="upvote-count">{{ upvoteCount }}</span>
         </button>
         <button class="action-btn" @click.stop="handleFavorite">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -75,7 +70,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { eventBus, Events } from '../events/eventBus'
-import upvoteLogo from '../assets/upvote-logo.png'
 
 const props = defineProps({
   deal: {

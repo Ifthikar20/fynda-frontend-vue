@@ -14,10 +14,12 @@
       
       <div class="nav-actions">
         <template v-if="isAuthenticated">
-          <router-link to="/outfit-lab" class="nav-link-icon" title="Outfit Studio">
+          <router-link to="/storyboard" class="nav-link-icon" title="Fashion Board">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <polygon points="10 8 16 12 10 16 10 8"/>
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
             </svg>
           </router-link>
           <router-link to="/profile" class="nav-link-icon" title="Profile">
@@ -27,8 +29,7 @@
           </router-link>
         </template>
         <template v-else>
-          <router-link to="/login" class="nav-btn-outline">Sign In</router-link>
-          <router-link to="/register" class="nav-btn">Get Started</router-link>
+          <router-link to="/login" class="nav-btn">Sign In</router-link>
         </template>
       </div>
       
@@ -55,12 +56,11 @@
       <div class="mobile-divider"></div>
       <template v-if="isAuthenticated">
         <router-link to="/profile" class="mobile-link" @click="mobileMenuOpen = false">Profile</router-link>
-        <router-link to="/outfit-lab" class="mobile-link" @click="mobileMenuOpen = false">Outfit Studio</router-link>
+        <router-link to="/storyboard" class="mobile-link" @click="mobileMenuOpen = false">Fashion Board</router-link>
         <button class="mobile-link logout" @click="handleLogout">Sign Out</button>
       </template>
       <template v-else>
-        <router-link to="/login" class="mobile-link" @click="mobileMenuOpen = false">Sign In</router-link>
-        <router-link to="/register" class="mobile-link primary" @click="mobileMenuOpen = false">Get Started</router-link>
+        <router-link to="/login" class="mobile-link primary" @click="mobileMenuOpen = false">Sign In</router-link>
       </template>
     </div>
   </nav>

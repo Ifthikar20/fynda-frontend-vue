@@ -14,6 +14,15 @@
       <!-- Auth Section -->
       <div class="auth-section">
         <template v-if="isAuthenticated">
+          <router-link to="/storyboard" class="storyboard-link">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            Storyboard
+          </router-link>
           <div class="user-dropdown">
             <button class="user-btn" @click="showUserMenu = !showUserMenu">
               <span class="user-avatar">{{ userInitials }}</span>
@@ -630,7 +639,27 @@ a {
 
 /* Auth Section */
 .auth-section {
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.storyboard-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #666;
+  text-decoration: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.storyboard-link:hover {
+  color: #000;
+  background: #f5f5f5;
 }
 
 .login-link {
