@@ -62,9 +62,7 @@
                 <div class="upvoted-meta">
                   <span class="upvoted-price">${{ item.price }}</span>
                   <span class="upvoted-votes">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 4l-8 8h5v8h6v-8h5z"/>
-                    </svg>
+                    <img src="@/assets/upvote-logo.png" alt="Upvote" class="upvote-icon" />
                     {{ item.upvotes }}
                   </span>
                 </div>
@@ -139,6 +137,16 @@
               <div class="deal-image">
                 <img :src="deal.image_url" :alt="deal.title" />
                 <span v-if="deal.discount" class="discount-badge">-{{ deal.discount }}%</span>
+                <!-- Small Upvote Button -->
+                <button 
+                  class="deal-upvote-btn" 
+                  :class="{ active: upvotedDeals[deal.id] }"
+                  @click.stop="toggleDealUpvote(deal)"
+                  title="Upvote"
+                >
+                  <img src="@/assets/upvote-logo.png" alt="Upvote" class="deal-upvote-icon" />
+                  <span class="deal-upvote-count">{{ dealUpvoteCounts[deal.id] || 0 }}</span>
+                </button>
               </div>
               <div class="deal-info">
                 <span class="deal-source">{{ deal.source }}</span>
@@ -191,6 +199,10 @@ const dropdownOpen = ref(false)
 const dropdownRef = ref(null)
 const activeSubcategory = ref('All')
 const selectedPeriod = ref('today')
+
+// Upvote state
+const upvotedDeals = ref({})
+const dealUpvoteCounts = ref({})
 
 // Random images for upvoted items
 const upvotedImages = [
@@ -344,6 +356,7 @@ const handleClickOutside = (e) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  loadUpvoteState()
   fetchDeals()
 })
 
@@ -384,6 +397,35 @@ const searchBrand = (brand) => {
 const goToDeal = (deal) => {
   if (deal.id !== undefined) {
     router.push(`/product/${deal.id || deal.deal_id}`)
+  }
+}
+
+// Toggle upvote for a deal
+const toggleDealUpvote = (deal) => {
+  const dealId = deal.id
+  const isCurrentlyUpvoted = upvotedDeals.value[dealId]
+  
+  if (isCurrentlyUpvoted) {
+    delete upvotedDeals.value[dealId]
+    dealUpvoteCounts.value[dealId] = Math.max(0, (dealUpvoteCounts.value[dealId] || 1) - 1)
+  } else {
+    upvotedDeals.value[dealId] = true
+    dealUpvoteCounts.value[dealId] = (dealUpvoteCounts.value[dealId] || 0) + 1
+  }
+  
+  // Persist to localStorage
+  localStorage.setItem('upvotedDeals', JSON.stringify(upvotedDeals.value))
+  localStorage.setItem('dealUpvotes', JSON.stringify(dealUpvoteCounts.value))
+}
+
+// Load upvote state from localStorage
+const loadUpvoteState = () => {
+  try {
+    upvotedDeals.value = JSON.parse(localStorage.getItem('upvotedDeals') || '{}')
+    dealUpvoteCounts.value = JSON.parse(localStorage.getItem('dealUpvotes') || '{}')
+  } catch (e) {
+    upvotedDeals.value = {}
+    dealUpvoteCounts.value = {}
   }
 }
 
@@ -654,6 +696,12 @@ watch(() => route.params.category, () => {
   font-weight: 500;
 }
 
+.upvoted-votes .upvote-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
 /* Discounts Section */
 .discounts-section {
   margin-bottom: 48px;
@@ -718,7 +766,7 @@ watch(() => route.params.category, () => {
   top: 12px;
   left: 12px;
   padding: 8px 14px;
-  background: linear-gradient(135deg, #ff4757, #ff3838);
+  background: #666;
   color: #fff;
   border-radius: 10px;
   font-size: 16px;
@@ -921,11 +969,68 @@ watch(() => route.params.category, () => {
   top: 12px;
   left: 12px;
   padding: 4px 10px;
-  background: #ff4757;
+  background: #666;
   color: #fff;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
+}
+
+/* Small Upvote Button for deal cards */
+.deal-upvote-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  padding: 4px;
+  opacity: 0;
+}
+
+.deal-card:hover .deal-upvote-btn {
+  opacity: 1;
+}
+
+.deal-upvote-btn:hover {
+  background: #fff;
+  transform: scale(1.05);
+}
+
+.deal-upvote-btn.active {
+  background: #1a1a1a;
+  opacity: 1;
+}
+
+.deal-upvote-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+.deal-upvote-btn.active .deal-upvote-icon {
+  filter: brightness(0) invert(1);
+}
+
+.deal-upvote-count {
+  font-size: 8px;
+  font-weight: 600;
+  color: #666;
+  line-height: 1;
+}
+
+.deal-upvote-btn.active .deal-upvote-count {
+  color: #fff;
 }
 
 .deal-info {

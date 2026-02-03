@@ -1,15 +1,20 @@
 /**
  * Auth Store - Manages authentication state
- * Uses localStorage for persistence and reactive state for UI
+ * Uses obfuscated localStorage for security and reactive state for UI
  */
 import { reactive, computed, readonly } from 'vue'
 import api from '../utils/api'
+import tokenStorage from '../utils/tokenStorage'
+import { identifyUser, resetUser, track } from '../services/analyticsService'
 
-// Initial state from localStorage
+// Migrate legacy storage on module load
+tokenStorage.migrateFromLegacy()
+
+// Initial state from obfuscated storage
 const getStoredAuth = () => {
     try {
-        const tokens = JSON.parse(localStorage.getItem('fynda_tokens') || 'null')
-        const user = JSON.parse(localStorage.getItem('fynda_user') || 'null')
+        const tokens = tokenStorage.getTokens()
+        const user = tokenStorage.getUser()
         return { tokens, user }
     } catch {
         return { tokens: null, user: null }
@@ -30,19 +35,10 @@ const state = reactive({
 const isAuthenticated = computed(() => !!state.tokens?.access && !!state.user)
 const currentUser = computed(() => state.user)
 
-// Persist to localStorage
+// Persist to obfuscated storage
 const persistAuth = () => {
-    if (state.tokens) {
-        localStorage.setItem('fynda_tokens', JSON.stringify(state.tokens))
-    } else {
-        localStorage.removeItem('fynda_tokens')
-    }
-
-    if (state.user) {
-        localStorage.setItem('fynda_user', JSON.stringify(state.user))
-    } else {
-        localStorage.removeItem('fynda_user')
-    }
+    tokenStorage.storeTokens(state.tokens)
+    tokenStorage.storeUser(state.user)
 }
 
 // Actions
@@ -56,6 +52,14 @@ const login = async (email, password) => {
         state.user = response.data.user
         state.tokens = response.data.tokens
         persistAuth()
+
+        // Identify user in analytics
+        identifyUser(response.data.user.id, {
+            email: response.data.user.email,
+            first_name: response.data.user.first_name,
+            last_name: response.data.user.last_name,
+        })
+        track('user_login', { method: 'email' })
 
         return { success: true }
     } catch (error) {
@@ -77,6 +81,14 @@ const register = async (userData) => {
         state.tokens = response.data.tokens
         persistAuth()
 
+        // Identify user in analytics
+        identifyUser(response.data.user.id, {
+            email: response.data.user.email,
+            first_name: response.data.user.first_name,
+            last_name: response.data.user.last_name,
+        })
+        track('user_signup', { method: 'email' })
+
         return { success: true }
     } catch (error) {
         const errors = error.response?.data
@@ -95,6 +107,9 @@ const logout = async () => {
     } catch {
         // Ignore logout errors
     } finally {
+        track('user_logout')
+        resetUser()
+
         state.user = null
         state.tokens = null
         state.error = null

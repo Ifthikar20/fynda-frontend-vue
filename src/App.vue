@@ -1,10 +1,19 @@
 <template>
   <router-view />
-  <!-- <CookieConsent /> -->
+  <CookieConsent />
 </template>
 
 <script setup>
-// import CookieConsent from './components/common/CookieConsent.vue'
+import { onMounted } from 'vue'
+import CookieConsent from './components/common/CookieConsent.vue'
+import { initAnalytics } from './services/analyticsService'
+
+// Initialize analytics when app mounts
+onMounted(() => {
+  initAnalytics({
+    mixpanelToken: import.meta.env.VITE_MIXPANEL_TOKEN,
+  })
+})
 </script>
 
 <style>

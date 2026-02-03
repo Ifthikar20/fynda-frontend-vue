@@ -16,11 +16,11 @@ import CareersPage from '../components/pages/CareersPage.vue'
 import HelpCenterPage from '../components/pages/HelpCenterPage.vue'
 import CookiesPage from '../components/pages/CookiesPage.vue'
 import CategoryPage from '../components/pages/CategoryPage.vue'
+import tokenStorage from '../utils/tokenStorage'
 
-// Check if user is authenticated
+// Check if user is authenticated (using obfuscated storage)
 const isAuthenticated = () => {
-    const tokens = localStorage.getItem('fynda_tokens')
-    return !!tokens
+    return tokenStorage.hasSession()
 }
 
 const routes = [
@@ -41,6 +41,13 @@ const routes = [
         name: 'Register',
         component: RegisterPage,
         meta: { guest: true }
+    },
+    // OAuth callback route
+    {
+        path: '/auth/callback',
+        name: 'OAuthCallback',
+        component: () => import('../components/OAuthCallback.vue'),
+        meta: { public: true }
     },
     // Public shared storyboard route
     {

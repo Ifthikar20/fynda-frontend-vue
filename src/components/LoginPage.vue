@@ -147,10 +147,11 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../stores/authStore'
 
 const router = useRouter()
+const route = useRoute()
 const { login, state } = useAuth()
 
 const email = ref('')
@@ -174,13 +175,65 @@ const handleLogin = async () => {
 }
 
 const loginWithGoogle = () => {
-  // TODO: Implement Google OAuth
-  alert('Google login coming soon!')
+  // Store provider for callback detection
+  sessionStorage.setItem('oauth_provider', 'google')
+  
+  // Store redirect destination if any
+  const redirect = route.query.redirect
+  if (redirect) {
+    sessionStorage.setItem('oauth_redirect', redirect)
+  }
+  
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+  const redirectUri = `${window.location.origin}/auth/callback`
+  const scope = 'openid email profile'
+  
+  if (!clientId) {
+    alert('Google OAuth is not configured. Please add VITE_GOOGLE_CLIENT_ID to your environment.')
+    return
+  }
+  
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: scope,
+    access_type: 'offline',
+    prompt: 'consent',
+    state: 'google'
+  })
+  
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
 }
 
 const loginWithApple = () => {
-  // TODO: Implement Apple OAuth
-  alert('Apple login coming soon!')
+  // Store provider for callback detection
+  sessionStorage.setItem('oauth_provider', 'apple')
+  
+  // Store redirect destination if any
+  const redirect = route.query.redirect
+  if (redirect) {
+    sessionStorage.setItem('oauth_redirect', redirect)
+  }
+  
+  const clientId = import.meta.env.VITE_APPLE_CLIENT_ID
+  const redirectUri = `${window.location.origin}/auth/callback`
+  
+  if (!clientId) {
+    alert('Apple OAuth is not configured. Please add VITE_APPLE_CLIENT_ID to your environment.')
+    return
+  }
+  
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code id_token',
+    scope: 'name email',
+    response_mode: 'fragment', // Use fragment for SPAs
+    state: 'apple'
+  })
+  
+  window.location.href = `https://appleid.apple.com/auth/authorize?${params.toString()}`
 }
 </script>
 

@@ -1,9 +1,20 @@
 /**
  * Cookie Consent Service
- * GDPR/CCPA compliant cookie management
+ * GDPR/CCPA compliant cookie management with functional cookie support
  */
 
 const COOKIE_CONSENT_KEY = 'fynda_cookie_consent'
+const FUNCTIONAL_PREFIX = 'fynda_func_'
+
+// Supported functional cookies
+const FUNCTIONAL_COOKIES = {
+    theme: 'theme',                    // User's theme preference (dark/light)
+    language: 'language',              // Preferred language
+    currency: 'currency',              // Preferred currency display
+    recent_searches: 'recent_searches', // Recent search queries
+    sidebar_collapsed: 'sidebar',       // UI preferences
+    view_mode: 'view_mode',            // Grid/list view preference
+}
 
 // Default consent state
 const defaultConsent = {
@@ -66,6 +77,9 @@ export const acceptAll = () => {
  * Reject all non-essential cookies
  */
 export const rejectAll = () => {
+    // Clear all functional cookies when rejected
+    clearFunctionalCookies()
+
     return setConsent({
         functional: false,
         analytics: false,
@@ -89,6 +103,132 @@ export const isAllowed = (category) => {
     return consent[category] === true
 }
 
+// =============================================================================
+// FUNCTIONAL COOKIES - User Preferences (require functional consent)
+// =============================================================================
+
+/**
+ * Set a functional cookie (requires functional consent)
+ * @param {string} key - Cookie key from FUNCTIONAL_COOKIES
+ * @param {any} value - Value to store (will be JSON stringified)
+ * @returns {boolean} - Whether the cookie was set
+ */
+export const setFunctionalCookie = (key, value) => {
+    if (!isAllowed('functional')) {
+        console.debug(`Functional cookies not allowed. Cannot set ${key}`)
+        return false
+    }
+
+    try {
+        const storageKey = FUNCTIONAL_PREFIX + key
+        localStorage.setItem(storageKey, JSON.stringify(value))
+        return true
+    } catch (e) {
+        console.warn(`Error setting functional cookie ${key}:`, e)
+        return false
+    }
+}
+
+/**
+ * Get a functional cookie value
+ * @param {string} key - Cookie key from FUNCTIONAL_COOKIES
+ * @param {any} defaultValue - Default value if not found
+ * @returns {any} - Stored value or default
+ */
+export const getFunctionalCookie = (key, defaultValue = null) => {
+    try {
+        const storageKey = FUNCTIONAL_PREFIX + key
+        const stored = localStorage.getItem(storageKey)
+        if (stored !== null) {
+            return JSON.parse(stored)
+        }
+    } catch (e) {
+        console.warn(`Error reading functional cookie ${key}:`, e)
+    }
+    return defaultValue
+}
+
+/**
+ * Remove a functional cookie
+ */
+export const removeFunctionalCookie = (key) => {
+    localStorage.removeItem(FUNCTIONAL_PREFIX + key)
+}
+
+/**
+ * Clear all functional cookies
+ */
+export const clearFunctionalCookies = () => {
+    Object.values(FUNCTIONAL_COOKIES).forEach(key => {
+        localStorage.removeItem(FUNCTIONAL_PREFIX + key)
+    })
+}
+
+// =============================================================================
+// THEME PREFERENCE HELPERS
+// =============================================================================
+
+/**
+ * Get user's theme preference
+ * @returns {'dark' | 'light' | null}
+ */
+export const getThemePreference = () => {
+    return getFunctionalCookie(FUNCTIONAL_COOKIES.theme, null)
+}
+
+/**
+ * Set user's theme preference
+ * @param {'dark' | 'light'} theme
+ */
+export const setThemePreference = (theme) => {
+    return setFunctionalCookie(FUNCTIONAL_COOKIES.theme, theme)
+}
+
+// =============================================================================
+// RECENT SEARCHES HELPERS
+// =============================================================================
+
+/**
+ * Get recent searches
+ * @param {number} limit - Maximum number of searches to return
+ * @returns {string[]}
+ */
+export const getRecentSearches = (limit = 10) => {
+    const searches = getFunctionalCookie(FUNCTIONAL_COOKIES.recent_searches, [])
+    return searches.slice(0, limit)
+}
+
+/**
+ * Add a search to recent searches
+ * @param {string} query - Search query to add
+ */
+export const addRecentSearch = (query) => {
+    if (!query?.trim()) return false
+
+    const searches = getRecentSearches(50)
+    const normalized = query.trim().toLowerCase()
+
+    // Remove duplicate if exists
+    const filtered = searches.filter(s => s.toLowerCase() !== normalized)
+
+    // Add to front
+    filtered.unshift(query.trim())
+
+    // Keep only last 50
+    return setFunctionalCookie(FUNCTIONAL_COOKIES.recent_searches, filtered.slice(0, 50))
+}
+
+/**
+ * Clear recent searches
+ */
+export const clearRecentSearches = () => {
+    return setFunctionalCookie(FUNCTIONAL_COOKIES.recent_searches, [])
+}
+
+// =============================================================================
+// ANALYTICS & MARKETING
+// =============================================================================
+
 /**
  * Apply consent decisions (enable/disable tracking)
  */
@@ -106,15 +246,17 @@ const applyConsent = (consent) => {
     } else {
         disableMarketing()
     }
+
+    // Functional - no action needed, just check isAllowed when storing
 }
 
 /**
  * Enable analytics tracking
  */
 const enableAnalytics = () => {
-    // Track page views and user behavior
     if (typeof window !== 'undefined') {
         window.fyndaAnalyticsEnabled = true
+        // Future: Initialize Google Analytics, Mixpanel, etc.
     }
 }
 
@@ -124,6 +266,8 @@ const enableAnalytics = () => {
 const disableAnalytics = () => {
     if (typeof window !== 'undefined') {
         window.fyndaAnalyticsEnabled = false
+        // Clear analytics data
+        localStorage.removeItem('fynda_analytics')
     }
 }
 
@@ -133,6 +277,7 @@ const disableAnalytics = () => {
 const enableMarketing = () => {
     if (typeof window !== 'undefined') {
         window.fyndaMarketingEnabled = true
+        // Future: Enable affiliate tracking, ad retargeting, etc.
     }
 }
 
@@ -186,12 +331,32 @@ if (typeof window !== 'undefined') {
 }
 
 export default {
+    // Consent management
     getConsent,
     setConsent,
     acceptAll,
     rejectAll,
     hasConsented,
     isAllowed,
+
+    // Functional cookies
+    setFunctionalCookie,
+    getFunctionalCookie,
+    removeFunctionalCookie,
+    clearFunctionalCookies,
+    FUNCTIONAL_COOKIES,
+
+    // Theme helpers
+    getThemePreference,
+    setThemePreference,
+
+    // Search helpers
+    getRecentSearches,
+    addRecentSearch,
+    clearRecentSearches,
+
+    // Analytics
     trackEvent,
     trackPageView
 }
+

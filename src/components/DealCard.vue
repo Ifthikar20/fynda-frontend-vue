@@ -9,6 +9,7 @@
           @click.stop="handleUpvote"
           title="Upvote this deal"
         >
+          <img src="@/assets/upvote-logo.png" alt="Upvote" class="upvote-icon" />
           <span class="upvote-count">{{ upvoteCount }}</span>
         </button>
         <button class="action-btn" @click.stop="handleFavorite">
@@ -244,10 +245,11 @@ const handleShare = () => {
 .upvote-btn {
   position: relative;
   flex-direction: column;
-  width: 48px;
-  height: 48px;
-  padding: 6px;
+  width: 36px;
+  height: 40px;
+  padding: 4px;
   background: rgba(255, 255, 255, 0.98);
+  gap: 2px;
 }
 
 .upvote-btn:hover {
@@ -255,8 +257,8 @@ const handleShare = () => {
 }
 
 .upvote-btn.upvoted {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .upvote-btn.upvoted .upvote-icon {
@@ -264,8 +266,8 @@ const handleShare = () => {
 }
 
 .upvote-icon {
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
   object-fit: contain;
   transition: all 0.2s ease;
 }
@@ -275,14 +277,14 @@ const handleShare = () => {
 }
 
 .upvote-btn.upvoted:hover .upvote-icon {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
 }
 
 .upvote-count {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 9px;
+  font-weight: 600;
   color: #666;
-  margin-top: 2px;
+  margin-top: 1px;
   line-height: 1;
 }
 
@@ -306,7 +308,7 @@ const handleShare = () => {
   position: absolute;
   top: 14px;
   left: 14px;
-  background: #ef4444;
+  background: #666;
   color: #fff;
   padding: 8px 12px;
   border-radius: 10px;

@@ -18,7 +18,7 @@
           <div class="image-container">
             <img :src="product.image_url" :alt="product.title" class="product-image" />
             
-            <!-- Upvote Button with Count -->
+            <!-- Upvote Button with Count - Smaller -->
             <div class="upvote-container">
               <button 
                 class="upvote-btn" 
@@ -26,26 +26,27 @@
                 @click="handleUpvote" 
                 title="Upvote this deal"
               >
+                <img src="@/assets/upvote-logo.png" alt="Upvote" class="upvote-icon" />
                 <span class="upvote-number">{{ upvoteCount }}</span>
               </button>
-              <span class="upvote-label" :class="{ active: isUpvoted }">
-                <template v-if="upvoteCount === 0 && !isUpvoted">Be the first!</template>
-                <template v-else-if="upvoteCount === 1">upvote</template>
-                <template v-else>upvotes</template>
-              </span>
             </div>
+            
+            <!-- Store name at bottom of image -->
+            <span class="store-name-overlay" @click.stop="goToBrand(product.merchant_name || product.source)">
+              {{ product.merchant_name || product.source }}
+            </span>
           </div>
         </div>
 
         <!-- Right: Product Info -->
         <div class="product-info-section">
           <div class="product-info-card">
-            <span class="store-name" @click="goToBrand(product.merchant_name || product.source)">{{ product.merchant_name || product.source }}</span>
             <h1 class="product-title">{{ product.title }}</h1>
             <p class="product-meta">
               <span class="product-price">${{ formatPrice(product.price) }}</span>
               <span class="product-brand" v-if="product.brand" @click="goToBrand(product.brand)">• {{ product.brand }}</span>
             </p>
+
 
             <!-- Price Comparison - Vertical Meter -->
             <div class="price-meter">
@@ -68,26 +69,35 @@
                     <span class="price-amount">${{ formatPrice(product.price) }}</span>
                     <span class="price-level">{{ priceLevel }}</span>
                   </div>
-                  <p class="meter-description">Compared to {{ similarProducts.length || 'similar' }} items</p>
+                  <p class="meter-description">We compared to {{ similarProducts.length || 19 }} other products</p>
                 </div>
               </div>
             </div>
 
-            <!-- Shop Button -->
-            <a :href="product.url" target="_blank" class="shop-btn">
+            <!-- Shop Button (with affiliate tracking) -->
+            <a :href="affiliateUrl" target="_blank" rel="noopener sponsored" class="shop-btn">
               Shop item
             </a>
             
-            <!-- Add to Fashion Board Button -->
-            <button class="outfit-btn" @click="goToFashionBoard">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="7" rx="1"/>
-                <rect x="14" y="3" width="7" height="7" rx="1"/>
-                <rect x="3" y="14" width="7" height="7" rx="1"/>
-                <rect x="14" y="14" width="7" height="7" rx="1"/>
-              </svg>
-              Add to Fashion Board
-            </button>
+            <!-- Add to Fashion Board + Library Row -->
+            <div class="action-row">
+              <button class="outfit-btn" @click="goToFashionBoard">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7" rx="1"/>
+                  <rect x="14" y="3" width="7" height="7" rx="1"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1"/>
+                  <rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                Add to Fashion Board
+              </button>
+              
+              <!-- Library Button - Small -->
+              <button class="library-btn" :class="{ saved: isInLibrary }" @click="toggleLibrary" :title="isInLibrary ? 'Saved to Library' : 'Add to Library'">
+                <svg width="18" height="18" viewBox="0 0 24 24" :fill="isInLibrary ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -170,6 +180,7 @@ const showPriceDetails = ref(true)
 const activeFilter = ref('all')
 const sortBy = ref('featured')
 const upvotedProducts = ref({})
+const isInLibrary = ref(false)
 
 // Computed
 const priceRange = computed(() => {
@@ -195,6 +206,34 @@ const priceLevel = computed(() => {
   if (pos < 33) return 'low'
   if (pos < 66) return 'typical'
   return 'high'
+})
+
+// Awin Affiliate Link Configuration
+const AWIN_PUBLISHER_ID = '2754350'
+const AWIN_ADVERTISERS = {
+  'asos': '',
+  'nordstrom': '',
+  'farfetch': '',
+  'net-a-porter': '',
+  'revolve': '',
+  // Add advertiser IDs after Awin approval
+}
+
+const affiliateUrl = computed(() => {
+  const originalUrl = product.value.url
+  if (!originalUrl) return '#'
+  
+  const source = (product.value.source || product.value.merchant_name || '').toLowerCase()
+  const advertiserId = AWIN_ADVERTISERS[source]
+  
+  // If we have an advertiser ID, generate Awin tracking link
+  if (advertiserId) {
+    const encodedUrl = encodeURIComponent(originalUrl)
+    return `https://www.awin1.com/cread.php?awinmid=${advertiserId}&awinaffid=${AWIN_PUBLISHER_ID}&ued=${encodedUrl}`
+  }
+  
+  // Fall back to original URL
+  return originalUrl
 })
 
 const filteredSimilarProducts = computed(() => {
@@ -280,6 +319,46 @@ const goToBrand = (brandName) => {
   }
 }
 
+// Library functions
+const toggleLibrary = () => {
+  if (!isAuthenticated.value) {
+    router.push('/login')
+    return
+  }
+  
+  isInLibrary.value = !isInLibrary.value
+  
+  // Get current library from localStorage
+  const library = JSON.parse(localStorage.getItem('userLibrary') || '[]')
+  
+  if (isInLibrary.value) {
+    // Add to library
+    const productData = {
+      id: product.value.id,
+      title: product.value.title,
+      price: product.value.price,
+      image_url: product.value.image_url,
+      brand: product.value.brand || product.value.merchant_name,
+      url: product.value.url,
+      savedAt: new Date().toISOString()
+    }
+    library.push(productData)
+  } else {
+    // Remove from library
+    const index = library.findIndex(item => item.id === product.value.id)
+    if (index > -1) {
+      library.splice(index, 1)
+    }
+  }
+  
+  localStorage.setItem('userLibrary', JSON.stringify(library))
+}
+
+const checkLibraryStatus = () => {
+  const library = JSON.parse(localStorage.getItem('userLibrary') || '[]')
+  isInLibrary.value = library.some(item => item.id === product.value.id)
+}
+
 const fetchProduct = async (id) => {
   loading.value = true
   try {
@@ -326,6 +405,7 @@ onMounted(() => {
   if (route.params.id) {
     fetchProduct(route.params.id)
   }
+  checkLibraryStatus()
 })
 </script>
 
@@ -432,6 +512,8 @@ onMounted(() => {
   border-radius: 12px;
   object-fit: cover;
   transition: transform 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .image-container {
@@ -454,77 +536,77 @@ onMounted(() => {
 }
 
 .upvote-btn {
-  width: 50px;
-  height: 50px;
+  width: 42px;
+  height: 48px;
   background: #fff;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 6px;
 }
 
 .upvote-number {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: inherit;
-}
-
-.upvote-label {
   font-size: 0.7rem;
-  font-weight: 500;
-  color: #888;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.upvote-label.active {
-  color: #1a1a1a;
   font-weight: 600;
+  color: #666;
 }
 
-.upvote-btn.show-count {
-  font-size: 1.1rem;
-  font-weight: 700;
+.upvote-btn.active .upvote-number {
+  color: #fff;
 }
 
 .upvote-btn:hover {
   background: #f5f5f5;
-  transform: scale(1.08);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .upvote-btn.active {
   background: #1a1a1a;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  animation: upvote-pop 0.4s ease;
-}
-
-@keyframes upvote-pop {
-  0% { transform: scale(1); }
-  30% { transform: scale(1.25); }
-  50% { transform: scale(0.95); }
-  70% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .upvote-icon {
-  width: 28px;
-  height: 28px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   transition: all 0.2s ease;
 }
 
 .upvote-btn:hover .upvote-icon {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
 }
 
 .upvote-btn.active .upvote-icon {
   filter: brightness(0) invert(1);
+}
+
+/* Store name overlay at bottom of image */
+.store-name-overlay {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.store-name-overlay:hover {
+  background: rgba(0, 0, 0, 0.9);
 }
 
 /* Right: Info */
@@ -615,7 +697,7 @@ onMounted(() => {
 .meter-bar {
   width: 8px;
   height: 100px;
-  background: linear-gradient(to top, #22c55e 0%, #facc15 50%, #ef4444 100%);
+  background: linear-gradient(to top, #10b981 0%, #6366f1 50%, #8b5cf6 100%);
   border-radius: 4px;
   position: relative;
 }
@@ -641,8 +723,8 @@ onMounted(() => {
   color: #666;
 }
 
-.meter-label.high { color: #ef4444; }
-.meter-label.low { color: #22c55e; }
+.meter-label.high { color: #8b5cf6; }
+.meter-label.low { color: #10b981; }
 
 .meter-info {
   flex: 1;
@@ -660,15 +742,15 @@ onMounted(() => {
 }
 
 .current-price-tag.low {
-  background: #f0fdf4;
+  background: #ecfdf5;
 }
 
-.current-price-tag.mid {
-  background: #fefce8;
+.current-price-tag.typical {
+  background: #f5f3ff;
 }
 
 .current-price-tag.high {
-  background: #fef2f2;
+  background: #faf5ff;
 }
 
 .price-amount {
@@ -684,9 +766,9 @@ onMounted(() => {
   letter-spacing: 0.5px;
 }
 
-.current-price-tag.low .price-level { color: #22c55e; }
-.current-price-tag.mid .price-level { color: #ca8a04; }
-.current-price-tag.high .price-level { color: #ef4444; }
+.current-price-tag.low .price-level { color: #10b981; }
+.current-price-tag.typical .price-level { color: #6366f1; }
+.current-price-tag.high .price-level { color: #8b5cf6; }
 
 .meter-description {
   font-size: 0.8rem;
@@ -732,6 +814,48 @@ onMounted(() => {
 
 .outfit-btn:hover {
   background: #f5f5f5;
+}
+
+/* Action Row */
+.action-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.action-row .outfit-btn {
+  flex: 1;
+  margin-top: 0;
+}
+
+/* Library Button - Small Icon */
+.library-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  padding: 0;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.library-btn:hover {
+  background: #333;
+  transform: scale(1.05);
+}
+
+.library-btn.saved {
+  background: #10b981;
+}
+
+.library-btn.saved:hover {
+  background: #059669;
 }
 
 /* Similar Section */
@@ -925,7 +1049,7 @@ onMounted(() => {
   width: auto;
   height: auto;
   display: inline-block;
-  background: #ef4444;
+  background: #666;
   color: #fff;
   padding: 0.15rem 0.4rem;
   border-radius: 3px;

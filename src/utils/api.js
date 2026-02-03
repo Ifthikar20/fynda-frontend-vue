@@ -3,6 +3,7 @@
  */
 import axios from 'axios'
 import { getAccessToken, getRefreshToken, setTokens } from '../stores/authStore'
+import tokenStorage from './tokenStorage'
 
 // Create axios instance
 const api = axios.create({
@@ -123,9 +124,8 @@ api.interceptors.response.use(
 
             if (!refreshToken) {
                 isRefreshing = false
-                // Redirect to login - clear auth
-                localStorage.removeItem('fynda_tokens')
-                localStorage.removeItem('fynda_user')
+                // Redirect to login - clear obfuscated auth data
+                tokenStorage.clearAll()
                 window.location.href = '/login'
                 return Promise.reject(error)
             }
@@ -151,9 +151,8 @@ api.interceptors.response.use(
             } catch (refreshError) {
                 processQueue(refreshError, null)
 
-                // Clear auth and redirect to login
-                localStorage.removeItem('fynda_tokens')
-                localStorage.removeItem('fynda_user')
+                // Clear obfuscated auth and redirect to login
+                tokenStorage.clearAll()
                 window.location.href = '/login'
 
                 return Promise.reject(refreshError)
