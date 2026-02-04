@@ -6,8 +6,20 @@
     "devCommand": "npm run dev",
     "rewrites": [
         {
+            "source": "/blog/:path*",
+            "destination": "https://api.fynda.shop/blog/:path*"
+        },
+        {
+            "source": "/blog",
+            "destination": "https://api.fynda.shop/blog/"
+        },
+        {
+            "source": "/sitemap.xml",
+            "destination": "https://api.fynda.shop/sitemap.xml"
+        },
+        {
             "source": "/api/:path*",
-            "destination": "https://YOUR_RAILWAY_BACKEND.railway.app/api/:path*"
+            "destination": "https://api.fynda.shop/api/:path*"
         }
     ],
     "headers": [

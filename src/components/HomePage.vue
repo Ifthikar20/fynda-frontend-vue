@@ -425,52 +425,57 @@ const handleImageUpload = async (event) => {
       reader.readAsDataURL(file)
     })
     
-    // Call ML visual search service
+    // Step 1: Extract attributes from image (colors, textures, category, search queries)
     const mlUrl = import.meta.env.VITE_ML_API_URL || 'http://127.0.0.1:8001'
-    const response = await fetch(`${mlUrl}/api/visual-search`, {
+    const attrResponse = await fetch(`${mlUrl}/api/extract-attributes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        image_base64: base64,
-        top_k: 20
-      })
+      body: JSON.stringify({ image_base64: base64 })
     })
     
-    if (!response.ok) {
-      throw new Error('Visual search failed')
+    if (!attrResponse.ok) {
+      throw new Error('Failed to analyze image')
     }
     
-    const data = await response.json()
+    const attributes = await attrResponse.json()
+    console.log('Extracted attributes:', attributes)
     
-    if (data.success && data.results?.length > 0) {
-      // Map ML results to product IDs and fetch full product data
-      const productIds = data.results.map(r => r.product_id)
+    if (attributes.success && attributes.search_queries?.length > 0) {
+      // Step 2: Use the best search query to search marketplace APIs
+      const searchQuery = attributes.search_queries[0]
+      lastSearchQuery.value = searchQuery
       
-      // Fetch full product details from main API
+      // Call main search API (hits Amazon, CJ, eBay, etc.)
       const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
-      const productResponse = await fetch(`${apiUrl}/api/products/batch/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: productIds })
-      })
+      const searchResponse = await fetch(
+        `${apiUrl}/api/search/?q=${encodeURIComponent(searchQuery)}`
+      )
       
-      if (productResponse.ok) {
-        const productData = await productResponse.json()
-        deals.value = productData.products || []
-      } else {
-        // Fallback: use metadata from ML response
-        deals.value = data.results.map(r => ({
-          id: r.product_id,
-          title: r.metadata?.title || 'Similar Product',
-          price: r.metadata?.price || 0,
-          image_url: r.metadata?.image_url || '',
-          source: r.metadata?.source || 'Found',
-          similarity_score: r.similarity_score
-        }))
+      if (searchResponse.ok) {
+        const searchData = await searchResponse.json()
+        deals.value = searchData.deals || []
+        
+        if (deals.value.length === 0) {
+          // Try a simpler query if no results
+          const fallbackQuery = attributes.category || attributes.caption?.split(' ').slice(0, 3).join(' ')
+          if (fallbackQuery && fallbackQuery !== searchQuery) {
+            const fallbackResponse = await fetch(
+              `${apiUrl}/api/search/?q=${encodeURIComponent(fallbackQuery)}`
+            )
+            if (fallbackResponse.ok) {
+              const fallbackData = await fallbackResponse.json()
+              deals.value = fallbackData.deals || []
+            }
+          }
+        }
+      }
+      
+      if (deals.value.length === 0) {
+        alert(`No products found for "${searchQuery}". Try a different image.`)
       }
     } else {
       deals.value = []
-      alert('No similar products found. Try a different image.')
+      alert('Could not identify the product. Please try a clearer image.')
     }
   } catch (error) {
     console.error('Visual search failed:', error)
