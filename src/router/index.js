@@ -7,6 +7,10 @@ import StoryboardPage from '../components/StoryboardPage.vue'
 import ProfilePage from '../components/ProfilePage.vue'
 import BrandPage from '../components/BrandPage.vue'
 
+// Blog pages
+import BlogPage from '../components/BlogPage.vue'
+import BlogPostPage from '../components/BlogPostPage.vue'
+
 // Static pages
 import AboutPage from '../components/pages/AboutPage.vue'
 import PrivacyPage from '../components/pages/PrivacyPage.vue'
@@ -134,6 +138,17 @@ const routes = [
         path: '/cookies',
         name: 'Cookies',
         component: CookiesPage
+    },
+    // Blog pages - public
+    {
+        path: '/blog',
+        name: 'Blog',
+        component: BlogPage
+    },
+    {
+        path: '/blog/:slug',
+        name: 'BlogPost',
+        component: BlogPostPage
     }
 ]
 
