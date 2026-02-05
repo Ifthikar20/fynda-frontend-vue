@@ -417,70 +417,40 @@ const handleImageUpload = async (event) => {
   lastSearchQuery.value = 'Visual Search'
   
   try {
-    // Convert file to base64
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result.split(',')[1])
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
+    // Create FormData for multipart upload
+    const formData = new FormData()
+    formData.append('image', file)
     
-    // Step 1: Extract attributes from image (colors, textures, category, search queries)
-    const mlUrl = import.meta.env.VITE_ML_API_URL || 'http://127.0.0.1:8001'
-    const attrResponse = await fetch(`${mlUrl}/api/extract-attributes`, {
+    // Call the backend upload endpoint which internally handles ML extraction
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+    const response = await fetch(`${apiUrl}/api/upload/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image_base64: base64 })
+      body: formData
     })
     
-    if (!attrResponse.ok) {
-      throw new Error('Failed to analyze image')
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || 'Failed to analyze image')
     }
     
-    const attributes = await attrResponse.json()
-    console.log('Extracted attributes:', attributes)
+    const data = await response.json()
+    console.log('Visual search result:', data)
     
-    if (attributes.success && attributes.search_queries?.length > 0) {
-      // Step 2: Use the best search query to search marketplace APIs
-      const searchQuery = attributes.search_queries[0]
-      lastSearchQuery.value = searchQuery
-      
-      // Call main search API (hits Amazon, CJ, eBay, etc.)
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
-      const searchResponse = await fetch(
-        `${apiUrl}/api/search/?q=${encodeURIComponent(searchQuery)}`
-      )
-      
-      if (searchResponse.ok) {
-        const searchData = await searchResponse.json()
-        deals.value = searchData.deals || []
-        
-        if (deals.value.length === 0) {
-          // Try a simpler query if no results
-          const fallbackQuery = attributes.category || attributes.caption?.split(' ').slice(0, 3).join(' ')
-          if (fallbackQuery && fallbackQuery !== searchQuery) {
-            const fallbackResponse = await fetch(
-              `${apiUrl}/api/search/?q=${encodeURIComponent(fallbackQuery)}`
-            )
-            if (fallbackResponse.ok) {
-              const fallbackData = await fallbackResponse.json()
-              deals.value = fallbackData.deals || []
-            }
-          }
-        }
-      }
-      
-      if (deals.value.length === 0) {
-        alert(`No products found for "${searchQuery}". Try a different image.`)
-      }
-    } else {
-      deals.value = []
-      alert('Could not identify the product. Please try a clearer image.')
+    // Update the search query if we got one
+    if (data.search_queries?.length > 0) {
+      lastSearchQuery.value = data.search_queries[0]
+    }
+    
+    // Set the deals from the response
+    deals.value = data.deals || []
+    
+    if (deals.value.length === 0) {
+      alert('No products found. Try a different image or a clearer photo.')
     }
   } catch (error) {
     console.error('Visual search failed:', error)
     deals.value = []
-    alert('Visual search failed. Please try again.')
+    alert(error.message || 'Visual search failed. Please try again.')
   } finally {
     loading.value = false
     // Reset file input

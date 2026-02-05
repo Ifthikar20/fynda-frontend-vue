@@ -104,25 +104,36 @@ const visualSearch = async (imageBase64) => {
     state.lastSearchQuery = 'Visual Search'
 
     try {
-        const mlUrl = import.meta.env.VITE_ML_API_URL || 'http://127.0.0.1:8001'
-        const response = await fetch(`${mlUrl}/api/visual-search`, {
+        // Convert base64 to Blob for FormData upload
+        const byteCharacters = atob(imageBase64)
+        const byteNumbers = new Array(byteCharacters.length)
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i)
+        }
+        const byteArray = new Uint8Array(byteNumbers)
+        const blob = new Blob([byteArray], { type: 'image/jpeg' })
+
+        // Create FormData and upload via backend
+        const formData = new FormData()
+        formData.append('image', blob, 'visual-search.jpg')
+
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+        const response = await fetch(`${apiUrl}/api/upload/`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image_base64: imageBase64, top_k: 20 })
+            body: formData
         })
+
+        if (!response.ok) {
+            throw new Error('Visual search request failed')
+        }
 
         const data = await response.json()
 
-        if (data.success && data.results?.length > 0) {
-            // Map results to deals format
-            state.deals = data.results.map(r => ({
-                id: r.product_id,
-                title: r.metadata?.title || 'Similar Product',
-                price: r.metadata?.price || 0,
-                image_url: r.metadata?.image_url || '',
-                source: r.metadata?.source || 'Found',
-                similarity_score: r.similarity_score
-            }))
+        if (data.deals?.length > 0) {
+            state.deals = data.deals
+            if (data.search_queries?.length > 0) {
+                state.lastSearchQuery = data.search_queries[0]
+            }
         } else {
             state.deals = []
             state.error = 'No similar products found'
