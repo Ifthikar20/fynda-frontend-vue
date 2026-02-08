@@ -187,6 +187,16 @@
           </div>
         </div>
         
+        <!-- Quota Warning Banner -->
+        <div v-if="quotaWarning" class="quota-banner">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>{{ quotaWarning }}</span>
+        </div>
+        
         <!-- Inline Loading State -->
         <div v-if="loading" class="inline-loading">
           <div class="loading-spinner-inline"></div>
@@ -325,6 +335,7 @@ const showUserMenu = ref(false)
 const visibleCount = ref(12)
 const trendingVisibleCount = ref(12)
 const scrollSentinel = ref(null)
+const quotaWarning = ref('')
 let scrollObserver = null
 
 // Quick suggestions
@@ -631,6 +642,7 @@ const handleSearch = async () => {
   lastSearchQuery.value = searchQuery.value
   sortBy.value = 'relevance'
   visibleCount.value = 12  // Reset lazy load on new search
+  quotaWarning.value = ''  // Clear previous warning
   
   try {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
@@ -638,6 +650,11 @@ const handleSearch = async () => {
     const data = await response.json()
     
     deals.value = data.deals || []
+    
+    // Check for quota warning from backend
+    if (data.quota_warning) {
+      quotaWarning.value = data.quota_warning
+    }
   } catch (error) {
     console.error('Search failed:', error)
     deals.value = []
@@ -1443,6 +1460,25 @@ a {
   padding: 1.5rem 0;
   color: #aaa;
   font-size: 0.85rem;
+}
+
+/* Quota Warning Banner */
+.quota-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.6rem 1rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 0.78rem;
+  margin-bottom: 1rem;
+}
+
+.quota-banner svg {
+  flex-shrink: 0;
+  color: #d97706;
 }
 
 /* Load More */
