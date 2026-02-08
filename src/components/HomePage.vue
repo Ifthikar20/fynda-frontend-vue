@@ -48,6 +48,24 @@
         
         <!-- AI-Style Search Box -->
         <div class="ai-search-container">
+          <!-- Pasted/Uploaded Image Preview -->
+          <div v-if="pastedImage" class="paste-preview">
+            <img :src="pastedImage.preview" alt="Search image" class="paste-preview-img" />
+            <div class="paste-preview-info">
+              <span class="paste-preview-label">Visual Search</span>
+              <span class="paste-preview-detail">{{ pastedImage.name }}</span>
+            </div>
+            <button class="paste-preview-remove" @click="removePastedImage" title="Remove image">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+            <button class="paste-search-btn" @click="searchWithPastedImage" :disabled="loading">
+              <span v-if="loading" class="spinner-sm"></span>
+              <span v-else>Find Similar</span>
+            </button>
+          </div>
+
           <div class="ai-search-box">
             <div class="ai-search-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -62,13 +80,15 @@
               @keyup.enter="handleSearch"
               @focus="isSearchFocused = true"
               @blur="handleBlur"
+              @paste="handlePaste"
+              :placeholder="pastedImage ? 'Add description (optional)...' : ''"
             />
-            <span v-if="!searchQuery && !isSearchFocused" class="ai-animated-placeholder">
+            <span v-if="!searchQuery && !isSearchFocused && !pastedImage" class="ai-animated-placeholder">
               {{ animatedPrompt }}
             </span>
             
             <!-- Image Upload Button -->
-            <label class="image-upload-btn" title="Search by image">
+            <label class="image-upload-btn" title="Search by image or paste (Ctrl+V)">
               <input type="file" accept="image/*" @change="handleImageUpload" hidden />
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -89,6 +109,8 @@
             <button v-for="suggestion in quickSuggestions" :key="suggestion" @click="searchSuggestion(suggestion)">
               {{ suggestion }}
             </button>
+            <span class="suggestion-divider">|</span>
+            <span class="suggestion-hint">📋 Paste an image (Ctrl+V)</span>
           </div>
         </div>
       </section>
@@ -117,7 +139,7 @@
         <h2 class="section-title">Trending Now</h2>
         <div class="masonry-grid">
           <div 
-            v-for="(deal, index) in trendingDeals.slice(0, 12)" 
+            v-for="(deal, index) in visibleTrendingDeals" 
             :key="'trending-' + deal.id" 
             class="masonry-item"
             :class="getCardSize(index)"
@@ -133,6 +155,14 @@
               <span class="card-price">${{ formatPrice(deal.price) }}</span>
             </div>
           </div>
+        </div>
+        
+        <!-- Load More Button -->
+        <div v-if="trendingVisibleCount < trendingDeals.length" class="load-more-container">
+          <button class="load-more-btn" @click="loadMoreTrending">Load More</button>
+        </div>
+        <div v-else-if="trendingDeals.length > 12" class="all-loaded">
+          <span>Showing all {{ trendingDeals.length }} trending items</span>
         </div>
       </section>
       
@@ -166,7 +196,7 @@
         <!-- Masonry Grid Results -->
         <div v-else-if="sortedDeals.length > 0" class="masonry-grid">
           <div 
-            v-for="(deal, index) in sortedDeals" 
+            v-for="(deal, index) in visibleDeals" 
             :key="deal.id" 
             class="masonry-item"
             :class="getCardSize(index)"
@@ -182,6 +212,19 @@
               <span class="card-price">${{ formatPrice(deal.price) }}</span>
             </div>
           </div>
+        </div>
+        
+        <!-- Infinite Scroll Sentinel -->
+        <div v-if="sortedDeals.length > 0 && visibleCount < sortedDeals.length" ref="scrollSentinel" class="scroll-sentinel">
+          <div class="loading-more">
+            <div class="loading-spinner-inline"></div>
+            <span>Loading more deals...</span>
+          </div>
+        </div>
+        
+        <!-- Show count -->
+        <div v-if="sortedDeals.length > 0 && visibleCount >= sortedDeals.length && sortedDeals.length > 12" class="all-loaded">
+          <span>Showing all {{ sortedDeals.length }} items</span>
         </div>
         
         <!-- Empty State -->
@@ -249,7 +292,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../stores/authStore'
 
@@ -276,8 +319,13 @@ const loading = ref(false)
 const hasSearched = ref(false)
 const isSearchFocused = ref(false)
 const currentCategory = ref('all')
+const pastedImage = ref(null)
 const sortBy = ref('relevance')
 const showUserMenu = ref(false)
+const visibleCount = ref(12)
+const trendingVisibleCount = ref(12)
+const scrollSentinel = ref(null)
+let scrollObserver = null
 
 // Quick suggestions
 const quickSuggestions = ['Vintage jacket', 'Running shoes', 'Designer bag', 'Summer dress']
@@ -341,6 +389,52 @@ const sortedDeals = computed(() => {
   }
 })
 
+// Visible deals (lazy loaded)
+const visibleDeals = computed(() => {
+  return sortedDeals.value.slice(0, visibleCount.value)
+})
+
+// Visible trending deals (load-more)
+const visibleTrendingDeals = computed(() => {
+  return trendingDeals.value.slice(0, trendingVisibleCount.value)
+})
+
+// Load more trending deals
+const loadMoreTrending = () => {
+  trendingVisibleCount.value = Math.min(trendingVisibleCount.value + 12, trendingDeals.value.length)
+}
+
+// Infinite scroll - load more when sentinel is visible
+const setupScrollObserver = () => {
+  if (scrollObserver) scrollObserver.disconnect()
+  
+  scrollObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && visibleCount.value < sortedDeals.value.length) {
+      visibleCount.value = Math.min(visibleCount.value + 12, sortedDeals.value.length)
+    }
+  }, { rootMargin: '200px' })
+  
+  nextTick(() => {
+    if (scrollSentinel.value) {
+      scrollObserver.observe(scrollSentinel.value)
+    }
+  })
+}
+
+// Watch deals changes to setup observer
+watch(() => deals.value.length, () => {
+  nextTick(() => setupScrollObserver())
+})
+
+// Watch visibleCount to re-observe sentinel
+watch(visibleCount, () => {
+  nextTick(() => {
+    if (scrollSentinel.value && scrollObserver) {
+      scrollObserver.observe(scrollSentinel.value)
+    }
+  })
+})
+
 // Format price
 const formatPrice = (price) => {
   if (!price) return '0.00'
@@ -393,35 +487,85 @@ const toggleFavorite = (deal) => {
   console.log('Favorited:', deal.title)
 }
 
-// Handle image upload - Visual Search
+// ============================================================
+// Image Paste & Upload — Visual Search
+// ============================================================
+
+// Handle Ctrl+V paste
+const handlePaste = async (event) => {
+  const items = event.clipboardData?.items
+  if (!items) return
+  
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      event.preventDefault()
+      const file = item.getAsFile()
+      if (file) {
+        await previewImage(file)
+      }
+      return
+    }
+  }
+}
+
+// Create preview for a pasted/uploaded image (doesn't search yet)
+const previewImage = async (file) => {
+  // Validate
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!allowedTypes.includes(file.type)) {
+    alert('Please use a JPEG, PNG, or WebP image')
+    return
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    alert('Image must be under 10MB')
+    return
+  }
+  
+  // Create preview URL
+  const preview = URL.createObjectURL(file)
+  pastedImage.value = {
+    file,
+    preview,
+    name: file.name || 'Pasted image'
+  }
+}
+
+// Remove pasted image
+const removePastedImage = () => {
+  if (pastedImage.value?.preview) {
+    URL.revokeObjectURL(pastedImage.value.preview)
+  }
+  pastedImage.value = null
+}
+
+// Search with the pasted/uploaded image
+const searchWithPastedImage = async () => {
+  if (!pastedImage.value) return
+  await processImageFile(pastedImage.value.file)
+}
+
+// Handle file input upload
 const handleImageUpload = async (event) => {
   const file = event.target.files?.[0]
   if (!file) return
-  
-  // Validate file type
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
-  if (!allowedTypes.includes(file.type)) {
-    alert('Please upload a JPEG, PNG, or WebP image')
-    return
+  event.target.value = ''
+  await previewImage(file)
+  // Auto-search immediately on file picker upload
+  if (pastedImage.value) {
+    await processImageFile(pastedImage.value.file)
   }
-  
-  // Validate file size (5MB max)
-  const maxSize = 5 * 1024 * 1024
-  if (file.size > maxSize) {
-    alert('Image must be under 5MB')
-    return
-  }
-  
+}
+
+// Core: send image to backend for visual search
+const processImageFile = async (file) => {
   loading.value = true
   hasSearched.value = true
   lastSearchQuery.value = 'Visual Search'
   
   try {
-    // Create FormData for multipart upload
     const formData = new FormData()
     formData.append('image', file)
     
-    // Call the backend upload endpoint which internally handles ML extraction
     const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
     const response = await fetch(`${apiUrl}/api/upload/`, {
       method: 'POST',
@@ -436,25 +580,24 @@ const handleImageUpload = async (event) => {
     const data = await response.json()
     console.log('Visual search result:', data)
     
-    // Update the search query if we got one
     if (data.search_queries?.length > 0) {
       lastSearchQuery.value = data.search_queries[0]
+      searchQuery.value = data.search_queries[0]
     }
     
-    // Set the deals from the response
     deals.value = data.deals || []
     
     if (deals.value.length === 0) {
-      alert('No products found. Try a different image or a clearer photo.')
+      alert('No products found. Try a different image.')
     }
+    
+    // Keep the image preview visible after search (don't clear it)
   } catch (error) {
     console.error('Visual search failed:', error)
     deals.value = []
     alert(error.message || 'Visual search failed. Please try again.')
   } finally {
     loading.value = false
-    // Reset file input
-    event.target.value = ''
   }
 }
 
@@ -487,6 +630,7 @@ const handleSearch = async () => {
   hasSearched.value = true
   lastSearchQuery.value = searchQuery.value
   sortBy.value = 'relevance'
+  visibleCount.value = 12  // Reset lazy load on new search
   
   try {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
@@ -843,6 +987,105 @@ a {
   background: #333;
 }
 
+/* Paste Preview */
+.paste-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8f8f8;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.paste-preview-img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+}
+
+.paste-preview-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.paste-preview-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.paste-preview-detail {
+  font-size: 0.7rem;
+  color: #888;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.paste-preview-remove {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #999;
+  transition: all 0.2s;
+}
+
+.paste-preview-remove:hover {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.paste-search-btn {
+  padding: 8px 18px;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.paste-search-btn:hover:not(:disabled) {
+  background: #333;
+}
+
+.paste-search-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner-sm {
+  width: 14px;
+  height: 14px;
+  border: 2px solid transparent;
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
 /* Quick Suggestions */
 .quick-suggestions {
   display: flex;
@@ -856,6 +1099,17 @@ a {
 .suggestion-label {
   font-size: 0.75rem;
   color: #888;
+}
+
+.suggestion-divider {
+  font-size: 0.7rem;
+  color: #ddd;
+  margin: 0 2px;
+}
+
+.suggestion-hint {
+  font-size: 0.72rem;
+  color: #aaa;
 }
 
 .quick-suggestions button {
@@ -1169,12 +1423,60 @@ a {
 
 .empty-state p { color: #888; font-size: 0.85rem; }
 
+/* Infinite Scroll */
+.scroll-sentinel {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.loading-more {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.all-loaded {
+  text-align: center;
+  padding: 1.5rem 0;
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+/* Load More */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 0 0.5rem;
+}
+
+.load-more-btn {
+  padding: 0.6rem 2rem;
+  background: #fff;
+  color: #1a1a1a;
+  border: 1.5px solid #ddd;
+  border-radius: 24px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.load-more-btn:hover {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
 /* Footer */
 .footer {
   background: #fafafa;
   border-top: 1px solid #e5e5e5;
-  margin-top: 3rem;
-  padding: 3rem 1.5rem 1.5rem;
+  margin-top: 1.5rem;
+  padding: 1.5rem 1.5rem 1rem;
   width: 100vw;
   margin-left: calc(-50vw + 50%);
 }
@@ -1187,8 +1489,8 @@ a {
 .footer-main {
   display: flex;
   justify-content: space-between;
-  gap: 3rem;
-  margin-bottom: 2rem;
+  gap: 2rem;
+  margin-bottom: 1rem;
 }
 
 .footer-brand {
@@ -1196,36 +1498,36 @@ a {
 }
 
 .footer-logo {
-  height: 36px;
-  margin-bottom: 1rem;
+  height: 28px;
+  margin-bottom: 0.5rem;
 }
 
 .footer-tagline {
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   color: #666;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .footer-links {
   display: flex;
-  gap: 4rem;
+  gap: 2.5rem;
 }
 
 .footer-column {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.3rem;
 }
 
 .footer-column h4 {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #1a1a1a;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .footer-column a {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: #666;
   text-decoration: none;
   transition: color 0.2s ease;
@@ -1239,12 +1541,12 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 1.5rem;
+  padding-top: 0.75rem;
   border-top: 1px solid #e5e5e5;
 }
 
 .footer-bottom p {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   color: #888;
 }
 
@@ -1254,7 +1556,7 @@ a {
 }
 
 .footer-legal a {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   color: #888;
   text-decoration: none;
 }

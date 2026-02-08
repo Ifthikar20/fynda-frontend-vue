@@ -100,14 +100,14 @@ const currentYear = computed(() => new Date().getFullYear())
 .footer-inner {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 56px 48px 32px;
+  padding: 32px 48px 20px;
 }
 
 .footer-main {
   display: flex;
   justify-content: space-between;
-  gap: 64px;
-  padding-bottom: 40px;
+  gap: 48px;
+  padding-bottom: 24px;
   border-bottom: 1px solid #e8e8e8;
 }
 
@@ -118,10 +118,10 @@ const currentYear = computed(() => new Date().getFullYear())
 .footer-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-weight: 700;
-  font-size: 22px;
-  margin-bottom: 14px;
+  font-size: 18px;
+  margin-bottom: 8px;
   text-decoration: none;
 }
 
@@ -134,33 +134,33 @@ const currentYear = computed(() => new Date().getFullYear())
 }
 
 .footer-tagline {
-  font-size: 14px;
+  font-size: 12px;
   color: #777;
-  line-height: 1.7;
+  line-height: 1.5;
 }
 
 .footer-links {
   display: flex;
-  gap: 72px;
+  gap: 48px;
 }
 
 .link-group {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
 }
 
 .link-title {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: #333;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 .link {
-  font-size: 14px;
+  font-size: 12px;
   color: #777;
   text-decoration: none;
   transition: color 0.2s ease;
@@ -174,11 +174,11 @@ const currentYear = computed(() => new Date().getFullYear())
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 28px;
+  padding-top: 16px;
 }
 
 .copyright {
-  font-size: 13px;
+  font-size: 11px;
   color: #999;
 }
 
@@ -188,7 +188,7 @@ const currentYear = computed(() => new Date().getFullYear())
 }
 
 .legal-link {
-  font-size: 13px;
+  font-size: 11px;
   color: #888;
   text-decoration: none;
   transition: color 0.2s ease;
@@ -239,7 +239,7 @@ const currentYear = computed(() => new Date().getFullYear())
 
 @media (max-width: 600px) {
   .footer-inner {
-    padding: 40px 24px 24px;
+    padding: 24px 24px 16px;
   }
   
   .footer-bottom {
