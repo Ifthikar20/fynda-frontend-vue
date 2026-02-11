@@ -503,15 +503,12 @@ const fetchProduct = async (id) => {
   }
 }
 
-// Watch for route changes
+// Watch for route changes (immediate: true handles the initial load)
 watch(() => route.params.id, (newId) => {
   if (newId) fetchProduct(newId)
 }, { immediate: true })
 
 onMounted(() => {
-  if (route.params.id) {
-    fetchProduct(route.params.id)
-  }
   checkLibraryStatus()
   checkCompareStatus()
 })
