@@ -14,7 +14,7 @@
       
       <div class="nav-actions">
         <template v-if="isAuthenticated">
-          <router-link to="/compare" class="nav-link-icon" title="Compare Products">
+          <router-link to="/compare" class="nav-link-icon" :class="{ 'compare-glow': compareGlow }" title="Compare Products">
             <div class="compare-icon-wrap">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="20" x2="18" y2="10"/>
@@ -78,7 +78,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../stores/authStore'
 
@@ -87,10 +87,20 @@ const { isAuthenticated, currentUser, logout } = useAuth()
 
 const mobileMenuOpen = ref(false)
 const compareCount = ref(0)
+const compareGlow = ref(false)
 
 const loadCompareCount = () => {
   const items = JSON.parse(localStorage.getItem('fyndaCompare') || '[]')
   compareCount.value = items.length
+}
+
+const onCompareUpdated = () => {
+  loadCompareCount()
+  // Trigger glow animation
+  compareGlow.value = true
+  setTimeout(() => {
+    compareGlow.value = false
+  }, 1500)
 }
 
 const userInitial = computed(() => {
@@ -108,6 +118,11 @@ const handleLogout = async () => {
 
 onMounted(() => {
   loadCompareCount()
+  window.addEventListener('compare-updated', onCompareUpdated)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('compare-updated', onCompareUpdated)
 })
 </script>
 
@@ -218,6 +233,24 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0 4px;
+}
+
+.compare-glow {
+  animation: compare-pulse 1.5s ease-out;
+}
+
+@keyframes compare-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6);
+  }
+  30% {
+    box-shadow: 0 0 12px 6px rgba(59, 130, 246, 0.4);
+    background: rgba(59, 130, 246, 0.08);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    background: transparent;
+  }
 }
 
 .nav-btn-outline {

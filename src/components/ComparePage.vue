@@ -66,11 +66,19 @@
         <!-- Price -->
         <div class="compare-row highlight">
           <div class="row-label">Price</div>
-          <div v-for="item in compareItems" :key="'price-' + item.id" class="compare-cell">
-            <span class="price-value" :class="{ 'best-price': isBestPrice(item) }">
-              ${{ formatPrice(item.price) }}
-            </span>
+          <div v-for="item in compareItems" :key="'price-' + item.id" class="compare-cell price-cell">
+            <div>
+              <span class="price-value" :class="{ 'best-price': isBestPrice(item) }">
+                ${{ formatPrice(item.price) }}
+              </span>
+              <span v-if="item.original_price && parseFloat(item.original_price) > parseFloat(item.price)" class="original-price">
+                ${{ formatPrice(item.original_price) }}
+              </span>
+            </div>
             <span v-if="isBestPrice(item) && compareItems.length > 1" class="best-badge">Best Price</span>
+            <span v-if="item.original_price && parseFloat(item.original_price) > parseFloat(item.price)" class="savings-badge">
+              Save {{ Math.round(((parseFloat(item.original_price) - parseFloat(item.price)) / parseFloat(item.original_price)) * 100) }}%
+            </span>
           </div>
           <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
         </div>
@@ -120,6 +128,33 @@
           <div class="row-label">Condition</div>
           <div v-for="item in compareItems" :key="'cond-' + item.id" class="compare-cell">
             {{ item.condition || 'New' }}
+          </div>
+          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
+        </div>
+
+        <!-- Description -->
+        <div class="compare-row">
+          <div class="row-label">Details</div>
+          <div v-for="item in compareItems" :key="'desc-' + item.id" class="compare-cell description-cell">
+            <p class="desc-text">{{ getDescription(item) }}</p>
+          </div>
+          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
+        </div>
+
+        <!-- Material -->
+        <div class="compare-row">
+          <div class="row-label">Material</div>
+          <div v-for="item in compareItems" :key="'mat-' + item.id" class="compare-cell">
+            <span class="tag">{{ getMaterial(item) }}</span>
+          </div>
+          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
+        </div>
+
+        <!-- Fit -->
+        <div class="compare-row">
+          <div class="row-label">Fit</div>
+          <div v-for="item in compareItems" :key="'fit-' + item.id" class="compare-cell">
+            {{ getFit(item) }}
           </div>
           <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
         </div>
@@ -229,6 +264,45 @@ const getColors = (item) => {
   }
   if (found.length === 0) return ['#1a1a1a', '#f5f5f5', '#2563eb']
   return found
+}
+
+// Extract description, truncated
+const getDescription = (item) => {
+  if (item.description) {
+    return item.description.length > 120 ? item.description.slice(0, 120) + '…' : item.description
+  }
+  return 'No description available'
+}
+
+// Extract material from description or title
+const getMaterial = (item) => {
+  const text = ((item.description || '') + ' ' + (item.title || '')).toLowerCase()
+  const materials = [
+    'cotton', 'polyester', 'silk', 'linen', 'wool', 'cashmere', 'viscose',
+    'rayon', 'nylon', 'spandex', 'leather', 'suede', 'denim', 'velvet',
+    'satin', 'chiffon', 'tweed', 'jersey', 'modal', 'elastane', 'lycra',
+    'canvas', 'mesh', 'latex', 'corduroy', 'fleece', 'organza'
+  ]
+  const found = materials.filter(m => text.includes(m))
+  if (found.length > 0) {
+    return found.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(', ')
+  }
+  return 'Not specified'
+}
+
+// Extract fit info from description or title
+const getFit = (item) => {
+  const text = ((item.description || '') + ' ' + (item.title || '')).toLowerCase()
+  const fits = [
+    'slim fit', 'regular fit', 'relaxed fit', 'oversized', 'bodycon',
+    'loose fit', 'tailored', 'cropped', 'petite', 'plus size',
+    'straight', 'wide leg', 'skinny', 'flared', 'a-line', 'midi', 'maxi', 'mini'
+  ]
+  const found = fits.filter(f => text.includes(f))
+  if (found.length > 0) {
+    return found.map(f => f.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')).join(', ')
+  }
+  return 'Standard'
 }
 
 onMounted(() => {
@@ -452,6 +526,40 @@ onMounted(() => {
   font-size: 0.68rem;
   font-weight: 600;
   border-radius: 4px;
+}
+
+.price-cell {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.original-price {
+  font-size: 0.78rem;
+  color: #999;
+  text-decoration: line-through;
+  margin-left: 0.5rem;
+}
+
+.savings-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border-radius: 4px;
+}
+
+.description-cell {
+  align-items: flex-start;
+}
+
+.desc-text {
+  font-size: 0.8rem;
+  color: #666;
+  line-height: 1.5;
+  margin: 0;
 }
 
 /* Tags */

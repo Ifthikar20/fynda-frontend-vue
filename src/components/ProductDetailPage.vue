@@ -54,7 +54,7 @@
               Shop item
             </a>
             
-            <!-- Add to Fashion Board + Compare + Library Row -->
+            <!-- Add to Fashion Board + Library Row -->
             <div class="action-row">
               <button class="outfit-btn" @click="goToFashionBoard">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -65,14 +65,6 @@
                 </svg>
                 Add to Fashion Board
               </button>
-
-              <button class="compare-btn" :class="{ added: isInCompare }" @click="toggleCompare" :title="isInCompare ? 'Remove from Compare' : 'Add to Compare'">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="20" x2="18" y2="10"/>
-                  <line x1="12" y1="20" x2="12" y2="4"/>
-                  <line x1="6" y1="20" x2="6" y2="14"/>
-                </svg>
-              </button>
               
               <!-- Library Button - Small -->
               <button class="library-btn" :class="{ saved: isInLibrary }" @click="toggleLibrary" :title="isInLibrary ? 'Saved to Library' : 'Add to Library'">
@@ -81,6 +73,16 @@
                 </svg>
               </button>
             </div>
+
+            <!-- Add to Compare -->
+            <button class="compare-btn" :class="{ added: isInCompare }" @click="toggleCompare">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+              {{ isInCompare ? 'Added to Compare ✓' : 'Add to Compare' }}
+            </button>
           </div>
         </div>
 
@@ -379,22 +381,29 @@ const toggleCompare = () => {
     compareList.splice(index, 1)
     isInCompare.value = false
   } else {
-    // Add to compare (max 4)
-    if (compareList.length >= 4) {
+    // Add to compare (max 3)
+    if (compareList.length >= 3) {
       compareList.shift() // Remove oldest
     }
     compareList.push({
       id: product.value.id,
       title: product.value.title,
       price: product.value.price,
+      original_price: product.value.original_price || null,
       image_url: product.value.image_url,
       brand: product.value.brand || product.value.merchant_name,
-      url: product.value.url
+      merchant_name: product.value.merchant_name || product.value.source,
+      source: product.value.source,
+      url: product.value.url,
+      description: product.value.description || '',
+      condition: product.value.condition || 'New',
     })
     isInCompare.value = true
   }
 
   localStorage.setItem('fyndaCompare', JSON.stringify(compareList))
+  // Notify NavBar to update badge + glow
+  window.dispatchEvent(new CustomEvent('compare-updated'))
 }
 
 const checkCompareStatus = () => {
@@ -902,36 +911,40 @@ onMounted(() => {
   background: #059669;
 }
 
-/* Compare Button */
+/* Compare Button - Full Width */
 .compare-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  min-width: 48px;
-  height: 48px;
-  padding: 0;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
   background: #fff;
   color: #1a1a1a;
-  border: 1px solid #1a1a1a;
+  border: 1px solid #e5e5e5;
   border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  margin-top: 0.5rem;
 }
 
 .compare-btn:hover {
-  background: #f5f5f5;
-  transform: scale(1.05);
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: #eff6ff;
 }
 
 .compare-btn.added {
-  background: #3b82f6;
+  background: #eff6ff;
   border-color: #3b82f6;
-  color: #fff;
+  color: #3b82f6;
 }
 
 .compare-btn.added:hover {
-  background: #2563eb;
+  background: #dbeafe;
 }
 
 /* Similar Section */
