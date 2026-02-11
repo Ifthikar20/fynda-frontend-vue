@@ -414,7 +414,62 @@ const checkCompareStatus = () => {
 const fetchProduct = async (id) => {
   loading.value = true
   try {
-    // Mock data for now - replace with actual API call
+    // Check if product data was passed from an explore/category page
+    const storedProduct = localStorage.getItem('fyndaViewProduct')
+    if (storedProduct) {
+      const parsed = JSON.parse(storedProduct)
+      localStorage.removeItem('fyndaViewProduct')
+
+      product.value = {
+        id: parsed.id || id,
+        title: parsed.title,
+        price: parsed.price,
+        brand: parsed.merchant_name || parsed.source || 'Brand',
+        merchant_name: parsed.merchant_name || parsed.source || 'Amazon',
+        source: parsed.source || 'Amazon',
+        image_url: parsed.image_url || parsed.image,
+        url: parsed.url || '#',
+        rating: parsed.rating,
+        reviews: parsed.reviews,
+        badge: parsed.badge,
+        original_price: parsed.original_price
+      }
+
+      // Fetch similar products from Amazon for the price comparison section
+      try {
+        const searchTerm = parsed.title ? parsed.title.split(' ').slice(0, 4).join(' ') : 'fashion'
+        const response = await fetch(
+          `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(searchTerm)}&page=1&country=US`,
+          {
+            headers: {
+              'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
+              'x-rapidapi-key': '8b4defb9f1msh2f2a139618fa11ep1a3ca8jsn88f8d4935e04'
+            }
+          }
+        )
+        const data = await response.json()
+        const products = data?.data?.products || []
+        similarProducts.value = products
+          .filter(p => p.asin !== parsed.id)
+          .slice(0, 8)
+          .map((p, idx) => ({
+            id: p.asin || idx,
+            title: p.product_title,
+            price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
+            image_url: p.product_photo,
+            source: 'Amazon',
+            brand: 'Amazon',
+            url: p.product_url
+          }))
+      } catch (similarErr) {
+        console.error('Failed to fetch similar products:', similarErr)
+      }
+
+      loading.value = false
+      return
+    }
+
+    // Fallback: try backend API
     const response = await api.get(`/api/search/?q=jacket&limit=10`)
     const deals = response.data.deals || []
     

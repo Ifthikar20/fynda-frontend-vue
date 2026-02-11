@@ -939,11 +939,10 @@ const loadTrending = async () => {
 
 // Open deal - navigate to product detail page
 const openDeal = (deal) => {
-  if (deal.url) {
-    window.open(deal.url, '_blank')
-  } else {
-    router.push(`/product/${deal.id}`)
-  }
+  // Store product data for the detail page to pick up
+  localStorage.setItem('fyndaViewProduct', JSON.stringify(deal))
+  const productId = deal.id || encodeURIComponent((deal.title || '').substring(0, 30))
+  router.push(`/product/${productId}`)
 }
 
 // Animate search prompts

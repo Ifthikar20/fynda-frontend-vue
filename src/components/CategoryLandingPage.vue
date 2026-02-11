@@ -19,10 +19,10 @@
               type="text" 
               class="search-input"
               v-model="searchQuery"
-              :placeholder="searchPlaceholder"
+              :placeholder="typingPlaceholder"
               @keyup.enter="searchProducts"
-              @focus="searchFocused = true"
-              @blur="searchFocused = false"
+              @focus="onSearchFocus"
+              @blur="onSearchBlur"
             />
             <button v-if="searchQuery" class="clear-btn" @click="clearSearch">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -88,7 +88,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import NavBar from './NavBar.vue'
 import Footer from './Footer.vue'
@@ -102,6 +102,87 @@ const lastQuery = ref('')
 const deals = ref([])
 const loading = ref(true)
 const visibleCount = ref(12)
+
+// ── Typewriter animation ──
+const typingPlaceholder = ref('')
+let typingTimer = null
+let isTypingPaused = false
+
+const typingPhrases = {
+  'for-him': ['sneakers', 'winter jackets', 'slim fit jeans', 'watches', 'hoodies', 'blazers', 'leather boots'],
+  'for-her': ['summer dresses', 'handbags', 'heels', 'silk tops', 'gold jewelry', 'maxi skirts', 'cashmere sweaters'],
+  'both': ['sneakers', 'oversized hoodies', 'tote bags', 'sunglasses', 'joggers', 'denim jackets']
+}
+
+const startTypingAnimation = () => {
+  const slug = route.params.category || 'for-her'
+  const phrases = typingPhrases[slug] || typingPhrases['for-her']
+  let phraseIdx = 0
+  let charIdx = 0
+  let isDeleting = false
+  const typeSpeed = 80
+  const deleteSpeed = 40
+  const pauseAfterType = 1800
+  const pauseAfterDelete = 400
+
+  const tick = () => {
+    if (isTypingPaused) {
+      typingTimer = setTimeout(tick, 200)
+      return
+    }
+
+    const currentPhrase = phrases[phraseIdx]
+
+    if (!isDeleting) {
+      // Typing
+      charIdx++
+      typingPlaceholder.value = currentPhrase.substring(0, charIdx)
+
+      if (charIdx === currentPhrase.length) {
+        // Finished typing — pause then delete
+        isDeleting = true
+        typingTimer = setTimeout(tick, pauseAfterType)
+        return
+      }
+      typingTimer = setTimeout(tick, typeSpeed)
+    } else {
+      // Deleting
+      charIdx--
+      typingPlaceholder.value = currentPhrase.substring(0, charIdx)
+
+      if (charIdx === 0) {
+        // Finished deleting — move to next phrase
+        isDeleting = false
+        phraseIdx = (phraseIdx + 1) % phrases.length
+        typingTimer = setTimeout(tick, pauseAfterDelete)
+        return
+      }
+      typingTimer = setTimeout(tick, deleteSpeed)
+    }
+  }
+
+  tick()
+}
+
+const stopTypingAnimation = () => {
+  if (typingTimer) {
+    clearTimeout(typingTimer)
+    typingTimer = null
+  }
+}
+
+const onSearchFocus = () => {
+  searchFocused.value = true
+  isTypingPaused = true
+  typingPlaceholder.value = 'Search...'
+}
+
+const onSearchBlur = () => {
+  searchFocused.value = false
+  if (!searchQuery.value.trim()) {
+    isTypingPaused = false
+  }
+}
 
 const categoryConfig = {
   'for-her': {
@@ -163,13 +244,6 @@ const pageTitle = computed(() => currentConfig.value.title)
 const pageSubtitle = computed(() => currentConfig.value.subtitle)
 const editorsPicks = computed(() => currentConfig.value.editorsPicks)
 const featuredProducts = computed(() => currentConfig.value.featured)
-
-const searchPlaceholder = computed(() => {
-  const slug = route.params.category || 'for-her'
-  if (slug === 'for-him') return 'Search men\'s fashion...'
-  if (slug === 'for-her') return 'Search women\'s fashion...'
-  return 'Search all styles...'
-})
 
 // Category prefix for scoping searches
 const categoryPrefix = computed(() => {
@@ -258,18 +332,24 @@ const clearSearch = () => {
 }
 
 const openProduct = (deal) => {
-  if (deal.url) {
-    window.open(deal.url, '_blank')
-  } else if (deal.id && !String(deal.id).startsWith('f')) {
-    router.push(`/product/${deal.id}`)
-  }
+  // Store product data for the detail page to pick up
+  localStorage.setItem('fyndaViewProduct', JSON.stringify(deal))
+  const productId = deal.id || encodeURIComponent(deal.title.substring(0, 30))
+  router.push(`/product/${productId}`)
 }
 
 const goSearch = (query) => {
   router.push(`/?q=${encodeURIComponent(query)}`)
 }
 
-onMounted(fetchProducts)
+onMounted(() => {
+  fetchProducts()
+  startTypingAnimation()
+})
+
+onUnmounted(() => {
+  stopTypingAnimation()
+})
 
 watch(() => route.params.category, () => {
   visibleCount.value = 12
@@ -277,6 +357,10 @@ watch(() => route.params.category, () => {
   hasSearched.value = false
   deals.value = []
   fetchProducts()
+  // Restart typing animation for new category
+  stopTypingAnimation()
+  isTypingPaused = false
+  startTypingAnimation()
 })
 </script>
 
@@ -347,19 +431,27 @@ watch(() => route.params.category, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  padding: 0;
   border: none;
-  background: #f0f0f0;
+  background: #e8e8e8;
   border-radius: 50%;
   color: #666;
   cursor: pointer;
-  margin-right: 0.5rem;
+  margin-right: 0.35rem;
+  flex-shrink: 0;
   transition: background 0.2s ease;
 }
 
+.clear-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
 .clear-btn:hover {
-  background: #e0e0e0;
+  background: #d4d4d4;
 }
 
 .search-submit {
