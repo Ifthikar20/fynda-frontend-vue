@@ -109,8 +109,6 @@
             <button v-for="suggestion in quickSuggestions" :key="suggestion" @click="searchSuggestion(suggestion)">
               {{ suggestion }}
             </button>
-            <span class="suggestion-divider">|</span>
-            <span class="suggestion-hint">📋 Paste an image (Ctrl+V)</span>
           </div>
         </div>
       </section>
@@ -192,8 +190,8 @@
         </div>
         
         <!-- Filter Chips -->
-        <div v-if="!loading" class="filter-bar">
-          <div class="filter-group">
+        <div v-if="!loading && (showGenderFilter || showSizeFilter)" class="filter-bar">
+          <div v-if="showGenderFilter" class="filter-group">
             <span class="filter-label">Gender</span>
             <div class="filter-chips">
               <button
@@ -207,7 +205,7 @@
               </button>
             </div>
           </div>
-          <div class="filter-group">
+          <div v-if="showSizeFilter" class="filter-group">
             <span class="filter-label">Size</span>
             <div class="filter-chips">
               <button
@@ -430,8 +428,31 @@ const getCardSize = (index) => {
   return pattern[index % pattern.length]
 }
 
-// Client-side gender filter
-const WOMEN_WORDS = /\b(women|womens|women's|woman|ladies|lady|girls|girl|female|maternity)\b/i
+// Categories that DON'T need gender/size filters
+const NO_GENDER_CATEGORIES = /\b(bags?|handbags?|purse|wallet|backpack|tote|clutch|luggage|suitcase|jewelry|jewellery|necklace|bracelet|earrings?|ring|watch|watches|sunglasses|perfume|cologne|fragrance|skincare|makeup|cosmetics)\b/i
+
+// Gender keywords already in the query — if present, backend already handles filtering
+const QUERY_HAS_GENDER = /\b(men|mens|men's|women|womens|women's|ladies|boys?|girls?|kids?|unisex|male|female)\b/i
+
+// Show gender filter: only for clothing categories, only when gender isn't already in query
+const showGenderFilter = computed(() => {
+  const q = lastSearchQuery.value.toLowerCase()
+  if (!hasSearched.value || !deals.value.length) return false
+  if (QUERY_HAS_GENDER.test(q)) return false  // query already specifies gender
+  if (NO_GENDER_CATEGORIES.test(q)) return false  // bags, jewelry, etc.
+  return true
+})
+
+// Show size filter: only for clothing that typically has sizes
+const showSizeFilter = computed(() => {
+  const q = lastSearchQuery.value.toLowerCase()
+  if (!hasSearched.value || !deals.value.length) return false
+  if (NO_GENDER_CATEGORIES.test(q)) return false  // bags, jewelry, etc. don't have S/M/L
+  return true
+})
+
+// Gender word patterns for client-side filtering
+const WOMEN_WORDS = /\b(womens|women's|ladies|girls?|female)\b/i
 const MEN_WORDS = /\b(mens|men's|boys?|male|gentleman)\b/i
 // Special pattern for "men" that avoids matching inside "women"
 const MEN_STANDALONE = /(?<!wo)\bmen\b/i
