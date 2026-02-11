@@ -6,6 +6,7 @@ import ProductDetailPage from '../components/ProductDetailPage.vue'
 import StoryboardPage from '../components/StoryboardPage.vue'
 import ProfilePage from '../components/ProfilePage.vue'
 import BrandPage from '../components/BrandPage.vue'
+import ComparePage from '../components/ComparePage.vue'
 
 // Blog pages
 import BlogPage from '../components/BlogPage.vue'
@@ -93,6 +94,12 @@ const routes = [
         path: '/brand/:brand',
         name: 'Brand',
         component: BrandPage,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/compare',
+        name: 'Compare',
+        component: ComparePage,
         meta: { requiresAuth: true }
     },
     // Shop category pages - require auth

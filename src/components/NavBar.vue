@@ -14,6 +14,16 @@
       
       <div class="nav-actions">
         <template v-if="isAuthenticated">
+          <router-link to="/compare" class="nav-link-icon" title="Compare Products">
+            <div class="compare-icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+              <span v-if="compareCount > 0" class="compare-badge">{{ compareCount }}</span>
+            </div>
+          </router-link>
           <router-link to="/storyboard" class="nav-link-icon" title="Fashion Board">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="7" height="7" rx="1"/>
@@ -56,6 +66,7 @@
       <div class="mobile-divider"></div>
       <template v-if="isAuthenticated">
         <router-link to="/profile" class="mobile-link" @click="mobileMenuOpen = false">Profile</router-link>
+        <router-link to="/compare" class="mobile-link" @click="mobileMenuOpen = false">Compare</router-link>
         <router-link to="/storyboard" class="mobile-link" @click="mobileMenuOpen = false">Fashion Board</router-link>
         <button class="mobile-link logout" @click="handleLogout">Sign Out</button>
       </template>
@@ -67,7 +78,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../stores/authStore'
 
@@ -75,6 +86,12 @@ const router = useRouter()
 const { isAuthenticated, currentUser, logout } = useAuth()
 
 const mobileMenuOpen = ref(false)
+const compareCount = ref(0)
+
+const loadCompareCount = () => {
+  const items = JSON.parse(localStorage.getItem('fyndaCompare') || '[]')
+  compareCount.value = items.length
+}
 
 const userInitial = computed(() => {
   const user = currentUser.value
@@ -88,6 +105,10 @@ const handleLogout = async () => {
   await logout()
   router.push('/')
 }
+
+onMounted(() => {
+  loadCompareCount()
+})
 </script>
 
 <style scoped>
@@ -173,6 +194,30 @@ const handleLogout = async () => {
   color: #fff;
   font-size: 14px;
   font-weight: 600;
+}
+
+.compare-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compare-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
 }
 
 .nav-btn-outline {
