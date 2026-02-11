@@ -54,7 +54,7 @@
               Shop item
             </a>
             
-            <!-- Add to Fashion Board + Library Row -->
+            <!-- Add to Fashion Board + Compare + Library Row -->
             <div class="action-row">
               <button class="outfit-btn" @click="goToFashionBoard">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -64,6 +64,14 @@
                   <rect x="14" y="14" width="7" height="7" rx="1"/>
                 </svg>
                 Add to Fashion Board
+              </button>
+
+              <button class="compare-btn" :class="{ added: isInCompare }" @click="toggleCompare" :title="isInCompare ? 'Remove from Compare' : 'Add to Compare'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="20" x2="18" y2="10"/>
+                  <line x1="12" y1="20" x2="12" y2="4"/>
+                  <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
               </button>
               
               <!-- Library Button - Small -->
@@ -181,6 +189,7 @@ const activeFilter = ref('all')
 const sortBy = ref('featured')
 const upvotedProducts = ref({})
 const isInLibrary = ref(false)
+const isInCompare = ref(false)
 
 // Computed
 const priceRange = computed(() => {
@@ -359,6 +368,40 @@ const checkLibraryStatus = () => {
   isInLibrary.value = library.some(item => item.id === product.value.id)
 }
 
+// Compare functions
+const toggleCompare = () => {
+  const compareList = JSON.parse(localStorage.getItem('fyndaCompare') || '[]')
+  const productId = product.value.id
+  const index = compareList.findIndex(item => item.id === productId)
+
+  if (index > -1) {
+    // Remove from compare
+    compareList.splice(index, 1)
+    isInCompare.value = false
+  } else {
+    // Add to compare (max 4)
+    if (compareList.length >= 4) {
+      compareList.shift() // Remove oldest
+    }
+    compareList.push({
+      id: product.value.id,
+      title: product.value.title,
+      price: product.value.price,
+      image_url: product.value.image_url,
+      brand: product.value.brand || product.value.merchant_name,
+      url: product.value.url
+    })
+    isInCompare.value = true
+  }
+
+  localStorage.setItem('fyndaCompare', JSON.stringify(compareList))
+}
+
+const checkCompareStatus = () => {
+  const compareList = JSON.parse(localStorage.getItem('fyndaCompare') || '[]')
+  isInCompare.value = compareList.some(item => item.id === product.value.id)
+}
+
 const fetchProduct = async (id) => {
   loading.value = true
   try {
@@ -406,6 +449,7 @@ onMounted(() => {
     fetchProduct(route.params.id)
   }
   checkLibraryStatus()
+  checkCompareStatus()
 })
 </script>
 
@@ -856,6 +900,38 @@ onMounted(() => {
 
 .library-btn.saved:hover {
   background: #059669;
+}
+
+/* Compare Button */
+.compare-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  padding: 0;
+  background: #fff;
+  color: #1a1a1a;
+  border: 1px solid #1a1a1a;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.compare-btn:hover {
+  background: #f5f5f5;
+  transform: scale(1.05);
+}
+
+.compare-btn.added {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.compare-btn.added:hover {
+  background: #2563eb;
 }
 
 /* Similar Section */
