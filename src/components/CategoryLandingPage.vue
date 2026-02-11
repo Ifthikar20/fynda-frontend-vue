@@ -161,10 +161,33 @@ const getCardHeight = (idx) => {
 const fetchProducts = async () => {
   loading.value = true
   try {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
-    const response = await fetch(`${apiUrl}/api/search/?q=${encodeURIComponent(currentConfig.value.query)}`)
+    const response = await fetch(
+      `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(currentConfig.value.query)}&page=1&country=US`,
+      {
+        headers: {
+          'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
+          'x-rapidapi-key': '8b4defb9f1msh2f2a139618fa11ep1a3ca8jsn88f8d4935e04'
+        }
+      }
+    )
     const data = await response.json()
-    deals.value = data.deals || []
+    const products = data?.data?.products || []
+    
+    // Map Amazon fields to our format
+    deals.value = products.map((p, idx) => ({
+      id: p.asin || idx,
+      title: p.product_title,
+      price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
+      original_price: p.product_original_price ? p.product_original_price.replace(/[^0-9.]/g, '') : null,
+      image_url: p.product_photo,
+      source: 'Amazon',
+      merchant_name: 'Amazon',
+      url: p.product_url,
+      rating: p.product_star_rating,
+      reviews: p.product_num_ratings,
+      is_prime: p.is_prime,
+      badge: p.product_badge || (p.is_best_seller ? 'Best Seller' : (p.is_amazon_choice ? 'Amazon Choice' : null))
+    }))
   } catch (err) {
     console.error('Failed to fetch products:', err)
   } finally {
@@ -173,7 +196,9 @@ const fetchProducts = async () => {
 }
 
 const openProduct = (deal) => {
-  if (deal.id && !String(deal.id).startsWith('f')) {
+  if (deal.url) {
+    window.open(deal.url, '_blank')
+  } else if (deal.id && !String(deal.id).startsWith('f')) {
     router.push(`/product/${deal.id}`)
   }
 }
