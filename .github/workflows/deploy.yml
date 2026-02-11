@@ -49,11 +49,20 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          # Copy built files to EC2
-          scp -i ~/.ssh/deploy_key -r dist/* $EC2_USER@$EC2_HOST:/var/www/frontend/
+          # Upload to temp directory (ubuntu user has write access here)
+          ssh -i ~/.ssh/deploy_key $EC2_USER@$EC2_HOST "rm -rf /tmp/frontend-deploy && mkdir -p /tmp/frontend-deploy"
+          scp -i ~/.ssh/deploy_key -r dist/* $EC2_USER@$EC2_HOST:/tmp/frontend-deploy/
 
-          # Reload nginx
-          ssh -i ~/.ssh/deploy_key $EC2_USER@$EC2_HOST "sudo nginx -t && sudo systemctl reload nginx"
+          # Move to web root with sudo, then reload nginx
+          ssh -i ~/.ssh/deploy_key $EC2_USER@$EC2_HOST << 'ENDSSH'
+            sudo mkdir -p /var/www/frontend
+            sudo rm -rf /var/www/frontend/*
+            sudo cp -r /tmp/frontend-deploy/* /var/www/frontend/
+            sudo chown -R www-data:www-data /var/www/frontend/
+            rm -rf /tmp/frontend-deploy
+            sudo nginx -t && sudo systemctl reload nginx
+            echo "Frontend deployed!"
+          ENDSSH
 
       - name: Verify Deployment
         run: |
