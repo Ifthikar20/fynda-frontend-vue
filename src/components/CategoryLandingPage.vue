@@ -7,6 +7,31 @@
       <section class="landing-hero">
         <h1 class="landing-title">{{ pageTitle }}</h1>
         <p class="landing-subtitle">{{ pageSubtitle }}</p>
+
+        <!-- Search Bar -->
+        <div class="category-search">
+          <div class="search-box" :class="{ focused: searchFocused }">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input 
+              type="text" 
+              class="search-input"
+              v-model="searchQuery"
+              :placeholder="searchPlaceholder"
+              @keyup.enter="searchProducts"
+              @focus="searchFocused = true"
+              @blur="searchFocused = false"
+            />
+            <button v-if="searchQuery" class="clear-btn" @click="clearSearch">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+            <button class="search-submit" @click="searchProducts">Search</button>
+          </div>
+        </div>
       </section>
 
       <!-- Editor's Picks -->
@@ -28,9 +53,9 @@
         </div>
       </section>
 
-      <!-- For You — shows featured (dummy) instantly, then real products -->
+      <!-- Results or For You -->
       <section class="for-you-section">
-        <h2 class="section-heading">For you</h2>
+        <h2 class="section-heading">{{ hasSearched ? `Results for "${lastQuery}"` : 'For you' }}</h2>
 
         <div class="product-grid">
           <div 
@@ -70,7 +95,10 @@ import Footer from './Footer.vue'
 
 const route = useRoute()
 const router = useRouter()
-
+const searchQuery = ref('')
+const searchFocused = ref(false)
+const hasSearched = ref(false)
+const lastQuery = ref('')
 const deals = ref([])
 const loading = ref(true)
 const visibleCount = ref(12)
@@ -136,6 +164,21 @@ const pageSubtitle = computed(() => currentConfig.value.subtitle)
 const editorsPicks = computed(() => currentConfig.value.editorsPicks)
 const featuredProducts = computed(() => currentConfig.value.featured)
 
+const searchPlaceholder = computed(() => {
+  const slug = route.params.category || 'for-her'
+  if (slug === 'for-him') return 'Search men\'s fashion...'
+  if (slug === 'for-her') return 'Search women\'s fashion...'
+  return 'Search all styles...'
+})
+
+// Category prefix for scoping searches
+const categoryPrefix = computed(() => {
+  const slug = route.params.category || 'for-her'
+  if (slug === 'for-him') return 'men'
+  if (slug === 'for-her') return 'women'
+  return ''
+})
+
 // Combine: featured first, then API products (deduped)
 const allProducts = computed(() => {
   if (deals.value.length === 0) return featuredProducts.value
@@ -158,11 +201,12 @@ const getCardHeight = (idx) => {
   return 'height-short'
 }
 
-const fetchProducts = async () => {
+const fetchProducts = async (query) => {
   loading.value = true
   try {
+    const searchTerm = query || currentConfig.value.query
     const response = await fetch(
-      `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(currentConfig.value.query)}&page=1&country=US`,
+      `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(searchTerm)}&page=1&country=US`,
       {
         headers: {
           'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
@@ -173,7 +217,6 @@ const fetchProducts = async () => {
     const data = await response.json()
     const products = data?.data?.products || []
     
-    // Map Amazon fields to our format
     deals.value = products.map((p, idx) => ({
       id: p.asin || idx,
       title: p.product_title,
@@ -195,6 +238,25 @@ const fetchProducts = async () => {
   }
 }
 
+const searchProducts = () => {
+  if (!searchQuery.value.trim()) return
+  const scopedQuery = categoryPrefix.value
+    ? `${categoryPrefix.value} ${searchQuery.value}`
+    : searchQuery.value
+  hasSearched.value = true
+  lastQuery.value = searchQuery.value
+  visibleCount.value = 12
+  fetchProducts(scopedQuery)
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  hasSearched.value = false
+  lastQuery.value = ''
+  visibleCount.value = 12
+  fetchProducts()
+}
+
 const openProduct = (deal) => {
   if (deal.url) {
     window.open(deal.url, '_blank')
@@ -211,6 +273,8 @@ onMounted(fetchProducts)
 
 watch(() => route.params.category, () => {
   visibleCount.value = 12
+  searchQuery.value = ''
+  hasSearched.value = false
   deals.value = []
   fetchProducts()
 })
@@ -234,6 +298,85 @@ watch(() => route.params.category, () => {
 /* ── Hero ── */
 .landing-hero {
   padding: 3.5rem 0 2rem;
+}
+
+/* ── Search Bar ── */
+.category-search {
+  margin-top: 1.5rem;
+  max-width: 580px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 32px;
+  padding: 0.4rem 0.5rem 0.4rem 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.search-box.focused {
+  border-color: #1a1a1a;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+
+.search-icon {
+  color: #999;
+  flex-shrink: 0;
+  margin-right: 0.75rem;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  outline: none;
+  min-width: 0;
+  height: 38px;
+}
+
+.search-input::placeholder {
+  color: #bbb;
+}
+
+.clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #f0f0f0;
+  border-radius: 50%;
+  color: #666;
+  cursor: pointer;
+  margin-right: 0.5rem;
+  transition: background 0.2s ease;
+}
+
+.clear-btn:hover {
+  background: #e0e0e0;
+}
+
+.search-submit {
+  padding: 0.5rem 1.25rem;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+}
+
+.search-submit:hover {
+  background: #333;
 }
 
 .landing-title {
