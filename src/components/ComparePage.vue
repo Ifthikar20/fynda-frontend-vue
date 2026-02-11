@@ -442,8 +442,8 @@ onMounted(() => {
 }
 
 .compare-image {
-  width: 140px;
-  height: 180px;
+  width: 200px;
+  height: 260px;
   object-fit: cover;
   border-radius: 10px;
   border: 1px solid #eee;
