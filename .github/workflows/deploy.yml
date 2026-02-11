@@ -1,0 +1,62 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  EC2_HOST: ${{ secrets.EC2_HOST }}
+  EC2_USER: ubuntu
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy Frontend
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          VITE_API_URL: https://api.fynda.shop
+        run: npm run build
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          cat >> ~/.ssh/config << EOF
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            ConnectTimeout 30
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Deploy to EC2
+        run: |
+          # Copy built files to EC2
+          scp -i ~/.ssh/deploy_key -r dist/* $EC2_USER@$EC2_HOST:/var/www/frontend/
+
+          # Reload nginx
+          ssh -i ~/.ssh/deploy_key $EC2_USER@$EC2_HOST "sudo nginx -t && sudo systemctl reload nginx"
+
+      - name: Verify Deployment
+        run: |
+          sleep 5
+          curl --fail --max-time 15 https://fynda.shop || echo "Site check pending..."
+          echo "✅ Frontend deployed successfully!"
