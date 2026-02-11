@@ -91,7 +91,7 @@
 
       <!-- CTA Section -->
       <div class="cta-section">
-        <h2>Create Your Own Fashion Storyboard</h2>
+        <h2>Create Your Own Fashion Board</h2>
         <p>Design stunning mood boards with our easy-to-use Fashion Board tool.</p>
         <router-link to="/register" class="create-btn">Get Started Free</router-link>
       </div>

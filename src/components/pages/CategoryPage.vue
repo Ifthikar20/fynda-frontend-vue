@@ -26,13 +26,17 @@
         </div>
         
         <!-- Trending Section -->
-        <section class="trending-section">
+        <section v-if="categoryData.trending && categoryData.trending.length > 0" class="trending-section">
           <h2>Trending in {{ categoryData.title }}</h2>
           <div class="trending-grid">
-            <div v-for="trend in categoryData.trending" :key="trend.name" class="trending-card">
-              <div class="trending-image" :style="{ backgroundImage: `url(${trend.image})` }"></div>
+            <div v-for="trend in categoryData.trending" :key="trend.name" class="trending-card" @click="searchTrending(trend.query)">
+              <div class="trending-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                  <polyline points="17 6 23 6 23 12"/>
+                </svg>
+              </div>
               <h3>{{ trend.name }}</h3>
-              <span class="trending-deals">{{ trend.deals }} deals</span>
             </div>
           </div>
         </section>
@@ -165,13 +169,12 @@
         </section>
         
         <!-- Best Brands Section (moved to bottom) -->
-        <section class="brands-section">
+        <section v-if="categoryData.brands && categoryData.brands.length > 0" class="brands-section">
           <h2>Best Brands</h2>
           <div class="brands-grid">
             <div v-for="brand in categoryData.brands" :key="brand.name" class="brand-card" @click="searchBrand(brand.name)">
               <div class="brand-logo">{{ brand.logo }}</div>
               <span class="brand-name">{{ brand.name }}</span>
-              <span class="brand-deals">{{ brand.deals }} deals</span>
             </div>
           </div>
         </section>
@@ -213,6 +216,16 @@ const upvotedImages = [
   'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=200',
 ]
 
+// Default fallback category data
+const defaultCategoryData = {
+  title: 'Fashion',
+  description: 'Discover the best deals.',
+  subcategories: ['All'],
+  brands: [],
+  trending: [],
+  search_query: 'fashion',
+}
+
 const sortOptions = [
   { value: 'popular', label: 'Most Popular' },
   { value: 'newest', label: 'Newest First' },
@@ -229,108 +242,37 @@ const timePeriods = [
   { value: 'all', label: 'All Time' },
 ]
 
-// Category configurations (no emojis)
-const categories = {
-  women: {
-    title: "Women's Fashion",
-    description: "Discover the latest trends in women's clothing, shoes, and accessories at the best prices.",
-    subcategories: ['All', 'Dresses', 'Tops', 'Pants', 'Shoes', 'Bags', 'Jewelry', 'Activewear'],
-    brands: [
-      { name: 'Nike', logo: 'N', deals: 156 },
-      { name: 'Zara', logo: 'Z', deals: 234 },
-      { name: 'H&M', logo: 'H', deals: 189 },
-      { name: 'Lululemon', logo: 'L', deals: 87 },
-      { name: 'Adidas', logo: 'A', deals: 143 },
-      { name: 'Nordstrom', logo: 'N', deals: 312 },
-    ],
-    trending: [
-      { name: 'Summer Dresses', deals: 234, image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=300' },
-      { name: 'Designer Bags', deals: 156, image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=300' },
-      { name: 'Sneakers', deals: 189, image: 'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=300' },
-      { name: 'Sunglasses', deals: 98, image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=300' },
-    ],
-    searchQuery: 'women fashion clothing'
-  },
-  men: {
-    title: "Men's Fashion",
-    description: "Shop men's clothing, shoes, and accessories from top brands at unbeatable prices.",
-    subcategories: ['All', 'Shirts', 'Pants', 'Suits', 'Shoes', 'Watches', 'Accessories', 'Athleisure'],
-    brands: [
-      { name: 'Nike', logo: 'N', deals: 312 },
-      { name: 'Ralph Lauren', logo: 'RL', deals: 143 },
-      { name: 'Uniqlo', logo: 'U', deals: 178 },
-      { name: 'Adidas', logo: 'A', deals: 256 },
-      { name: 'Levi\'s', logo: 'L', deals: 134 },
-      { name: 'Rolex', logo: 'R', deals: 45 },
-    ],
-    trending: [
-      { name: 'Sneakers', deals: 312, image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300' },
-      { name: 'Watches', deals: 143, image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300' },
-      { name: 'Jackets', deals: 178, image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=300' },
-      { name: 'Sunglasses', deals: 87, image: 'https://images.unsplash.com/photo-1577803645773-f96470509666?w=300' },
-    ],
-    searchQuery: 'men fashion clothing'
-  },
-  home: {
-    title: 'Home & Living',
-    description: 'Find amazing deals on furniture, decor, kitchen essentials, and everything for your home.',
-    subcategories: ['All', 'Furniture', 'Decor', 'Kitchen', 'Bedding', 'Lighting', 'Storage', 'Outdoor'],
-    brands: [
-      { name: 'IKEA', logo: 'IK', deals: 456 },
-      { name: 'West Elm', logo: 'WE', deals: 234 },
-      { name: 'Crate & Barrel', logo: 'CB', deals: 178 },
-      { name: 'Pottery Barn', logo: 'PB', deals: 156 },
-      { name: 'Wayfair', logo: 'W', deals: 389 },
-      { name: 'Target', logo: 'T', deals: 267 },
-    ],
-    trending: [
-      { name: 'Bedding Sets', deals: 245, image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=300' },
-      { name: 'Coffee Makers', deals: 167, image: 'https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?w=300' },
-      { name: 'Rugs', deals: 134, image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300' },
-      { name: 'Lamps', deals: 98, image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=300' },
-    ],
-    searchQuery: 'home decor furniture'
-  },
-  beauty: {
-    title: 'Beauty & Personal Care',
-    description: 'Skincare, makeup, haircare, and wellness products from top beauty brands.',
-    subcategories: ['All', 'Skincare', 'Makeup', 'Haircare', 'Fragrance', 'Wellness', 'Tools', 'Sets'],
-    brands: [
-      { name: 'Sephora', logo: 'S', deals: 345 },
-      { name: 'Ulta', logo: 'U', deals: 289 },
-      { name: 'Glossier', logo: 'G', deals: 156 },
-      { name: 'Fenty', logo: 'F', deals: 123 },
-      { name: 'Drunk Elephant', logo: 'DE', deals: 87 },
-      { name: 'The Ordinary', logo: 'TO', deals: 234 },
-    ],
-    trending: [
-      { name: 'Serums', deals: 189, image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=300' },
-      { name: 'Perfumes', deals: 234, image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=300' },
-      { name: 'Lip Products', deals: 156, image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=300' },
-      { name: 'Hair Tools', deals: 112, image: 'https://images.unsplash.com/photo-1522338242042-2d1c2124c6d6?w=300' },
-    ],
-    searchQuery: 'beauty skincare makeup'
+const categoryData = ref({...defaultCategoryData})
+
+// Load featured content from backend
+const loadFeaturedContent = async () => {
+  try {
+    const category = route.params.category || 'women'
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+    const response = await fetch(`${apiUrl}/api/featured/?category=${category}`)
+    const data = await response.json()
+    
+    if (data.category) {
+      categoryData.value = {
+        ...defaultCategoryData,
+        ...data.category,
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load featured content:', error)
   }
 }
 
-const categoryData = computed(() => {
-  const category = route.params.category || 'women'
-  return categories[category] || categories.women
-})
-
-// Top upvoted with random images
+// Top upvoted — built from actual deal results
 const topUpvoted = computed(() => {
-  const items = [
-    { title: 'Nike Air Max 270', source: 'Nike', price: 89, upvotes: 1247 },
-    { title: 'Levi\'s 501 Original Jeans', source: 'Amazon', price: 49, upvotes: 892 },
-    { title: 'Apple AirPods Pro', source: 'Best Buy', price: 189, upvotes: 756 },
-    { title: 'Adidas Ultraboost 22', source: 'Adidas', price: 112, upvotes: 623 },
-    { title: 'Ray-Ban Classic Aviator', source: 'Nordstrom', price: 129, upvotes: 534 },
-  ]
-  return items.map((item, idx) => ({
-    ...item,
-    id: idx,
-    image: upvotedImages[idx % upvotedImages.length]
+  // Use the first 5 deals from search results as "top" items
+  return deals.value.slice(0, 5).map((deal, idx) => ({
+    id: deal.id || idx,
+    title: deal.title,
+    source: deal.source || deal.merchant_name || 'Store',
+    price: deal.price || 0,
+    upvotes: dealUpvoteCounts.value[deal.id] || 0,
+    image: deal.image_url || upvotedImages[idx % upvotedImages.length],
   }))
 })
 
@@ -369,8 +311,8 @@ const fetchDeals = async () => {
   
   try {
     const searchQuery = activeSubcategory.value === 'All' 
-      ? categoryData.value.searchQuery 
-      : `${categoryData.value.searchQuery} ${activeSubcategory.value}`
+      ? categoryData.value.search_query 
+      : `${categoryData.value.search_query} ${activeSubcategory.value}`
     
     const response = await api.get('/api/deals/search/', {
       params: { q: searchQuery, limit: 12 }
@@ -392,6 +334,12 @@ const selectSubcategory = (sub) => {
 
 const searchBrand = (brand) => {
   router.push(`/?q=${encodeURIComponent(brand)}`)
+}
+
+const searchTrending = (query) => {
+  if (query) {
+    router.push(`/?q=${encodeURIComponent(query)}`)
+  }
 }
 
 const goToDeal = (deal) => {
@@ -435,7 +383,19 @@ const loadMore = () => {
 
 watch(() => route.params.category, () => {
   activeSubcategory.value = 'All'
+  loadFeaturedContent()
   fetchDeals()
+})
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+  loadUpvoteState()
+  loadFeaturedContent()
+  fetchDeals()
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -534,38 +494,35 @@ watch(() => route.params.category, () => {
 .trending-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 16px;
 }
 
 .trending-card {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #f8f8f8;
+  border-radius: 12px;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .trending-card:hover {
-  transform: translateY(-4px);
+  background: #f0f0f0;
+  transform: translateY(-2px);
 }
 
-.trending-image {
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 16px;
-  background-size: cover;
-  background-position: center;
-  margin-bottom: 12px;
+.trending-icon {
+  color: #22c55e;
+  flex-shrink: 0;
 }
 
 .trending-card h3 {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 500;
   color: #111;
-  margin-bottom: 4px;
-}
-
-.trending-deals {
-  font-size: 13px;
-  color: #888;
+  margin: 0;
 }
 
 /* Upvoted Section - No gray background */

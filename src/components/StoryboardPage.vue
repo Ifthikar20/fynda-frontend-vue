@@ -11,7 +11,7 @@
         </svg>
         Back
       </button>
-      <h1 class="page-title">Fashion Storyboard</h1>
+      <h1 class="page-title">Fashion Board</h1>
       <div class="toolbar-actions">
         <button class="save-btn" @click="saveStoryboard">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -69,7 +69,7 @@
                   {{ linkCopied ? 'Copied!' : 'Copy Link' }}
                 </button>
               </div>
-              <p class="share-info">Anyone with this link can view your storyboard. Link expires in 30 days.</p>
+              <p class="share-info">Anyone with this link can view your fashion board. Link expires in 30 days.</p>
             </div>
           </div>
         </div>
