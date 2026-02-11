@@ -805,35 +805,45 @@ const handleSearch = async () => {
   hasSearched.value = true
   lastSearchQuery.value = searchQuery.value
   sortBy.value = 'relevance'
-  visibleCount.value = 12  // Reset lazy load on new search
-  quotaWarning.value = ''  // Clear previous warning
-  suggestedQuery.value = null  // Clear previous suggestion
-  activeSize.value = 'All'  // Reset size filter
+  visibleCount.value = 12
+  quotaWarning.value = ''
+  suggestedQuery.value = null
+  activeSize.value = 'All'
   
   try {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
-    const response = await fetch(`${apiUrl}/api/search/?q=${encodeURIComponent(searchQuery.value)}`)
+    const response = await fetch(
+      `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(searchQuery.value)}&page=1&country=US`,
+      {
+        headers: {
+          'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
+          'x-rapidapi-key': '8b4defb9f1msh2f2a139618fa11ep1a3ca8jsn88f8d4935e04'
+        }
+      }
+    )
     const data = await response.json()
+    const products = data?.data?.products || []
     
-    deals.value = data.deals || []
+    deals.value = products.map((p, idx) => ({
+      id: p.asin || idx,
+      title: p.product_title,
+      price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
+      original_price: p.product_original_price ? p.product_original_price.replace(/[^0-9.]/g, '') : null,
+      image_url: p.product_photo,
+      source: 'Amazon',
+      merchant_name: 'Amazon',
+      url: p.product_url,
+      rating: p.product_star_rating,
+      reviews: p.product_num_ratings,
+      is_prime: p.is_prime,
+      badge: p.product_badge || (p.is_best_seller ? 'Best Seller' : (p.is_amazon_choice ? 'Amazon Choice' : null)),
+      discount_percent: p.product_original_price && p.product_price
+        ? Math.round(((parseFloat(p.product_original_price.replace(/[^0-9.]/g, '')) - parseFloat(p.product_price.replace(/[^0-9.]/g, ''))) / parseFloat(p.product_original_price.replace(/[^0-9.]/g, ''))) * 100)
+        : null
+    }))
     
-    // Auto-select gender chip from backend detection
-    detectedGender.value = data.detected_gender || null
-    if (data.detected_gender && ['men', 'women', 'kids'].includes(data.detected_gender)) {
-      activeGender.value = data.detected_gender
-    } else {
-      activeGender.value = 'all'
-    }
-    
-    // Check for quota warning from backend
-    if (data.quota_warning) {
-      quotaWarning.value = data.quota_warning
-    }
-    
-    // Check for spell correction suggestion
-    if (data.suggested_query) {
-      suggestedQuery.value = data.suggested_query
-    }
+    // Reset gender filter since Amazon doesn't return this
+    activeGender.value = 'all'
+    detectedGender.value = null
   } catch (error) {
     console.error('Search failed:', error)
     deals.value = []
@@ -929,7 +939,11 @@ const loadTrending = async () => {
 
 // Open deal - navigate to product detail page
 const openDeal = (deal) => {
-  router.push(`/product/${deal.id}`)
+  if (deal.url) {
+    window.open(deal.url, '_blank')
+  } else {
+    router.push(`/product/${deal.id}`)
+  }
 }
 
 // Animate search prompts
