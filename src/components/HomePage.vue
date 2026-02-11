@@ -1,41 +1,6 @@
 <template>
   <div id="app">
-    <!-- Header -->
-    <header class="header">
-      <a href="/" class="logo-link" @click.prevent="goHome">
-        <img src="../assets/fynda-png-1.png" alt="Fynda" class="logo" />
-      </a>
-      <nav class="nav-links">
-        <router-link to="/explore" class="nav-link">Explore</router-link>
-      </nav>
-      <!-- Auth Section -->
-      <div class="auth-section">
-        <template v-if="isAuthenticated">
-          <router-link to="/storyboard" class="storyboard-link">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="7" height="7" rx="1"/>
-            </svg>
-            Fashion Board
-          </router-link>
-          <div class="user-dropdown">
-            <button class="user-btn" @click="showUserMenu = !showUserMenu">
-              <span class="user-avatar">{{ userInitials }}</span>
-              <span class="user-name">{{ currentUser?.first_name || 'Account' }}</span>
-            </button>
-            <div v-if="showUserMenu" class="dropdown-menu">
-              <a href="#" @click.prevent="goToProfile">Profile</a>
-              <a href="#" @click.prevent="handleLogout">Logout</a>
-            </div>
-          </div>
-        </template>
-        <template v-else>
-          <router-link to="/login" class="login-link">Sign In</router-link>
-        </template>
-      </div>
-    </header>
+    <NavBar />
     
     <main class="main-content">
       <!-- Hero Section -->
@@ -400,6 +365,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../stores/authStore'
+import NavBar from './NavBar.vue'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 
@@ -1104,160 +1070,6 @@ a {
   flex: 1;
   width: 100%;
   padding: 0 6px;
-}
-
-/* Header */
-.header {
-  width: 100%;
-  padding: 0.75rem 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.logo {
-  height: 60px;
-  width: auto;
-}
-
-.nav-links {
-  display: flex;
-  gap: 1.75rem;
-}
-
-.nav-links a {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #666;
-  padding: 0.4rem 0;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.nav-links a:hover,
-.nav-links a.active {
-  color: #000;
-  border-color: #000;
-}
-
-/* Auth Section */
-.auth-section {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.storyboard-link {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #666;
-  text-decoration: none;
-  padding: 0.4rem 0.75rem;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.storyboard-link:hover {
-  color: #000;
-  background: #f5f5f5;
-}
-
-.login-link {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #1a1a1a;
-  padding: 0.5rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  text-decoration: none;
-}
-
-.login-link:hover {
-  background: #000;
-  color: #fff;
-  border-color: #000;
-}
-
-.user-dropdown {
-  position: relative;
-}
-
-.user-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
-  background: #f5f5f5;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.user-btn:hover {
-  background: #eee;
-}
-
-.user-avatar {
-  width: 28px;
-  height: 28px;
-  background: #000;
-  color: #fff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.user-name {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #1a1a1a;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 0.5rem;
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  min-width: 150px;
-  z-index: 200;
-}
-
-.dropdown-menu a {
-  display: block;
-  padding: 0.75rem 1rem;
-  color: #1a1a1a;
-  font-size: 0.9rem;
-  text-decoration: none;
-  transition: background 0.2s ease;
-}
-
-.dropdown-menu a:hover {
-  background: #f5f5f5;
-}
-
-.dropdown-menu a:first-child {
-  border-radius: 8px 8px 0 0;
-}
-
-.dropdown-menu a:last-child {
-  border-radius: 0 0 8px 8px;
 }
 
 /* Hero Section */
