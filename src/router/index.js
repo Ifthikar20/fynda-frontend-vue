@@ -7,6 +7,7 @@ import StoryboardPage from '../components/StoryboardPage.vue'
 import ProfilePage from '../components/ProfilePage.vue'
 import BrandPage from '../components/BrandPage.vue'
 import ComparePage from '../components/ComparePage.vue'
+import ExplorePage from '../components/ExplorePage.vue'
 
 // Blog pages
 import BlogPage from '../components/BlogPage.vue'
@@ -40,6 +41,11 @@ const routes = [
         name: 'Login',
         component: LoginPage,
         meta: { guest: true }
+    },
+    {
+        path: '/explore',
+        name: 'Explore',
+        component: ExplorePage,
     },
     {
         path: '/register',
