@@ -103,12 +103,18 @@
             </button>
           </div>
           
-          <!-- Quick Suggestions -->
+          <!-- Quick Suggestions (rotating) -->
           <div class="quick-suggestions">
             <span class="suggestion-label">Try:</span>
-            <button v-for="suggestion in quickSuggestions" :key="suggestion" @click="searchSuggestion(suggestion)">
-              {{ suggestion }}
-            </button>
+            <transition-group name="suggestion-fade" tag="div" class="suggestion-pills">
+              <button
+                v-for="suggestion in visibleSuggestions"
+                :key="suggestion"
+                @click="searchSuggestion(suggestion)"
+              >
+                {{ suggestion }}
+              </button>
+            </transition-group>
           </div>
         </div>
       </section>
@@ -396,8 +402,16 @@ const genderOptions = [
 ]
 const sizeOptions = ['All', 'XS', 'S', 'M', 'L', 'XL', 'XXL']
 
-// Quick suggestions (loaded from API)
-const quickSuggestions = ref(['Summer dresses', 'White sneakers', 'Designer bag', 'Skincare routine'])
+// Quick suggestions — multiple sets that rotate
+const suggestionSets = [
+  ['Pineapple design dress', 'White sneakers with golden stripes under $100', 'Designer bag in Maroon', "Men's winter jacket with hood"],
+  ['Y2K aesthetic outfit', 'Floral maxi dress for beach wedding', 'Vintage leather crossbody bag', 'Running shoes with arch support'],
+  ['Silk blouse under $50', 'Black boots that go with everything', 'Statement earrings gold', 'Cozy oversized sweater for fall'],
+  ['Date night outfit elegant', 'Minimalist watch rose gold', 'High waisted jeans petite', 'Summer sandals comfortable walking'],
+]
+const currentSuggestionSet = ref(0)
+const visibleSuggestions = computed(() => suggestionSets[currentSuggestionSet.value])
+let suggestionRotateInterval = null
 
 // Featured Brands (loaded from API)
 const featuredBrands = ref([])
@@ -923,11 +937,19 @@ const loadFeaturedContent = async () => {
 onMounted(() => {
   loadFeaturedContent()
   loadTrending()
+  
+  // Rotate quick suggestions every 5 seconds
+  suggestionRotateInterval = setInterval(() => {
+    currentSuggestionSet.value = (currentSuggestionSet.value + 1) % suggestionSets.length
+  }, 5000)
 })
 
 onUnmounted(() => {
   if (promptInterval) {
     clearInterval(promptInterval)
+  }
+  if (suggestionRotateInterval) {
+    clearInterval(suggestionRotateInterval)
   }
 })
 </script>
@@ -1345,20 +1367,34 @@ a {
   flex-wrap: wrap;
 }
 
+.suggestion-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .suggestion-label {
   font-size: 0.75rem;
   color: #888;
 }
 
-.suggestion-divider {
-  font-size: 0.7rem;
-  color: #ddd;
-  margin: 0 2px;
+/* Fade animation for rotating suggestions */
+.suggestion-fade-enter-active {
+  transition: all 0.4s ease;
 }
-
-.suggestion-hint {
-  font-size: 0.72rem;
-  color: #aaa;
+.suggestion-fade-leave-active {
+  transition: all 0.3s ease;
+  position: absolute;
+}
+.suggestion-fade-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.suggestion-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 .quick-suggestions button {
