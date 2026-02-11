@@ -13,32 +13,7 @@
     <main v-else class="main-content">
       <!-- Top Section: Product Image + Info -->
       <section class="product-hero">
-        <!-- Left: Product Image -->
-        <div class="product-image-section">
-          <div class="image-container">
-            <img :src="product.image_url" :alt="product.title" class="product-image" />
-            
-            <!-- Upvote Button with Count - Smaller -->
-            <div class="upvote-container">
-              <button 
-                class="upvote-btn" 
-                :class="{ active: isUpvoted }" 
-                @click="handleUpvote" 
-                title="Upvote this deal"
-              >
-                <img src="@/assets/upvote-logo.png" alt="Upvote" class="upvote-icon" />
-                <span class="upvote-number">{{ upvoteCount }}</span>
-              </button>
-            </div>
-            
-            <!-- Store name at bottom of image -->
-            <span class="store-name-overlay" @click.stop="goToBrand(product.merchant_name || product.source)">
-              {{ product.merchant_name || product.source }}
-            </span>
-          </div>
-        </div>
-
-        <!-- Right: Product Info -->
+        <!-- Left: Product Info -->
         <div class="product-info-section">
           <div class="product-info-card">
             <h1 class="product-title">{{ product.title }}</h1>
@@ -98,6 +73,31 @@
                 </svg>
               </button>
             </div>
+          </div>
+        </div>
+
+        <!-- Right: Product Image -->
+        <div class="product-image-section">
+          <div class="image-container">
+            <img :src="product.image_url" :alt="product.title" class="product-image" />
+            
+            <!-- Upvote Button with Count - Smaller -->
+            <div class="upvote-container">
+              <button 
+                class="upvote-btn" 
+                :class="{ active: isUpvoted }" 
+                @click="handleUpvote" 
+                title="Upvote this deal"
+              >
+                <img src="@/assets/upvote-logo.png" alt="Upvote" class="upvote-icon" />
+                <span class="upvote-number">{{ upvoteCount }}</span>
+              </button>
+            </div>
+            
+            <!-- Store name at bottom of image -->
+            <span class="store-name-overlay" @click.stop="goToBrand(product.merchant_name || product.source)">
+              {{ product.merchant_name || product.source }}
+            </span>
           </div>
         </div>
       </section>
@@ -490,7 +490,7 @@ onMounted(() => {
 /* Product Hero */
 .product-hero {
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 400px 1fr;
   gap: 2rem;
   margin-bottom: 3rem;
 }
