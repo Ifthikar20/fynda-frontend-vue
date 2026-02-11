@@ -6,10 +6,7 @@
         <img src="../assets/fynda-png-1.png" alt="Fynda" class="logo" />
       </a>
       <nav class="nav-links">
-        <router-link to="/shop/women" class="nav-link">Women</router-link>
-        <router-link to="/shop/men" class="nav-link">Men</router-link>
-        <router-link to="/shop/home" class="nav-link">Home</router-link>
-        <router-link to="/shop/beauty" class="nav-link">Beauty</router-link>
+        <router-link to="/explore" class="nav-link">Explore</router-link>
       </nav>
       <!-- Auth Section -->
       <div class="auth-section">
