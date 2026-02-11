@@ -171,7 +171,11 @@
         <div class="results-header">
           <div class="results-info">
             <h2 class="section-title">Results for "{{ lastSearchQuery }}"</h2>
-            <span class="results-count">{{ deals.length }} items found</span>
+            <span class="results-count">
+              {{ filteredDeals.length }}
+              <template v-if="filteredDeals.length !== deals.length"> of {{ deals.length }}</template>
+              items found
+            </span>
           </div>
           
           <!-- Sort Options -->
@@ -184,6 +188,38 @@
               <option value="discount">Biggest Discount</option>
               <option value="newest">Newest First</option>
             </select>
+          </div>
+        </div>
+        
+        <!-- Filter Chips -->
+        <div v-if="!loading" class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">Gender</span>
+            <div class="filter-chips">
+              <button
+                v-for="g in genderOptions"
+                :key="g.value"
+                class="filter-chip"
+                :class="{ active: activeGender === g.value }"
+                @click="setGenderFilter(g.value)"
+              >
+                {{ g.label }}
+              </button>
+            </div>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Size</span>
+            <div class="filter-chips">
+              <button
+                v-for="s in sizeOptions"
+                :key="s"
+                class="filter-chip"
+                :class="{ active: activeSize === s }"
+                @click="setSizeFilter(s)"
+              >
+                {{ s }}
+              </button>
+            </div>
           </div>
         </div>
         
@@ -240,7 +276,7 @@
         <!-- Empty State -->
         <div v-else-if="!loading" class="empty-state">
           <h3>No results found</h3>
-          <p>Try searching for something else like "sneakers" or "dress"</p>
+          <p>Try a different filter or search for something else</p>
         </div>
       </section>
     </main>
@@ -264,26 +300,25 @@
             
             <div class="footer-column">
               <h4>Company</h4>
-              <a href="#">About Us</a>
-              <a href="#">Careers</a>
-              <a href="#">Press</a>
-              <a href="#">Blog</a>
+              <router-link to="/about">About Us</router-link>
+              <router-link to="/careers">Careers</router-link>
+              <a href="https://blog.fynda.com" target="_blank" rel="noopener">Blog</a>
             </div>
             
             <div class="footer-column">
               <h4>Support</h4>
-              <a href="#">Help Center</a>
-              <a href="#">Privacy Policy</a>
-              <a href="#">Terms of Service</a>
-              <a href="#">Contact Us</a>
+              <router-link to="/help">Help Center</router-link>
+              <router-link to="/privacy">Privacy Policy</router-link>
+              <router-link to="/terms">Terms of Service</router-link>
+              <router-link to="/contact">Contact Us</router-link>
             </div>
             
             <div class="footer-column">
               <h4>Connect</h4>
-              <a href="#">Instagram</a>
-              <a href="#">Twitter</a>
-              <a href="#">TikTok</a>
-              <a href="#">Pinterest</a>
+              <a href="https://instagram.com/fynda" target="_blank" rel="noopener">Instagram</a>
+              <a href="https://twitter.com/fynda" target="_blank" rel="noopener">Twitter</a>
+              <a href="https://tiktok.com/@fynda" target="_blank" rel="noopener">TikTok</a>
+              <a href="https://pinterest.com/fynda" target="_blank" rel="noopener">Pinterest</a>
             </div>
           </div>
         </div>
@@ -291,9 +326,9 @@
         <div class="footer-bottom">
           <p>© 2026 Fynda. All rights reserved.</p>
           <div class="footer-legal">
-            <a href="#">Privacy</a>
-            <a href="#">Terms</a>
-            <a href="#">Cookies</a>
+            <router-link to="/privacy">Privacy</router-link>
+            <router-link to="/terms">Terms</router-link>
+            <router-link to="/cookies">Cookies</router-link>
           </div>
         </div>
       </div>
@@ -338,31 +373,31 @@ const scrollSentinel = ref(null)
 const quotaWarning = ref('')
 let scrollObserver = null
 
-// Quick suggestions
-const quickSuggestions = ['Vintage jacket', 'Running shoes', 'Designer bag', 'Summer dress']
+// Gender & size filter state
+const activeGender = ref('all')
+const activeSize = ref('all')
+const detectedGender = ref(null)
 
-// Featured Brands
-const featuredBrands = ref([
-  { name: 'Nike', initial: 'N', category: 'Sportswear' },
-  { name: 'Gucci', initial: 'G', category: 'Luxury Fashion' },
-  { name: 'Apple', initial: 'A', category: 'Technology' },
-  { name: 'Zara', initial: 'Z', category: 'Fast Fashion' },
-  { name: 'Louis Vuitton', initial: 'LV', category: 'Luxury' },
-  { name: 'Adidas', initial: 'A', category: 'Sportswear' },
-  { name: 'H&M', initial: 'H', category: 'Fashion' },
-  { name: 'Sephora', initial: 'S', category: 'Beauty' },
-])
-
-// Animated search prompts
-const searchPrompts = [
-  'Find me a vintage leather jacket under $200...',
-  'Show Nike Air Jordan 1 best deals...',
-  'Summer dress for beach vacation...',
-  'Designer handbag with best discount...',
-  'Wireless headphones with noise canceling...',
+const genderOptions = [
+  { label: 'All', value: 'all' },
+  { label: 'Women', value: 'women' },
+  { label: 'Men', value: 'men' },
+  { label: 'Kids', value: 'kids' },
 ]
+const sizeOptions = ['All', 'XS', 'S', 'M', 'L', 'XL', 'XXL']
+
+// Quick suggestions (loaded from API)
+const quickSuggestions = ref(['Summer dresses', 'White sneakers', 'Designer bag', 'Skincare routine'])
+
+// Featured Brands (loaded from API)
+const featuredBrands = ref([])
+
+// Animated search prompts (loaded from API)
+const searchPrompts = ref([
+  'Find me a vintage leather jacket under $200...',
+])
 const currentPromptIndex = ref(0)
-const animatedPrompt = ref(searchPrompts[0])
+const animatedPrompt = ref('')
 let promptInterval = null
 
 // Category titles
@@ -383,9 +418,46 @@ const getCardSize = (index) => {
   return pattern[index % pattern.length]
 }
 
-// Sorted deals
+// Client-side gender filter
+const WOMEN_WORDS = /\b(women|womens|women's|woman|ladies|lady|girls|girl|female|maternity)\b/i
+const MEN_WORDS = /\b(mens|men's|boys?|male|gentleman)\b/i
+// Special pattern for "men" that avoids matching inside "women"
+const MEN_STANDALONE = /(?<!wo)\bmen\b/i
+
+const filteredDeals = computed(() => {
+  let result = [...deals.value]
+  
+  // Gender filter
+  if (activeGender.value !== 'all') {
+    const gender = activeGender.value
+    result = result.filter(deal => {
+      const title = (deal.title || '').toLowerCase()
+      if (gender === 'men') {
+        return !WOMEN_WORDS.test(title)
+      } else if (gender === 'women') {
+        return !MEN_WORDS.test(title) && !MEN_STANDALONE.test(title)
+      } else if (gender === 'kids') {
+        return !WOMEN_WORDS.test(title) && !MEN_WORDS.test(title) && !MEN_STANDALONE.test(title)
+      }
+      return true
+    })
+  }
+  
+  // Size filter
+  if (activeSize.value !== 'All') {
+    const size = activeSize.value.toLowerCase()
+    result = result.filter(deal => {
+      const title = (deal.title || '').toLowerCase()
+      return title.includes(size) || title.includes(`size ${size}`)
+    })
+  }
+  
+  return result
+})
+
+// Sorted deals (applies to filtered deals)
 const sortedDeals = computed(() => {
-  const sorted = [...deals.value]
+  const sorted = [...filteredDeals.value]
   switch (sortBy.value) {
     case 'price-low':
       return sorted.sort((a, b) => (a.price || 0) - (b.price || 0))
@@ -404,6 +476,17 @@ const sortedDeals = computed(() => {
 const visibleDeals = computed(() => {
   return sortedDeals.value.slice(0, visibleCount.value)
 })
+
+// Filter chip handlers
+const setGenderFilter = (gender) => {
+  activeGender.value = gender
+  visibleCount.value = 12
+}
+
+const setSizeFilter = (size) => {
+  activeSize.value = size
+  visibleCount.value = 12
+}
 
 // Visible trending deals (load-more)
 const visibleTrendingDeals = computed(() => {
@@ -643,6 +726,7 @@ const handleSearch = async () => {
   sortBy.value = 'relevance'
   visibleCount.value = 12  // Reset lazy load on new search
   quotaWarning.value = ''  // Clear previous warning
+  activeSize.value = 'All'  // Reset size filter
   
   try {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
@@ -650,6 +734,14 @@ const handleSearch = async () => {
     const data = await response.json()
     
     deals.value = data.deals || []
+    
+    // Auto-select gender chip from backend detection
+    detectedGender.value = data.detected_gender || null
+    if (data.detected_gender && ['men', 'women', 'kids'].includes(data.detected_gender)) {
+      activeGender.value = data.detected_gender
+    } else {
+      activeGender.value = 'all'
+    }
     
     // Check for quota warning from backend
     if (data.quota_warning) {
@@ -663,13 +755,86 @@ const handleSearch = async () => {
   }
 }
 
-// Load trending deals
+// Fashion keywords filter — exclude non-fashion products
+const NON_FASHION_KEYWORDS = [
+  // Electronics
+  'laptop', 'phone', 'tablet', 'headphone', 'speaker', 'camera', 'tv', 'television',
+  'monitor', 'keyboard', 'mouse', 'charger', 'cable', 'adapter', 'battery', 'usb',
+  'bluetooth', 'wireless', 'printer', 'router', 'modem', 'hard drive', 'ssd',
+  'gaming', 'console', 'controller', 'gpu', 'cpu', 'ram', 'motherboard',
+  // Kitchen & Food
+  'kitchen', 'utensil', 'pan', 'pot', 'spatula', 'knife set', 'blender', 'mixer',
+  'toaster', 'microwave', 'oven', 'fridge', 'coffee maker', 'food', 'snack',
+  'protein powder', 'vitamin', 'supplement', 'cooking', 'baking', 'recipe',
+  'cutting board', 'bowl set', 'plate set', 'fork', 'spoon',
+  // Tools & Hardware
+  'drill', 'hammer', 'screwdriver', 'wrench', 'saw', 'toolbox', 'pliers',
+  'power tool', 'garden hose', 'lawn mower', 'leaf blower',
+  // Auto
+  'car', 'tire', 'motor oil', 'dashboard', 'windshield', 'automotive',
+  // Office & Stationery
+  'printer ink', 'toner', 'stapler', 'paper shredder', 'filing cabinet',
+  // Pet
+  'dog food', 'cat food', 'pet bed', 'aquarium', 'fish tank', 'bird cage',
+  // Toys (non-fashion)
+  'action figure', 'lego', 'puzzle', 'board game', 'nerf',
+]
+
+const isFashionOrBeauty = (deal) => {
+  const title = (deal.title || '').toLowerCase()
+  const category = (deal.category || '').toLowerCase()
+  const combined = title + ' ' + category
+  
+  // Reject if title contains non-fashion keywords
+  for (const kw of NON_FASHION_KEYWORDS) {
+    if (combined.includes(kw)) return false
+  }
+  
+  // Must have an image
+  if (!deal.image && !deal.image_url) return false
+  
+  return true
+}
+
+// Load trending deals — fashion & beauty focused
 const loadTrending = async () => {
   try {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
-    const response = await fetch(`${apiUrl}/api/search/?q=trending`)
-    const data = await response.json()
-    trendingDeals.value = data.deals || []
+    
+    // Fetch multiple fashion-specific queries in parallel
+    const fashionQueries = [
+      'women dress', 'sneakers', 'designer handbag', 'men jacket',
+      'skincare', 'lipstick makeup', 'sunglasses', 'jewelry',
+      'heels shoes', 'denim jeans', 'blazer', 'silk scarf'
+    ]
+    
+    // Pick 4 random queries for more variety
+    const shuffled = fashionQueries.sort(() => 0.5 - Math.random())
+    const selected = shuffled.slice(0, 4)
+    
+    const responses = await Promise.allSettled(
+      selected.map(q => 
+        fetch(`${apiUrl}/api/search/?q=${encodeURIComponent(q)}&limit=15`).then(r => r.json())
+      )
+    )
+    
+    // Combine and deduplicate
+    const allDeals = []
+    const seenIds = new Set()
+    
+    for (const res of responses) {
+      if (res.status === 'fulfilled' && res.value?.deals) {
+        for (const deal of res.value.deals) {
+          if (!seenIds.has(deal.id) && isFashionOrBeauty(deal)) {
+            seenIds.add(deal.id)
+            allDeals.push(deal)
+          }
+        }
+      }
+    }
+    
+    // Shuffle for variety
+    trendingDeals.value = allDeals.sort(() => 0.5 - Math.random())
   } catch (error) {
     console.error('Failed to load trending:', error)
   }
@@ -682,14 +847,42 @@ const openDeal = (deal) => {
 
 // Animate search prompts
 const animatePrompts = () => {
+  if (searchPrompts.value.length === 0) return
+  animatedPrompt.value = searchPrompts.value[0]
   promptInterval = setInterval(() => {
-    currentPromptIndex.value = (currentPromptIndex.value + 1) % searchPrompts.length
-    animatedPrompt.value = searchPrompts[currentPromptIndex.value]
+    currentPromptIndex.value = (currentPromptIndex.value + 1) % searchPrompts.value.length
+    animatedPrompt.value = searchPrompts.value[currentPromptIndex.value]
   }, 4000)
 }
 
+// Load featured content from backend
+const loadFeaturedContent = async () => {
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+    const response = await fetch(`${apiUrl}/api/featured/`)
+    const data = await response.json()
+    
+    if (data.featured_brands) {
+      featuredBrands.value = data.featured_brands
+    }
+    if (data.search_prompts) {
+      searchPrompts.value = data.search_prompts
+    }
+    if (data.quick_suggestions) {
+      quickSuggestions.value = data.quick_suggestions
+    }
+    
+    // Start prompt animation after data loads
+    animatePrompts()
+  } catch (error) {
+    console.error('Failed to load featured content:', error)
+    // Fallback: still animate with defaults
+    animatePrompts()
+  }
+}
+
 onMounted(() => {
-  animatePrompts()
+  loadFeaturedContent()
   loadTrending()
 })
 
@@ -891,26 +1084,26 @@ a {
 /* Hero Section */
 .hero-section {
   text-align: center;
-  padding: 1.5rem 0 1rem;
+  padding: 3rem 0 2rem;
 }
 
 .hero-title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 400;
   color: #1a1a1a;
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.4rem;
 }
 
 .hero-subtitle {
-  font-size: 0.85rem;
+  font-size: 1rem;
   color: #888;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.75rem;
 }
 
 /* AI Search Box */
 .ai-search-container {
-  max-width: 550px;
+  max-width: 640px;
   margin: 0 auto;
 }
 
@@ -919,9 +1112,9 @@ a {
   align-items: center;
   background: #fff;
   border: 2px solid #e0e0e0;
-  border-radius: 28px;
-  padding: 0.5rem 0.5rem 0.5rem 1.25rem;
-  min-height: 56px;
+  border-radius: 32px;
+  padding: 0.6rem 0.6rem 0.6rem 1.5rem;
+  min-height: 62px;
   transition: all 0.2s ease;
   position: relative;
 }
@@ -947,11 +1140,11 @@ a {
   border: none;
   background: transparent;
   font-family: 'Inter', sans-serif;
-  font-size: 1rem;
+  font-size: 1.05rem;
   color: #1a1a1a;
   outline: none;
   min-width: 0;
-  height: 40px;
+  height: 44px;
 }
 
 .ai-animated-placeholder {
@@ -1259,6 +1452,73 @@ a {
 .sort-select:focus {
   outline: none;
   border-color: #000;
+}
+
+/* Filter Chips */
+.filter-bar {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.filter-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.filter-chips {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.filter-chip {
+  padding: 0.35rem 0.85rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #555;
+  background: #f5f5f5;
+  border: 1px solid #e8e8e8;
+  border-radius: 100px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.filter-chip:hover {
+  background: #eee;
+  border-color: #ccc;
+  color: #222;
+}
+
+.filter-chip.active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.filter-chip.active:hover {
+  background: #333;
+  border-color: #333;
 }
 
 /* Inline Loading */
@@ -1645,6 +1905,8 @@ a {
   .logo { height: 36px; }
   .nav-links { gap: 1rem; }
   .results-header { flex-direction: column; align-items: flex-start; }
+  .filter-bar { flex-direction: column; gap: 0.75rem; }
+  .filter-chip { padding: 0.3rem 0.7rem; font-size: 0.68rem; }
   
   .footer-bottom {
     flex-direction: column;
