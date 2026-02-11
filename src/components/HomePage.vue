@@ -1328,7 +1328,7 @@ a {
 
 .ai-animated-placeholder {
   position: absolute;
-  left: 2.5rem;
+  left: 4rem;
   color: #999;
   font-size: 0.9rem;
   pointer-events: none;
