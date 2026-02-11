@@ -31,7 +31,7 @@
             :key="cat.id" 
             class="category-card"
             :style="{ backgroundImage: `url(${cat.image})` }"
-            @click="goSearch(cat.query)"
+            @click="goCategory(cat.query)"
           >
             <div class="category-overlay">
               <h3>{{ cat.title }}</h3>
@@ -147,19 +147,19 @@ const categories = [
   {
     id: 1,
     title: 'For her',
-    query: 'women fashion',
+    query: 'for-her',
     image: 'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=600&q=80'
   },
   {
     id: 2,
     title: 'For him',
-    query: 'men fashion',
+    query: 'for-him',
     image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80'
   },
   {
     id: 3,
     title: 'Both',
-    query: 'unisex streetwear',
+    query: 'both',
     image: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=600&q=80'
   }
 ]
@@ -217,6 +217,10 @@ const brands = [
 
 const goSearch = (query) => {
   router.push(`/?q=${encodeURIComponent(query)}`)
+}
+
+const goCategory = (slug) => {
+  router.push(`/explore/${slug}`)
 }
 
 const goBrand = (brand) => {
