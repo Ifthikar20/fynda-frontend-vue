@@ -9,26 +9,35 @@
         <p class="landing-subtitle">{{ pageSubtitle }}</p>
       </section>
 
-      <!-- For You -->
+      <!-- Editor's Picks -->
+      <section class="editors-section">
+        <h2 class="section-heading">Editor's picks</h2>
+        <div class="editors-grid">
+          <div 
+            v-for="pick in editorsPicks" 
+            :key="pick.id" 
+            class="editors-card"
+            :style="{ backgroundImage: `url(${pick.image})` }"
+            @click="goSearch(pick.query)"
+          >
+            <div class="editors-overlay">
+              <h3>{{ pick.title }}</h3>
+              <span class="editors-link">Start exploring →</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- For You — shows featured (dummy) instantly, then real products -->
       <section class="for-you-section">
         <h2 class="section-heading">For you</h2>
 
-        <!-- Skeleton Loader -->
-        <div v-if="loading" class="product-grid">
-          <div v-for="n in 8" :key="'skel-' + n" class="product-card skeleton">
-            <div class="skeleton-image"></div>
-            <div class="skeleton-line short"></div>
-            <div class="skeleton-line medium"></div>
-            <div class="skeleton-line tiny"></div>
-          </div>
-        </div>
-
-        <!-- Products -->
-        <div v-else class="product-grid">
+        <div class="product-grid">
           <div 
-            v-for="(deal, idx) in visibleDeals" 
-            :key="deal.id || idx" 
+            v-for="(deal, idx) in displayProducts" 
+            :key="deal.id || 'f-' + idx" 
             class="product-card"
+            :class="{ 'shimmer-card': loading && idx >= featuredProducts.length }"
             @click="openProduct(deal)"
           >
             <div class="product-image" :class="getCardHeight(idx)">
@@ -43,13 +52,8 @@
         </div>
 
         <!-- Load More -->
-        <div v-if="!loading && visibleCount < deals.length" class="load-more-wrap">
+        <div v-if="!loading && visibleCount < allProducts.length" class="load-more-wrap">
           <button class="load-more-btn" @click="visibleCount += 12">Load more</button>
-        </div>
-
-        <!-- Empty State -->
-        <div v-if="!loading && deals.length === 0" class="empty-state">
-          <p>No products found. Check back soon!</p>
         </div>
       </section>
     </main>
@@ -75,17 +79,50 @@ const categoryConfig = {
   'for-her': {
     title: "Women's Fashion",
     subtitle: 'Discover trending women\'s fashion and clothing curated just for you.',
-    query: 'women fashion clothing'
+    query: 'women fashion clothing',
+    editorsPicks: [
+      { id: 1, title: 'Effortless Elegance', query: 'elegant women dress', image: 'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=600&q=80' },
+      { id: 2, title: 'Summer Essentials', query: 'women summer outfit', image: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80' },
+      { id: 3, title: 'Power Blazers', query: 'women blazer', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&q=80' }
+    ],
+    featured: [
+      { id: 'f1', title: 'Silk Midi Dress — Blush Pink', price: '89', source: 'Reformation', image_url: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=400&q=80' },
+      { id: 'f2', title: 'Cashmere Crew Neck Sweater', price: '145', source: 'COS', image_url: 'https://images.unsplash.com/photo-1434389677669-e08b4cda3a46?w=400&q=80' },
+      { id: 'f3', title: 'High-Waist Wide Leg Trousers', price: '68', source: 'Zara', image_url: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400&q=80' },
+      { id: 'f4', title: 'Leather Crossbody Bag — Tan', price: '120', source: 'Madewell', image_url: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&q=80' },
+    ]
   },
   'for-him': {
     title: "Men's Clothing",
     subtitle: 'Discover trending men\'s fashion and clothing curated just for you.',
-    query: 'men fashion clothing'
+    query: 'men fashion clothing',
+    editorsPicks: [
+      { id: 1, title: 'Smart Casual', query: 'men smart casual', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80' },
+      { id: 2, title: 'Streetwear Edit', query: 'men streetwear', image: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?w=600&q=80' },
+      { id: 3, title: 'Winter Layers', query: 'men winter jacket', image: 'https://images.unsplash.com/photo-1544923246-77307dd270df?w=600&q=80' }
+    ],
+    featured: [
+      { id: 'f1', title: 'Slim Fit Oxford Shirt — White', price: '45', source: 'H&M', image_url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&q=80' },
+      { id: 'f2', title: 'Relaxed Fit Chinos — Olive', price: '58', source: 'Zara', image_url: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=400&q=80' },
+      { id: 'f3', title: 'Chunky Leather Sneakers', price: '110', source: 'Nike', image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80' },
+      { id: 'f4', title: 'Wool Overcoat — Charcoal', price: '195', source: 'COS', image_url: 'https://images.unsplash.com/photo-1544923246-77307dd270df?w=400&q=80' },
+    ]
   },
   'both': {
     title: 'Unisex & Streetwear',
     subtitle: 'Trending styles for everyone — from streetwear to everyday essentials.',
-    query: 'unisex streetwear fashion'
+    query: 'unisex streetwear fashion',
+    editorsPicks: [
+      { id: 1, title: 'Gender-Fluid Style', query: 'unisex fashion', image: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=600&q=80' },
+      { id: 2, title: 'Sneaker Culture', query: 'sneakers', image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80' },
+      { id: 3, title: 'Oversized Everything', query: 'oversized clothing', image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80' }
+    ],
+    featured: [
+      { id: 'f1', title: 'Oversized Graphic Hoodie', price: '65', source: 'Adidas', image_url: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?w=400&q=80' },
+      { id: 'f2', title: 'Cargo Joggers — Black', price: '52', source: 'Nike', image_url: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&q=80' },
+      { id: 'f3', title: 'Canvas Tote Bag — Natural', price: '28', source: 'Madewell', image_url: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&q=80' },
+      { id: 'f4', title: 'Retro Running Shoes', price: '95', source: 'New Balance', image_url: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80' },
+    ]
   }
 }
 
@@ -96,8 +133,16 @@ const currentConfig = computed(() => {
 
 const pageTitle = computed(() => currentConfig.value.title)
 const pageSubtitle = computed(() => currentConfig.value.subtitle)
+const editorsPicks = computed(() => currentConfig.value.editorsPicks)
+const featuredProducts = computed(() => currentConfig.value.featured)
 
-const visibleDeals = computed(() => deals.value.slice(0, visibleCount.value))
+// Combine: featured first, then API products (deduped)
+const allProducts = computed(() => {
+  if (deals.value.length === 0) return featuredProducts.value
+  return deals.value
+})
+
+const displayProducts = computed(() => allProducts.value.slice(0, visibleCount.value))
 
 const formatPrice = (price) => {
   const num = parseFloat(price)
@@ -105,7 +150,6 @@ const formatPrice = (price) => {
   return num % 1 === 0 ? num.toFixed(0) : num.toFixed(2)
 }
 
-// Vary card heights for editorial feel
 const getCardHeight = (idx) => {
   const pattern = [0, 1, 2, 0, 2, 1, 0, 2]
   const h = pattern[idx % pattern.length]
@@ -123,22 +167,26 @@ const fetchProducts = async () => {
     deals.value = data.deals || []
   } catch (err) {
     console.error('Failed to fetch products:', err)
-    deals.value = []
   } finally {
     loading.value = false
   }
 }
 
 const openProduct = (deal) => {
-  if (deal.id) {
+  if (deal.id && !String(deal.id).startsWith('f')) {
     router.push(`/product/${deal.id}`)
   }
+}
+
+const goSearch = (query) => {
+  router.push(`/?q=${encodeURIComponent(query)}`)
 }
 
 onMounted(fetchProducts)
 
 watch(() => route.params.category, () => {
   visibleCount.value = 12
+  deals.value = []
   fetchProducts()
 })
 </script>
@@ -189,7 +237,64 @@ watch(() => route.params.category, () => {
   margin-bottom: 1.25rem;
 }
 
+/* ── Editor's Picks ── */
+.editors-section {
+  margin-bottom: 2.5rem;
+}
+
+.editors-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.editors-card {
+  position: relative;
+  height: 300px;
+  border-radius: 12px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.editors-card:hover {
+  transform: scale(1.02);
+}
+
+.editors-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.65) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1.5rem;
+}
+
+.editors-overlay h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: #fff;
+  margin: 0 0 0.3rem;
+  line-height: 1.2;
+}
+
+.editors-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ── Product Grid ── */
+.for-you-section {
+  margin-bottom: 2rem;
+}
+
 .product-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -211,17 +316,9 @@ watch(() => route.params.category, () => {
   background: #f5f5f5;
 }
 
-.product-image.height-tall {
-  height: 420px;
-}
-
-.product-image.height-medium {
-  height: 340px;
-}
-
-.product-image.height-short {
-  height: 280px;
-}
+.product-image.height-tall { height: 420px; }
+.product-image.height-medium { height: 340px; }
+.product-image.height-short { height: 280px; }
 
 .product-image img {
   width: 100%;
@@ -263,37 +360,6 @@ watch(() => route.params.category, () => {
   color: #1a1a1a;
 }
 
-/* ── Skeleton ── */
-.product-card.skeleton {
-  cursor: default;
-}
-
-.skeleton-image {
-  height: 340px;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-.skeleton-line {
-  height: 10px;
-  border-radius: 4px;
-  margin-top: 10px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-.skeleton-line.short { width: 40%; }
-.skeleton-line.medium { width: 75%; }
-.skeleton-line.tiny { width: 25%; }
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
 /* ── Load More ── */
 .load-more-wrap {
   text-align: center;
@@ -316,42 +382,25 @@ watch(() => route.params.category, () => {
   background: #333;
 }
 
-/* ── Empty State ── */
-.empty-state {
-  text-align: center;
-  padding: 3rem;
-  color: #999;
-  font-size: 0.9rem;
-}
-
 /* ── Responsive ── */
 @media (max-width: 1024px) {
-  .product-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  .product-grid { grid-template-columns: repeat(3, 1fr); }
+  .editors-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .product-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .landing-title {
-    font-size: 2rem;
-  }
-
+  .product-grid { grid-template-columns: repeat(2, 1fr); }
+  .editors-grid { grid-template-columns: repeat(2, 1fr); }
+  .landing-title { font-size: 2rem; }
   .product-image.height-tall { height: 320px; }
   .product-image.height-medium { height: 260px; }
   .product-image.height-short { height: 220px; }
 }
 
 @media (max-width: 480px) {
-  .product-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .landing-title {
-    font-size: 1.75rem;
-  }
+  .product-grid { grid-template-columns: 1fr; }
+  .editors-grid { grid-template-columns: 1fr; }
+  .editors-card { height: 240px; }
+  .landing-title { font-size: 1.75rem; }
 }
 </style>
