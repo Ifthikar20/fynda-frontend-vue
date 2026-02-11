@@ -223,6 +223,17 @@
           </div>
         </div>
         
+        <!-- Did You Mean? Suggestion -->
+        <div v-if="suggestedQuery && !loading" class="did-you-mean">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <span>Did you mean: </span>
+          <button class="suggestion-link" @click="searchSuggestion(suggestedQuery)">"{{ suggestedQuery }}"</button>
+          <span>?</span>
+        </div>
+        
         <!-- Quota Warning Banner -->
         <div v-if="quotaWarning" class="quota-banner">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -371,6 +382,7 @@ const visibleCount = ref(12)
 const trendingVisibleCount = ref(12)
 const scrollSentinel = ref(null)
 const quotaWarning = ref('')
+const suggestedQuery = ref(null)
 let scrollObserver = null
 
 // Gender & size filter state
@@ -726,6 +738,7 @@ const handleSearch = async () => {
   sortBy.value = 'relevance'
   visibleCount.value = 12  // Reset lazy load on new search
   quotaWarning.value = ''  // Clear previous warning
+  suggestedQuery.value = null  // Clear previous suggestion
   activeSize.value = 'All'  // Reset size filter
   
   try {
@@ -746,6 +759,11 @@ const handleSearch = async () => {
     // Check for quota warning from backend
     if (data.quota_warning) {
       quotaWarning.value = data.quota_warning
+    }
+    
+    // Check for spell correction suggestion
+    if (data.suggested_query) {
+      suggestedQuery.value = data.suggested_query
     }
   } catch (error) {
     console.error('Search failed:', error)
@@ -1519,6 +1537,43 @@ a {
 .filter-chip.active:hover {
   background: #333;
   border-color: #333;
+}
+
+/* Did You Mean? Suggestion */
+.did-you-mean {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.75rem;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #666;
+}
+
+.did-you-mean svg {
+  color: #999;
+  flex-shrink: 0;
+}
+
+.suggestion-link {
+  background: none;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.suggestion-link:hover {
+  color: #555;
 }
 
 /* Inline Loading */
