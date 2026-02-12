@@ -330,6 +330,58 @@ if (typeof window !== 'undefined') {
     }
 }
 
+// =============================================================================
+// CONSENT SUMMARY & BANNER CONTROL
+// =============================================================================
+
+/**
+ * Get human-readable consent summary for profile page
+ * @returns {{ categories: Array, lastUpdated: string|null }}
+ */
+export const getConsentSummary = () => {
+    const consent = getConsent()
+    if (!consent) {
+        return {
+            hasConsented: false,
+            categories: [
+                { key: 'essential', name: 'Essential', enabled: true, required: true },
+                { key: 'functional', name: 'Functional', enabled: false, required: false },
+                { key: 'analytics', name: 'Analytics', enabled: false, required: false },
+                { key: 'marketing', name: 'Marketing', enabled: false, required: false },
+            ],
+            lastUpdated: null
+        }
+    }
+
+    return {
+        hasConsented: true,
+        categories: [
+            { key: 'essential', name: 'Essential', enabled: true, required: true, desc: 'Authentication & security' },
+            { key: 'functional', name: 'Functional', enabled: consent.functional || false, required: false, desc: 'Preferences & personalization' },
+            { key: 'analytics', name: 'Analytics', enabled: consent.analytics || false, required: false, desc: 'Usage & performance data' },
+            { key: 'marketing', name: 'Marketing', enabled: consent.marketing || false, required: false, desc: 'Personalized recommendations' },
+        ],
+        lastUpdated: consent.timestamp || null
+    }
+}
+
+/**
+ * Trigger the cookie banner to reopen (dispatches custom event)
+ */
+export const reopenBanner = () => {
+    window.dispatchEvent(new CustomEvent('fynda:reopen-cookie-banner'))
+}
+
+/**
+ * Clear all non-essential stored data
+ */
+export const clearAllData = () => {
+    clearFunctionalCookies()
+    localStorage.removeItem('fynda_analytics')
+    localStorage.removeItem('userLibrary')
+    // Keep consent preferences and auth tokens
+}
+
 export default {
     // Consent management
     getConsent,
@@ -338,6 +390,9 @@ export default {
     rejectAll,
     hasConsented,
     isAllowed,
+    getConsentSummary,
+    reopenBanner,
+    clearAllData,
 
     // Functional cookies
     setFunctionalCookie,

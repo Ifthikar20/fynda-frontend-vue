@@ -84,6 +84,30 @@
                 <span v-if="saveSuccess" class="success-message">✓ Profile updated</span>
               </div>
             </form>
+            
+            <!-- Account Activity -->
+            <div class="account-activity">
+              <h3 class="activity-title">Account Information</h3>
+              <div class="activity-grid">
+                <div class="activity-item">
+                  <span class="activity-label">Member Since</span>
+                  <span class="activity-value">{{ memberSince }}</span>
+                </div>
+                <div class="activity-item">
+                  <span class="activity-label">Login Method</span>
+                  <span class="activity-value">
+                    <span class="login-badge">
+                      <svg v-if="loginProvider === 'google'" width="14" height="14" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                      {{ loginProvider === 'google' ? 'Google' : 'Email & Password' }}
+                    </span>
+                  </span>
+                </div>
+                <div class="activity-item">
+                  <span class="activity-label">Account Status</span>
+                  <span class="activity-value"><span class="status-dot"></span> Active</span>
+                </div>
+              </div>
+            </div>
           </div>
           
           <!-- My Library Tab -->
@@ -311,6 +335,74 @@
             </div>
           </div>
           
+          <!-- Privacy & Cookies Tab -->
+          <div v-if="activeTab === 'privacy'" class="tab-content">
+            <div class="section-header">
+              <h2>Privacy & Cookies</h2>
+              <p>Manage your cookie preferences and data</p>
+            </div>
+            
+            <div class="settings-section">
+              <h3>Cookie Preferences</h3>
+              <p class="consent-status" v-if="consentSummary.lastUpdated">
+                Last updated: {{ formatConsentDate(consentSummary.lastUpdated) }}
+              </p>
+              <p class="consent-status" v-else>
+                You haven't set your cookie preferences yet.
+              </p>
+              
+              <div v-for="cat in consentSummary.categories" :key="cat.key" class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-label">{{ cat.name }}</span>
+                  <span class="setting-desc">{{ cat.desc || (cat.required ? 'Required for site function' : '') }}</span>
+                </div>
+                <label class="toggle" :class="{ 'always-on': cat.required }">
+                  <input 
+                    type="checkbox" 
+                    :checked="cat.enabled" 
+                    :disabled="cat.required"
+                    @change="updateCookieCategory(cat.key, $event.target.checked)" 
+                  />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              
+              <button class="btn-secondary" style="margin-top: 16px" @click="openCookieBanner">
+                Open Cookie Preferences Panel
+              </button>
+            </div>
+            
+            <div class="settings-section">
+              <h3>Data Management</h3>
+              
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-label">Clear Browsing Data</span>
+                  <span class="setting-desc">Remove search history, analytics data, and saved preferences</span>
+                </div>
+                <button class="btn-danger-sm" @click="handleClearData">
+                  {{ clearingData ? 'Clearing...' : 'Clear Data' }}
+                </button>
+              </div>
+              
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-label">Export Your Data</span>
+                  <span class="setting-desc">Download a copy of your personal data</span>
+                </div>
+                <button class="btn-secondary-sm" @click="exportUserData">
+                  Download
+                </button>
+              </div>
+            </div>
+            
+            <div class="privacy-links">
+              <router-link to="/cookies">Cookie Policy</router-link>
+              <router-link to="/privacy">Privacy Policy</router-link>
+              <router-link to="/terms">Terms of Service</router-link>
+            </div>
+          </div>
+          
           <!-- Saved Deals Tab -->
           <div v-if="activeTab === 'saved'" class="tab-content">
             <div class="section-header">
@@ -371,6 +463,7 @@ import NavBar from './NavBar.vue'
 import Footer from './Footer.vue'
 import { useAuth } from '../stores/authStore'
 import api from '../utils/api'
+import { getConsentSummary, setConsent, reopenBanner, clearAllData } from '../services/cookieService'
 
 const router = useRouter()
 const { state, currentUser, logout, updateProfile } = useAuth()
@@ -381,6 +474,7 @@ const tabs = [
   { id: 'library', label: 'My Library', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>' },
   { id: 'settings', label: 'Settings', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' },
   { id: 'notifications', label: 'Notifications', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>' },
+  { id: 'privacy', label: 'Privacy & Cookies', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
   { id: 'security', label: 'Security', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' },
   { id: 'saved', label: 'Saved Deals', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' },
 ]
@@ -437,6 +531,25 @@ const passwordForm = reactive({
 const changingPassword = ref(false)
 const passwordError = ref('')
 const passwordSuccess = ref(false)
+
+// Cookie consent
+const consentSummary = ref(getConsentSummary())
+const clearingData = ref(false)
+
+// Account info
+const memberSince = computed(() => {
+  if (user.value?.date_joined) {
+    return new Date(user.value.date_joined).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  }
+  return 'January 2026'
+})
+
+const loginProvider = computed(() => {
+  // Check if user has a social account linked
+  if (user.value?.social_provider) return user.value.social_provider
+  if (user.value?.is_social) return 'google'
+  return 'email'
+})
 
 // Saved deals
 const savedDeals = ref([])
@@ -608,6 +721,64 @@ const removeSaved = async (dealId) => {
 const handleLogout = async () => {
   await logout()
   router.push('/')
+}
+
+// Cookie/Privacy functions
+const updateCookieCategory = (key, enabled) => {
+  const current = consentSummary.value
+  const prefs = {}
+  current.categories.forEach(cat => {
+    if (!cat.required) {
+      prefs[cat.key] = cat.key === key ? enabled : cat.enabled
+    }
+  })
+  setConsent(prefs)
+  consentSummary.value = getConsentSummary()
+}
+
+const openCookieBanner = () => {
+  reopenBanner()
+}
+
+const handleClearData = () => {
+  clearingData.value = true
+  clearAllData()
+  setTimeout(() => {
+    clearingData.value = false
+    alert('Browsing data cleared successfully.')
+  }, 500)
+}
+
+const exportUserData = async () => {
+  try {
+    const data = {
+      profile: {
+        name: fullName.value,
+        email: user.value?.email,
+        member_since: user.value?.date_joined
+      },
+      saved_deals: savedDeals.value,
+      library: libraryItems.value,
+      consent: consentSummary.value,
+      exported_at: new Date().toISOString()
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'fynda_my_data.json'
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    console.error('Export failed:', err)
+    alert('Could not export data.')
+  }
+}
+
+const formatConsentDate = (dateStr) => {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 const deleteAccount = async () => {
@@ -1275,5 +1446,132 @@ const deleteAccount = async () => {
     align-items: flex-start;
     gap: 12px;
   }
+}
+
+/* Account Activity */
+.account-activity {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid #eee;
+}
+
+.activity-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 20px;
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.activity-item {
+  background: #fafafa;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.activity-label {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.activity-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111;
+}
+
+.login-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  display: inline-block;
+}
+
+/* Privacy & Cookies */
+.consent-status {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 20px;
+}
+
+.toggle.always-on {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.privacy-links {
+  display: flex;
+  gap: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #eee;
+  margin-top: 16px;
+}
+
+.privacy-links a {
+  font-size: 13px;
+  color: #666;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.privacy-links a:hover {
+  color: #111;
+  text-decoration: underline;
+}
+
+/* Small Action Buttons */
+.btn-danger-sm {
+  padding: 8px 16px;
+  border: 1px solid #dc3545;
+  background: transparent;
+  color: #dc3545;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-danger-sm:hover {
+  background: #dc3545;
+  color: #fff;
+}
+
+.btn-secondary-sm {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  background: transparent;
+  color: #333;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-secondary-sm:hover {
+  border-color: #111;
+  color: #111;
 }
 </style>
