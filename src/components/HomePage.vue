@@ -747,8 +747,8 @@ const processImageFile = async (file) => {
       throw new Error('Could not identify product. Try a clearer image.')
     }
     
-    lastSearchQuery.value = mlQuery
-    searchQuery.value = mlQuery
+    lastSearchQuery.value = 'Visual Search'
+    // Don't put ML query in search box — keep it clean
     
     // Step 2: Search Amazon directly using the ML-extracted query (same as handleSearch)
     console.log('Searching Amazon for:', mlQuery)
