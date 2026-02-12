@@ -15,16 +15,13 @@
             <img :src="pastedImage.preview" alt="Search image" class="paste-preview-img" />
             <div class="paste-preview-info">
               <span class="paste-preview-label">Visual Search</span>
-              <span class="paste-preview-detail">{{ pastedImage.name }}</span>
+              <span v-if="loading" class="paste-preview-detail">Analyzing...</span>
+              <span v-else class="paste-preview-detail">{{ searchQuery || pastedImage.name }}</span>
             </div>
             <button class="paste-preview-remove" @click="removePastedImage" title="Remove image">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M18 6L6 18M6 6l12 12"/>
               </svg>
-            </button>
-            <button class="paste-search-btn" @click="searchWithPastedImage" :disabled="loading">
-              <span v-if="loading" class="spinner-sm"></span>
-              <span v-else>Find Similar</span>
             </button>
           </div>
 
@@ -656,7 +653,7 @@ const toggleFavorite = (deal) => {
 // Image Paste & Upload — Visual Search
 // ============================================================
 
-// Handle Ctrl+V paste
+// Handle Ctrl+V paste — auto-searches immediately
 const handlePaste = async (event) => {
   const items = event.clipboardData?.items
   if (!items) return
@@ -667,6 +664,10 @@ const handlePaste = async (event) => {
       const file = item.getAsFile()
       if (file) {
         await previewImage(file)
+        // Auto-search immediately after paste
+        if (pastedImage.value) {
+          await processImageFile(pastedImage.value.file)
+        }
       }
       return
     }
@@ -721,13 +722,16 @@ const handleImageUpload = async (event) => {
   }
 }
 
-// Core: send image to backend for visual search
+// Core: send image to backend ML for analysis, then search Amazon directly
 const processImageFile = async (file) => {
   loading.value = true
   hasSearched.value = true
   lastSearchQuery.value = 'Visual Search'
+  sortBy.value = 'relevance'
+  visibleCount.value = 12
   
   try {
+    // Step 1: Send image to our ML model for product identification
     const formData = new FormData()
     formData.append('image', file)
     
@@ -743,20 +747,57 @@ const processImageFile = async (file) => {
     }
     
     const data = await response.json()
-    console.log('Visual search result:', data)
+    console.log('ML model result:', data)
     
-    if (data.search_queries?.length > 0) {
-      lastSearchQuery.value = data.search_queries[0]
-      searchQuery.value = data.search_queries[0]
+    // Extract the best search query from ML model
+    const mlQuery = data.search_queries?.[0] || data.extracted?.caption || ''
+    if (!mlQuery) {
+      throw new Error('Could not identify product. Try a clearer image.')
     }
     
-    deals.value = data.deals || []
+    lastSearchQuery.value = mlQuery
+    searchQuery.value = mlQuery
+    
+    // Step 2: Search Amazon directly using the ML-extracted query (same as handleSearch)
+    console.log('Searching Amazon for:', mlQuery)
+    const amazonResponse = await fetch(
+      `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(mlQuery)}&page=1&country=US`,
+      {
+        headers: {
+          'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
+          'x-rapidapi-key': '8b4defb9f1msh2f2a139618fa11ep1a3ca8jsn88f8d4935e04'
+        }
+      }
+    )
+    const amazonData = await amazonResponse.json()
+    const products = amazonData?.data?.products || []
+    
+    deals.value = products.map((p, idx) => ({
+      id: p.asin || idx,
+      title: p.product_title,
+      price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
+      original_price: p.product_original_price ? p.product_original_price.replace(/[^0-9.]/g, '') : null,
+      image_url: p.product_photo,
+      source: 'Amazon',
+      merchant_name: 'Amazon',
+      url: p.product_url,
+      rating: p.product_star_rating,
+      reviews: p.product_num_ratings,
+      is_prime: p.is_prime,
+      badge: p.product_badge || (p.is_best_seller ? 'Best Seller' : (p.is_amazon_choice ? 'Amazon Choice' : null)),
+      discount_percent: p.product_original_price && p.product_price
+        ? Math.round(((parseFloat(p.product_original_price.replace(/[^0-9.]/g, '')) - parseFloat(p.product_price.replace(/[^0-9.]/g, ''))) / parseFloat(p.product_original_price.replace(/[^0-9.]/g, ''))) * 100)
+        : null
+    }))
+    
+    activeGender.value = 'all'
+    detectedGender.value = null
     
     if (deals.value.length === 0) {
       alert('No products found. Try a different image.')
     }
     
-    // Keep the image preview visible after search (don't clear it)
+    // Keep the image preview visible after search
   } catch (error) {
     console.error('Visual search failed:', error)
     deals.value = []
