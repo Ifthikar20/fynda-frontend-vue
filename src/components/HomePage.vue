@@ -248,7 +248,7 @@
         </div>
         
         <!-- Empty State -->
-        <div v-else-if="!loading" class="empty-state">
+        <div v-if="hasSearched && !loading && sortedDeals.length === 0" class="empty-state">
           <h3>No results found</h3>
           <p>Try a different filter or search for something else</p>
         </div>
