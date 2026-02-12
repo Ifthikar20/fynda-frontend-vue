@@ -653,7 +653,7 @@ const toggleFavorite = (deal) => {
 // Image Paste & Upload — Visual Search
 // ============================================================
 
-// Handle Ctrl+V paste — auto-searches immediately
+// Handle Ctrl+V paste — shows preview, user clicks Search to find products
 const handlePaste = async (event) => {
   const items = event.clipboardData?.items
   if (!items) return
@@ -664,10 +664,6 @@ const handlePaste = async (event) => {
       const file = item.getAsFile()
       if (file) {
         await previewImage(file)
-        // Auto-search immediately after paste
-        if (pastedImage.value) {
-          await processImageFile(pastedImage.value.file)
-        }
       }
       return
     }
@@ -710,16 +706,12 @@ const searchWithPastedImage = async () => {
   await processImageFile(pastedImage.value.file)
 }
 
-// Handle file input upload
+// Handle file input upload — shows preview, user clicks Search
 const handleImageUpload = async (event) => {
   const file = event.target.files?.[0]
   if (!file) return
   event.target.value = ''
   await previewImage(file)
-  // Auto-search immediately on file picker upload
-  if (pastedImage.value) {
-    await processImageFile(pastedImage.value.file)
-  }
 }
 
 // Core: send image to backend ML for analysis, then search Amazon directly
@@ -828,8 +820,14 @@ const setCategory = (category) => {
   }
 }
 
-// Handle search
+// Handle search — works for both text and image
 const handleSearch = async () => {
+  // If an image is attached, do visual search
+  if (pastedImage.value) {
+    await processImageFile(pastedImage.value.file)
+    return
+  }
+  
   if (!searchQuery.value.trim()) return
 
   // Check search limit for non-authenticated users
