@@ -47,6 +47,24 @@
             </button>
           </div>
           <div class="share-modal-body">
+            <!-- Share Options Toggles -->
+            <div class="share-options">
+              <label class="share-toggle">
+                <span class="toggle-label">Enable Product Links</span>
+                <span class="toggle-desc">Viewers can click items to shop</span>
+                <div class="toggle-switch" :class="{ active: shareWithLinks }" @click="shareWithLinks = !shareWithLinks; regenerateShareLink()">
+                  <div class="toggle-knob"></div>
+                </div>
+              </label>
+              <label class="share-toggle">
+                <span class="toggle-label">Show Price Tags</span>
+                <span class="toggle-desc">Display prices on each item</span>
+                <div class="toggle-switch" :class="{ active: shareWithPrices }" @click="shareWithPrices = !shareWithPrices; regenerateShareLink()">
+                  <div class="toggle-knob"></div>
+                </div>
+              </label>
+            </div>
+
             <div v-if="shareLoading" class="share-loading">
               <div class="spinner-small"></div>
               <span>Generating your share link...</span>
@@ -585,10 +603,10 @@ const canvasDecorations = ref([])
 const canvasStickers = ref([])
 
 const aspectRatios = [
-  { name: 'landscape', label: '16:9', width: 960, height: 540 },
-  { name: 'square', label: '1:1', width: 680, height: 680 },
-  { name: 'portrait', label: '4:5', width: 560, height: 700 },
-  { name: 'story', label: '9:16', width: 400, height: 710 },
+  { name: 'landscape', label: '16:9', width: 1100, height: 620 },
+  { name: 'square', label: '1:1', width: 780, height: 780 },
+  { name: 'portrait', label: '4:5', width: 640, height: 800 },
+  { name: 'story', label: '9:16', width: 460, height: 820 },
 ]
 
 // Classical Fonts
@@ -667,8 +685,8 @@ const layoutTemplates = [
 const selectedBackground = ref('ivory')
 const selectedBackgroundStyle = ref({ background: '#FFFFF0' })
 const selectedRatio = ref('landscape')
-const canvasWidth = ref(960)
-const canvasHeight = ref(540)
+const canvasWidth = ref(1100)
+const canvasHeight = ref(620)
 const canvasItems = ref([])
 const textElements = ref([])
 const selectedItem = ref(null)
@@ -1280,15 +1298,21 @@ const generateShareLink = async () => {
   linkCopied.value = false
   
   try {
-    // Prepare storyboard data
+    // Prepare storyboard data with share options
     const storyboardData = {
       background: selectedBackgroundStyle.value,
       aspectRatio: selectedRatio.value,
       canvasWidth: canvasWidth.value,
       canvasHeight: canvasHeight.value,
-      items: canvasItems.value,
+      items: canvasItems.value.map(item => ({
+        ...item,
+        productUrl: item.url || null,
+        productPrice: item.price || null
+      })),
       textElements: textElements.value,
-      stickers: canvasStickers.value
+      stickers: canvasStickers.value,
+      enableLinks: shareWithLinks.value,
+      showPrices: shareWithPrices.value
     }
     
     // Call backend API to create share link
@@ -1307,6 +1331,14 @@ const generateShareLink = async () => {
     showShareDropdown.value = false
   } finally {
     shareLoading.value = false
+  }
+}
+
+const regenerateShareLink = async () => {
+  // When toggle options change, regenerate the link
+  if (currentShareUrl.value) {
+    currentShareUrl.value = ''
+    await generateShareLink()
   }
 }
 
@@ -1340,6 +1372,8 @@ const showShareDropdown = ref(false)
 const shareLoading = ref(false)
 const currentShareUrl = ref('')
 const linkCopied = ref(false)
+const shareWithLinks = ref(true)
+const shareWithPrices = ref(true)
 
 const showNotification = (message) => {
   notification.value = { show: true, message }
@@ -1575,6 +1609,67 @@ onUnmounted(() => {
 
 .share-modal-body {
   padding: 1.5rem;
+}
+
+.share-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.share-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  cursor: pointer;
+}
+
+.toggle-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  flex: 1;
+}
+
+.toggle-desc {
+  width: 100%;
+  font-size: 0.7rem;
+  color: #999;
+  margin-top: -0.1rem;
+  order: 3;
+}
+
+.toggle-switch {
+  width: 40px;
+  height: 22px;
+  background: #d4d4d4;
+  border-radius: 11px;
+  position: relative;
+  transition: background 0.25s ease;
+  cursor: pointer;
+}
+
+.toggle-switch.active {
+  background: #1a1a1a;
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggle-switch.active .toggle-knob {
+  transform: translateX(18px);
 }
 
 .share-loading {
@@ -2042,15 +2137,16 @@ onUnmounted(() => {
 .canvas-item {
   position: absolute;
   background: transparent;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: hidden;
   cursor: move;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: none;
   border: none;
 }
 
 .canvas-item.selected {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  outline: 2px dashed rgba(0,0,0,0.3);
+  outline-offset: 2px;
 }
 
 .item-img {
@@ -2091,14 +2187,22 @@ onUnmounted(() => {
 
 .resize-handle {
   position: absolute;
-  bottom: 0;
-  right: 0;
+  bottom: 2px;
+  right: 2px;
   width: 16px;
   height: 16px;
-  background: #000;
+  background: transparent;
+  color: rgba(0,0,0,0.4);
   cursor: se-resize;
   opacity: 0;
   transition: opacity 0.2s;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+}
+
+.resize-handle::after {
+  content: '⤡';
 }
 
 .canvas-item:hover .resize-handle,

@@ -37,11 +37,16 @@
         }"
       >
         <!-- Canvas Items -->
-        <div 
+        <component
           v-for="item in storyboard.items" 
           :key="item.id"
+          :is="storyboard.enableLinks && item.productUrl ? 'a' : 'div'"
+          :href="storyboard.enableLinks && item.productUrl ? getProductLink(item) : undefined"
           class="canvas-item"
-          :class="item.frame ? 'frame-' + item.frame : ''"
+          :class="[
+            item.frame ? 'frame-' + item.frame : '',
+            { clickable: storyboard.enableLinks && item.productUrl }
+          ]"
           :style="{
             left: item.x + 'px',
             top: item.y + 'px',
@@ -53,7 +58,11 @@
         >
           <div v-if="item.showPin" class="item-pin"></div>
           <img :src="item.image_url" :alt="item.title" />
-        </div>
+          <!-- Price Tag Overlay -->
+          <span v-if="storyboard.showPrices && item.productPrice" class="price-tag">
+            ${{ formatPrice(item.productPrice) }}
+          </span>
+        </component>
 
         <!-- Text Elements -->
         <div 
@@ -115,14 +124,27 @@ const route = useRoute()
 const loading = ref(true)
 const error = ref(null)
 const storyboard = ref({
-  canvasWidth: 960,
-  canvasHeight: 540,
+  canvasWidth: 1100,
+  canvasHeight: 620,
   background: { background: '#ffffff' },
   items: [],
-  textElements: []
+  textElements: [],
+  enableLinks: false,
+  showPrices: false
 })
 const owner = ref('')
 const viewCount = ref(0)
+
+const formatPrice = (price) => {
+  if (!price) return '0.00'
+  return parseFloat(price).toFixed(2)
+}
+
+const getProductLink = (item) => {
+  // Navigate to in-app product detail page
+  const productId = item.id || encodeURIComponent((item.title || '').substring(0, 30))
+  return `/product/${productId}`
+}
 
 onMounted(async () => {
   const token = route.params.token
@@ -140,11 +162,31 @@ onMounted(async () => {
     
     // Load the storyboard data
     storyboard.value = {
-      canvasWidth: data.storyboard_data.canvasWidth || 960,
-      canvasHeight: data.storyboard_data.canvasHeight || 540,
+      canvasWidth: data.storyboard_data.canvasWidth || 1100,
+      canvasHeight: data.storyboard_data.canvasHeight || 620,
       background: data.storyboard_data.background || { background: '#ffffff' },
       items: data.storyboard_data.items || [],
-      textElements: data.storyboard_data.textElements || []
+      textElements: data.storyboard_data.textElements || [],
+      stickers: data.storyboard_data.stickers || [],
+      enableLinks: data.storyboard_data.enableLinks || false,
+      showPrices: data.storyboard_data.showPrices || false
+    }
+    
+    // Store product data in localStorage for items with links
+    if (storyboard.value.enableLinks) {
+      storyboard.value.items.forEach(item => {
+        if (item.productUrl) {
+          const productId = item.id || encodeURIComponent((item.title || '').substring(0, 30))
+          sessionStorage.setItem(`fyndaProduct_${productId}`, JSON.stringify({
+            id: item.id,
+            title: item.title,
+            price: item.productPrice || item.price,
+            image_url: item.image_url,
+            url: item.productUrl || item.url,
+            source: 'Fashion Board'
+          }))
+        }
+      })
     }
     
     owner.value = data.owner || 'Anonymous'
@@ -297,15 +339,44 @@ onMounted(async () => {
 
 .canvas-item {
   position: absolute;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: none;
+  border: none;
+  display: block;
+  text-decoration: none;
+}
+
+.canvas-item.clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.canvas-item.clickable:hover {
+  transform: scale(1.02);
+  z-index: 999 !important;
 }
 
 .canvas-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Price Tag Overlay */
+.price-tag {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
 }
 
 .text-element {
@@ -456,6 +527,7 @@ onMounted(async () => {
   .shared-canvas {
     max-width: 100%;
     height: auto !important;
+    transform: scale(1);
   }
 }
 </style>
