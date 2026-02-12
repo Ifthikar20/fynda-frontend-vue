@@ -416,9 +416,15 @@ const fetchProduct = async (id) => {
   try {
     // Check if product data was passed from an explore/category page
     const storedProduct = localStorage.getItem('fyndaViewProduct')
-    if (storedProduct) {
-      const parsed = JSON.parse(storedProduct)
+    // Also check sessionStorage (persists when navigating between pages like Compare)
+    const sessionProduct = sessionStorage.getItem(`fyndaProduct_${id}`)
+    const productData = storedProduct || sessionProduct
+
+    if (productData) {
+      const parsed = JSON.parse(productData)
+      // Remove from localStorage (one-time transfer) but keep in sessionStorage
       localStorage.removeItem('fyndaViewProduct')
+      sessionStorage.setItem(`fyndaProduct_${id}`, JSON.stringify(parsed))
 
       product.value = {
         id: parsed.id || id,
@@ -614,8 +620,9 @@ onMounted(() => {
 .product-image {
   width: 100%;
   height: auto;
+  max-height: 600px;
   border-radius: 12px;
-  object-fit: cover;
+  object-fit: contain;
   transition: transform 0.3s ease;
   position: relative;
   z-index: 1;
