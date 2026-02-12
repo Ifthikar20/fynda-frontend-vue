@@ -31,6 +31,17 @@
             </button>
             <button class="search-submit" @click="searchProducts">Search</button>
           </div>
+
+          <!-- Suggestion Chips -->
+          <div v-if="currentSuggestions.length" class="suggestion-chips">
+            <span class="try-label">Try:</span>
+            <button 
+              v-for="(sug, i) in currentSuggestions" 
+              :key="i" 
+              class="chip"
+              @click="searchQuery = sug; searchProducts()"
+            >{{ sug }}</button>
+          </div>
         </div>
       </section>
 
@@ -237,7 +248,13 @@ const categoryConfig = {
   'all-products': {
     title: 'All Products',
     subtitle: 'Discover trending fashion and deals from everywhere.',
-    query: 'trending fashion clothing shoes accessories',
+    query: 'women men fashion outfit trending',
+    suggestions: [
+      'Pineapple design dress',
+      'White sneakers with golden stripes under $100',
+      'Designer bag in Maroon',
+      "Men's winter jacket with hood"
+    ],
     editorsPicks: [
       { id: 1, title: 'Y2K Aesthetic', query: 'Y2K aesthetic outfit', image: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=600&q=80' },
       { id: 2, title: 'Vintage Finds', query: 'vintage leather jacket', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80' },
@@ -261,6 +278,7 @@ const pageTitle = computed(() => currentConfig.value.title)
 const pageSubtitle = computed(() => currentConfig.value.subtitle)
 const editorsPicks = computed(() => currentConfig.value.editorsPicks)
 const featuredProducts = computed(() => currentConfig.value.featured)
+const currentSuggestions = computed(() => currentConfig.value.suggestions || [])
 
 // Category prefix for scoping searches
 const categoryPrefix = computed(() => {
@@ -308,7 +326,14 @@ const fetchProducts = async (query) => {
     const data = await response.json()
     const products = data?.data?.products || []
     
-    deals.value = products.map((p, idx) => ({
+    // Filter out non-fashion junk
+    const junkWords = ['doll', 'toy', 'pet ', 'dog ', 'cat ', 'phone case', 'tablet', 'charger', 'cable', 'battery', 'kitchen', 'utensil', 'food', 'vitamin', 'supplement', 'garden', 'tool', 'hardware', 'car ', 'vehicle', 'fishing', 'camping stove']
+    const filtered = products.filter(p => {
+      const title = (p.product_title || '').toLowerCase()
+      return !junkWords.some(w => title.includes(w))
+    })
+    
+    deals.value = filtered.map((p, idx) => ({
       id: p.asin || idx,
       title: p.product_title,
       price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
@@ -486,6 +511,38 @@ watch(() => route.params.category, () => {
 
 .search-submit:hover {
   background: #333;
+}
+
+.suggestion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.try-label {
+  font-size: 0.8rem;
+  color: #999;
+  font-weight: 500;
+}
+
+.chip {
+  padding: 0.35rem 0.85rem;
+  background: #f5f5f5;
+  border: 1px solid #e5e5e5;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.chip:hover {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
 }
 
 .landing-title {
