@@ -169,9 +169,9 @@
             v-for="texture in textures" 
             :key="texture.id"
             class="texture-card"
-            :class="{ active: selectedBackground === texture.id }"
+            :class="{ active: selectedTexture === texture.id }"
             :style="texture.style"
-            @click="selectBackground(texture)"
+            @click="selectTexture(texture)"
           >
             <span class="texture-name">{{ texture.name }}</span>
           </div>
@@ -693,6 +693,8 @@ const selectedItem = ref(null)
 const searchQuery = ref('')
 const products = ref([])
 const loading = ref(false)
+const selectedTexture = ref(null)
+const selectedTextureStyle = ref({})
 
 // Text tool state
 const selectedFont = ref(classicalFonts[0].value)
@@ -707,12 +709,30 @@ let resizingItem = null
 let draggingItem = null
 let draggingTextItem = null
 
-// Computed
-const canvasStyle = computed(() => ({
-  ...selectedBackgroundStyle.value,
-  width: canvasWidth.value + 'px',
-  height: canvasHeight.value + 'px',
-}))
+// Computed — layer texture on top of background color
+const canvasStyle = computed(() => {
+  const base = { ...selectedBackgroundStyle.value }
+  const tex = selectedTextureStyle.value
+  
+  // If a texture is active, overlay its backgroundImage on the current color
+  if (tex.backgroundImage) {
+    // Keep the chosen color as backgroundColor, layer texture on top
+    const bgColor = base.background || '#FFFFF0'
+    return {
+      backgroundColor: bgColor,
+      backgroundImage: tex.backgroundImage,
+      backgroundSize: tex.backgroundSize || 'auto',
+      width: canvasWidth.value + 'px',
+      height: canvasHeight.value + 'px',
+    }
+  }
+  
+  return {
+    ...base,
+    width: canvasWidth.value + 'px',
+    height: canvasHeight.value + 'px',
+  }
+})
 
 // Methods
 const formatPrice = (price) => {
@@ -729,6 +749,17 @@ const selectBackground = (bg) => {
   } else if (bg.value) {
     selectedBackgroundStyle.value = { background: bg.value }
   }
+}
+
+const selectTexture = (texture) => {
+  // Toggle off if same texture clicked again
+  if (selectedTexture.value === texture.id) {
+    selectedTexture.value = null
+    selectedTextureStyle.value = {}
+    return
+  }
+  selectedTexture.value = texture.id
+  selectedTextureStyle.value = texture.style || {}
 }
 
 const setAspectRatio = (ratio) => {
