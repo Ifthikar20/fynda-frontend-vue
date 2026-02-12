@@ -111,7 +111,8 @@ let isTypingPaused = false
 const typingPhrases = {
   'for-him': ['sneakers', 'winter jackets', 'slim fit jeans', 'watches', 'hoodies', 'blazers', 'leather boots'],
   'for-her': ['summer dresses', 'handbags', 'heels', 'silk tops', 'gold jewelry', 'maxi skirts', 'cashmere sweaters'],
-  'both': ['sneakers', 'oversized hoodies', 'tote bags', 'sunglasses', 'joggers', 'denim jackets']
+  'both': ['sneakers', 'oversized hoodies', 'tote bags', 'sunglasses', 'joggers', 'denim jackets'],
+  'all-products': ['vintage leather jacket', 'Y2K aesthetic outfit', 'floral maxi dress', 'running shoes', 'crossbody bag', 'gold hoop earrings', 'oversized blazer']
 }
 
 const startTypingAnimation = () => {
@@ -231,6 +232,22 @@ const categoryConfig = {
       { id: 'f2', title: 'Cargo Joggers — Black', price: '52', source: 'Nike', image_url: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&q=80' },
       { id: 'f3', title: 'Canvas Tote Bag — Natural', price: '28', source: 'Madewell', image_url: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&q=80' },
       { id: 'f4', title: 'Retro Running Shoes', price: '95', source: 'New Balance', image_url: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80' },
+    ]
+  },
+  'all-products': {
+    title: 'All Products',
+    subtitle: 'Discover trending fashion and deals from everywhere.',
+    query: 'trending fashion clothing shoes accessories',
+    editorsPicks: [
+      { id: 1, title: 'Y2K Aesthetic', query: 'Y2K aesthetic outfit', image: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=600&q=80' },
+      { id: 2, title: 'Vintage Finds', query: 'vintage leather jacket', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80' },
+      { id: 3, title: 'Beach Wedding', query: 'floral maxi dress beach wedding', image: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80' }
+    ],
+    featured: [
+      { id: 'f1', title: 'Vintage Leather Crossbody Bag', price: '89', source: 'Fashion', image_url: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&q=80' },
+      { id: 'f2', title: 'Y2K Butterfly Crop Top', price: '32', source: 'Trending', image_url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80' },
+      { id: 'f3', title: 'Running Shoes with Arch Support', price: '120', source: 'Nike', image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80' },
+      { id: 'f4', title: 'Gold Hoop Earrings — 14K', price: '45', source: 'Jewelry', image_url: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&q=80' },
     ]
   }
 }
