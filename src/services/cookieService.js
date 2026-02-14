@@ -296,9 +296,15 @@ const disableMarketing = () => {
 export const trackEvent = (eventName, eventData = {}) => {
     if (!isAllowed('analytics')) return
 
+    // Merge UTM data if present in session
+    let utmData = {}
+    try {
+        utmData = JSON.parse(sessionStorage.getItem('fynda_utm') || '{}')
+    } catch { /* ignore */ }
+
     const event = {
         name: eventName,
-        data: eventData,
+        data: { ...eventData, ...utmData },
         timestamp: new Date().toISOString(),
         page: window.location.pathname
     }

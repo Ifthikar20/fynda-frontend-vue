@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { captureUtm } from '../services/utmService'
 import HomePage from '../components/HomePage.vue'
 import LoginPage from '../components/LoginPage.vue'
 import RegisterPage from '../components/RegisterPage.vue'
@@ -185,6 +186,9 @@ const router = createRouter({
 
 // Navigation guards
 router.beforeEach((to, from, next) => {
+    // Capture UTM parameters (runs silently, no redirects)
+    captureUtm(to.query, to.path)
+
     const requiresAuth = to.meta.requiresAuth
     const guestOnly = to.meta.guest
     const loggedIn = isAuthenticated()
