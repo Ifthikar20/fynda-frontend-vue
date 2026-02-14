@@ -103,6 +103,7 @@
         <span class="footer-text">Created with <strong>Fynda</strong> Fashion Board</span>
         <router-link to="/register" class="create-btn">Create Your Own — Free</router-link>
       </footer>
+    </main>
   </div>
 </template>
 

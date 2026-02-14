@@ -438,36 +438,67 @@
       <aside class="products-panel">
         <h3 class="panel-title">Add Products</h3>
         
-        <div class="search-box">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="m21 21-4.35-4.35"/>
-          </svg>
-          <input 
-            type="text" 
-            v-model="searchQuery"
-            @keyup.enter="searchProducts"
-            placeholder="Search products..."
-          />
+        <!-- Closet / Search Tabs -->
+        <div class="pp-tabs">
+          <button class="pp-tab" :class="{ active: productsTab === 'closet' }" @click="productsTab = 'closet'; loadClosetItems()">Closet</button>
+          <button class="pp-tab" :class="{ active: productsTab === 'search' }" @click="productsTab = 'search'">Search</button>
         </div>
 
-        <div v-if="loading" class="loading-state">
-          <div class="spinner"></div>
-        </div>
-
-        <div v-else class="products-grid">
-          <div 
-            v-for="product in products" 
-            :key="product.id"
-            class="product-card"
-            draggable="true"
-            @dragstart="handleDragStart($event, product)"
-            @click="addToCanvas(product)"
-          >
-            <img :src="product.image_url" :alt="product.title" />
-            <span class="product-price">${{ formatPrice(product.price) }}</span>
+        <!-- CLOSET TAB -->
+        <template v-if="productsTab === 'closet'">
+          <div v-if="closetItems.length === 0" class="pp-empty">
+            <p>Your closet is empty</p>
+            <router-link to="/closet" class="pp-link">Go to Closet</router-link>
           </div>
-        </div>
+          <div v-else class="products-grid">
+            <div 
+              v-for="item in closetItems" 
+              :key="'closet-' + item.id"
+              class="product-card"
+              draggable="true"
+              @dragstart="handleDragStart($event, item)"
+              @click="addToCanvas(item)"
+              :title="item.title"
+            >
+              <img :src="item.image_url" :alt="item.title" />
+              <span v-if="item.price" class="product-price">${{ formatPrice(item.price) }}</span>
+            </div>
+          </div>
+        </template>
+
+        <!-- SEARCH TAB -->
+        <template v-if="productsTab === 'search'">
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input 
+              type="text" 
+              v-model="searchQuery"
+              @keyup.enter="searchProducts"
+              placeholder="Search products..."
+            />
+          </div>
+
+          <div v-if="loading" class="loading-state">
+            <div class="spinner"></div>
+          </div>
+
+          <div v-else class="products-grid">
+            <div 
+              v-for="product in products" 
+              :key="product.id"
+              class="product-card"
+              draggable="true"
+              @dragstart="handleDragStart($event, product)"
+              @click="addToCanvas(product)"
+            >
+              <img :src="product.image_url" :alt="product.title" />
+              <span class="product-price">${{ formatPrice(product.price) }}</span>
+            </div>
+          </div>
+        </template>
       </aside>
     </main>
     
@@ -766,6 +797,18 @@ const selectedItem = ref(null)
 const searchQuery = ref('')
 const products = ref([])
 const loading = ref(false)
+
+// Products panel tabs
+const productsTab = ref('closet')
+const closetItems = ref([])
+
+const loadClosetItems = () => {
+  try {
+    closetItems.value = JSON.parse(localStorage.getItem('fyndaCloset') || '[]')
+  } catch (e) {
+    closetItems.value = []
+  }
+}
 const selectedTexture = ref(null)
 const selectedTextureStyle = ref({})
 
@@ -1661,6 +1704,7 @@ const loadSharedStoryboard = () => {
 
 // Init
 onMounted(() => {
+  loadClosetItems()
   searchQuery.value = 'fashion'
   searchProducts()
   
@@ -2026,7 +2070,7 @@ onUnmounted(() => {
 /* Main Layout */
 .main-content {
   display: grid;
-  grid-template-columns: 230px 1fr 190px;
+  grid-template-columns: 230px 1fr 280px;
   gap: 0.75rem;
   padding: 0.75rem;
   height: calc(100vh - 60px);
@@ -3171,6 +3215,54 @@ onUnmounted(() => {
 .products-panel {
   max-height: calc(100vh - 80px);
   overflow-y: auto;
+}
+
+/* Products Panel Tabs */
+.pp-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 0.75rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.pp-tab {
+  flex: 1;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pp-tab.active {
+  background: #fff;
+  color: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.pp-empty {
+  text-align: center;
+  padding: 2rem 0.5rem;
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.pp-empty p {
+  margin: 0 0 0.5rem;
+}
+
+.pp-link {
+  font-size: 0.75rem;
+  color: #1a1a1a;
+  font-weight: 500;
+  text-decoration: underline;
 }
 
 /* Scrollbar Styling */
