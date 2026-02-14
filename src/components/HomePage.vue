@@ -933,38 +933,61 @@ const isFashionOrBeauty = (deal) => {
   return true
 }
 
-// Load trending deals — fashion & beauty focused
+// Load trending deals — fashion & beauty focused (via Amazon RapidAPI)
 const loadTrending = async () => {
   try {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
-    
-    // Fetch multiple fashion-specific queries in parallel
     const fashionQueries = [
       'women dress', 'sneakers', 'designer handbag', 'men jacket',
-      'skincare', 'lipstick makeup', 'sunglasses', 'jewelry',
-      'heels shoes', 'denim jeans', 'blazer', 'silk scarf'
+      'skincare set', 'lipstick makeup', 'sunglasses fashion', 'jewelry gold',
+      'heels shoes women', 'denim jeans', 'blazer men', 'silk scarf'
     ]
     
-    // Pick 4 random queries for more variety
+    // Pick 3 random queries for variety
     const shuffled = fashionQueries.sort(() => 0.5 - Math.random())
-    const selected = shuffled.slice(0, 4)
+    const selected = shuffled.slice(0, 3)
     
     const responses = await Promise.allSettled(
-      selected.map(q => 
-        fetch(`${apiUrl}/api/search/?q=${encodeURIComponent(q)}&limit=15`).then(r => r.json())
+      selected.map(q =>
+        fetch(
+          `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(q)}&page=1&country=US`,
+          {
+            headers: {
+              'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
+              'x-rapidapi-key': '8b4defb9f1msh2f2a139618fa11ep1a3ca8jsn88f8d4935e04'
+            }
+          }
+        ).then(r => r.json())
       )
     )
     
-    // Combine and deduplicate
+    // Combine, map, and deduplicate
     const allDeals = []
     const seenIds = new Set()
     
     for (const res of responses) {
-      if (res.status === 'fulfilled' && res.value?.deals) {
-        for (const deal of res.value.deals) {
-          if (!seenIds.has(deal.id) && isFashionOrBeauty(deal)) {
-            seenIds.add(deal.id)
-            allDeals.push(deal)
+      if (res.status === 'fulfilled') {
+        const products = res.value?.data?.products || []
+        for (const p of products) {
+          const id = p.asin || p.product_title
+          if (!seenIds.has(id) && p.product_photo && isFashionOrBeauty({ title: p.product_title, image_url: p.product_photo })) {
+            seenIds.add(id)
+            allDeals.push({
+              id: id,
+              title: p.product_title,
+              price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
+              original_price: p.product_original_price ? p.product_original_price.replace(/[^0-9.]/g, '') : null,
+              image_url: p.product_photo,
+              source: 'Amazon',
+              merchant_name: 'Amazon',
+              url: p.product_url,
+              rating: p.product_star_rating,
+              reviews: p.product_num_ratings,
+              is_prime: p.is_prime,
+              badge: p.product_badge || (p.is_best_seller ? 'Best Seller' : (p.is_amazon_choice ? 'Amazon Choice' : null)),
+              discount_percent: p.product_original_price && p.product_price
+                ? Math.round(((parseFloat(p.product_original_price.replace(/[^0-9.]/g, '')) - parseFloat(p.product_price.replace(/[^0-9.]/g, ''))) / parseFloat(p.product_original_price.replace(/[^0-9.]/g, ''))) * 100)
+                : null
+            })
           }
         }
       }
