@@ -246,8 +246,8 @@ const categoryConfig = {
     ]
   },
   'all-products': {
-    title: 'All Products',
-    subtitle: 'Discover trending fashion and deals from everywhere.',
+    title: 'All Brands, All Clothes',
+    subtitle: 'Search across hundreds of brands. Find the best deals.',
     query: 'women men fashion outfit trending',
     suggestions: [
       'Pineapple design dress',

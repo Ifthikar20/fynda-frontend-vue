@@ -6,7 +6,7 @@
       <!-- Hero Section -->
       <section class="hero-section">
         <h1 class="hero-title">{{ categoryTitle }}</h1>
-        <p class="hero-subtitle">Discover trending fashion and deals from everywhere</p>
+        <p class="hero-subtitle">Search across hundreds of brands. Find the best deals.</p>
         
         <!-- AI-Style Search Box -->
         <div class="ai-search-container">
@@ -428,7 +428,7 @@ let promptInterval = null
 
 // Category titles
 const categoryTitles = {
-  all: 'All Products',
+  all: 'All Brands, All Clothes',
   women: 'Women\'s Fashion',
   men: 'Men\'s Fashion',
   home: 'Home & Living',
