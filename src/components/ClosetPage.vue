@@ -65,17 +65,14 @@
               <span class="item-price">${{ formatPrice(item.price) }}</span>
             </div>
             <div class="item-actions">
-              <button class="btn-shadcn" :class="isWishlisted(item.id) ? 'btn-default' : 'btn-outline'" @click.stop="toggleWishlist(item.id)">
-                {{ isWishlisted(item.id) ? 'Saved' : 'Save' }}
-              </button>
               <button class="btn-shadcn btn-outline" @click.stop="moveToFashionBoard(item)">
-                Board
+                Fashion Board
               </button>
               <button class="btn-shadcn btn-outline" @click.stop="openDatePicker(item)">
                 Plan
               </button>
-              <button class="btn-shadcn btn-ghost-danger" @click.stop="removeFromCloset(item.id)">
-                Remove
+              <button class="btn-shadcn btn-ghost-danger" @click.stop="removeFromCloset(item.id)" title="Remove">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               </button>
             </div>
           </div>
@@ -161,8 +158,8 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="#999"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
             </button>
             <div v-if="sectionMenuId === sec.id" class="section-dropdown">
-              <button @click.stop="renameSection(sec)">Rename</button>
-              <button @click.stop="deleteSection(sec.id)" class="danger">Delete</button>
+              <button class="btn-shadcn btn-outline sdrop-btn" @click.stop="renameSection(sec)">Rename</button>
+              <button class="btn-shadcn btn-ghost-danger sdrop-btn" @click.stop="deleteSection(sec.id)">Delete</button>
             </div>
           </div>
           <!-- Create Section Card -->
@@ -191,16 +188,16 @@
                     <span class="sdm-item-title">{{ item.title }}</span>
                     <span class="sdm-item-price">${{ formatPrice(item.price) }}</span>
                   </div>
-                  <button v-if="viewingSection" class="sdm-remove" @click="removeFromSection(viewingSection.id, item.id)">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <button v-if="viewingSection" class="btn-shadcn btn-ghost-danger" style="width:28px;height:28px;padding:0;" @click="removeFromSection(viewingSection.id, item.id)" title="Remove">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                   </button>
                 </div>
                 <div v-if="sectionDetailItems.length === 0" class="sdm-empty">No items in this section</div>
               </div>
               <!-- Add items to section -->
               <div v-if="viewingSection" class="sdm-add-bar">
-                <button class="sdm-add-btn" @click="showAddToSection = !showAddToSection">
-                  {{ showAddToSection ? 'Done' : '+ Add Items' }}
+                <button class="btn-shadcn btn-outline" @click="showAddToSection = !showAddToSection">
+                  {{ showAddToSection ? 'Done' : 'Add Items' }}
                 </button>
               </div>
               <div v-if="showAddToSection && viewingSection" class="sdm-picker">
@@ -624,6 +621,7 @@ watch(wishlistIds, (ids) => {
   background: transparent; color: #a1a1aa; border-color: transparent;
 }
 .btn-ghost-danger:hover { background: #fef2f2; color: #dc2626; }
+.sdrop-btn { width: 100%; justify-content: flex-start; }
 
 /* ========== CALENDAR ========== */
 .cal-header { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 1.5rem; }
