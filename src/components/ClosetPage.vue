@@ -107,24 +107,7 @@
             </div>
           </div>
         </div>
-        <!-- Stats Bar -->
-        <div class="cal-stats">
-          <div class="stat-item">
-            <span class="stat-label">OOTD</span>
-            <span class="stat-value">{{ calOotdCount }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Most Worn</span>
-            <span class="stat-value stat-icon">
-              <img v-if="calMostWorn" :src="calMostWorn.image_url" class="stat-thumb" />
-              <span v-else>—</span>
-            </span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Expenses</span>
-            <span class="stat-value">${{ calTotalExpenses }}</span>
-          </div>
-        </div>
+
       </div>
 
       <!-- ==================== SECTIONS TAB ==================== -->
