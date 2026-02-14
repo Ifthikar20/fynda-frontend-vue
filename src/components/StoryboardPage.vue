@@ -199,12 +199,11 @@
             v-for="swatch in stickers.filter(s => s.type === 'fabric')" 
             :key="swatch.id"
             class="swatch-card"
-            :class="'texture-' + swatch.texture"
-            :style="{ backgroundColor: swatch.color }"
+            :style="{ backgroundImage: 'url(' + swatch.image + ')', backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: swatch.color }"
             :title="swatch.name"
             @click="addSwatch(swatch)"
           >
-            <div class="swatch-edge"></div>
+            <span class="swatch-label">{{ swatch.name }}</span>
           </div>
         </div>
         
@@ -348,7 +347,6 @@
             class="canvas-swatch"
             :class="[
               { selected: selectedItem === swatch.id },
-              swatch.type === 'fabric' ? 'texture-' + swatch.texture : '',
               swatch.type === 'pantone' ? 'pantone-swatch' : ''
             ]"
             :style="{
@@ -357,6 +355,9 @@
               width: swatch.width + 'px',
               height: swatch.height + 'px',
               backgroundColor: swatch.color,
+              backgroundImage: swatch.image ? 'url(' + swatch.image + ')' : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
               zIndex: swatch.zIndex,
               transform: `rotate(${swatch.rotation || 0}deg)`
             }"
@@ -581,13 +582,15 @@ const selectedFrame = ref('none')
 
 // Fabric swatches and Pantone color chips for mood boards
 const stickers = ref([
-  // Fabric Swatches with realistic textures
-  { id: 'f1', type: 'fabric', name: 'Linen Natural', color: '#e8e0d5', texture: 'linen' },
-  { id: 'f2', type: 'fabric', name: 'Denim Blue', color: '#4a6fa5', texture: 'denim' },
-  { id: 'f3', type: 'fabric', name: 'Tweed Gray', color: '#6b7280', texture: 'tweed' },
-  { id: 'f4', type: 'fabric', name: 'Silk Cream', color: '#faf6f0', texture: 'silk' },
-  { id: 'f5', type: 'fabric', name: 'Velvet Navy', color: '#1e3a5f', texture: 'velvet' },
-  { id: 'f6', type: 'fabric', name: 'Wool Camel', color: '#c9a86c', texture: 'wool' },
+  // Fabric Swatches with real texture photos
+  { id: 'f1', type: 'fabric', name: 'Linen Natural', color: '#e8e0d5', texture: 'linen', image: 'https://images.unsplash.com/photo-1528459105426-b9548367069b?w=200&q=80&fit=crop' },
+  { id: 'f2', type: 'fabric', name: 'Denim Blue', color: '#4a6fa5', texture: 'denim', image: 'https://images.unsplash.com/photo-1565084888279-aca607ecce0c?w=200&q=80&fit=crop' },
+  { id: 'f3', type: 'fabric', name: 'Tweed Gray', color: '#6b7280', texture: 'tweed', image: 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=200&q=80&fit=crop' },
+  { id: 'f4', type: 'fabric', name: 'Silk Cream', color: '#faf6f0', texture: 'silk', image: 'https://images.unsplash.com/photo-1553531384-397c80973a0b?w=200&q=80&fit=crop' },
+  { id: 'f5', type: 'fabric', name: 'Velvet Navy', color: '#1e3a5f', texture: 'velvet', image: 'https://images.unsplash.com/photo-1618220048045-10a6dbdf83e0?w=200&q=80&fit=crop' },
+  { id: 'f6', type: 'fabric', name: 'Wool Camel', color: '#c9a86c', texture: 'wool', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=200&q=80&fit=crop' },
+  { id: 'f7', type: 'fabric', name: 'Leather Brown', color: '#8B4513', texture: 'leather', image: 'https://images.unsplash.com/photo-1531310197839-ccf54634509e?w=200&q=80&fit=crop' },
+  { id: 'f8', type: 'fabric', name: 'Cotton White', color: '#f5f5f5', texture: 'cotton', image: 'https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?w=200&q=80&fit=crop' },
   // Pantone Color Chips
   { id: 'p1', type: 'pantone', name: 'Cool Gray', color: '#8b8b8b', code: '423 C' },
   { id: 'p2', type: 'pantone', name: 'Coral', color: '#ff6f61', code: '16-1546' },
@@ -1095,6 +1098,7 @@ const addSwatch = (swatch) => {
     name: swatch.name,
     color: swatch.color,
     texture: swatch.texture,
+    image: swatch.image,
     x: centerX + Math.random() * 100 - 50,
     y: centerY + Math.random() * 100 - 50,
     width: 80,
@@ -2204,58 +2208,32 @@ onUnmounted(() => {
 
 .swatch-card {
   position: relative;
-  height: 45px;
-  border-radius: 2px;
+  height: 55px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
 }
 
 .swatch-card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transform: scale(1.08);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.25);
 }
 
-/* Pinking shears edge effect */
-.swatch-edge {
-  position: absolute;
-  right: -2px;
-  top: 0;
-  bottom: 0;
-  width: 6px;
-  background: inherit;
-  clip-path: polygon(
-    0% 0%, 100% 5%, 0% 10%, 100% 15%, 0% 20%, 100% 25%, 
-    0% 30%, 100% 35%, 0% 40%, 100% 45%, 0% 50%, 100% 55%,
-    0% 60%, 100% 65%, 0% 70%, 100% 75%, 0% 80%, 100% 85%,
-    0% 90%, 100% 95%, 0% 100%
-  );
-}
-
-/* Fabric Textures */
-.texture-linen {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23000' fill-opacity='0.08' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
-}
-
-.texture-denim {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23fff' fill-opacity='0.12' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
-}
-
-.texture-tweed {
-  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff' fill-opacity='0.15' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
-}
-
-.texture-silk {
-  background-image: linear-gradient(135deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.2) 75%, transparent 75%, transparent);
-  background-size: 4px 4px;
-}
-
-.texture-velvet {
-  background-image: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(0,0,0,0.1) 100%);
-}
-
-.texture-wool {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cg fill='%23000' fill-opacity='0.08'%3E%3Cpath d='M0 0h4v4H0V0zm4 4h4v4H4V4z'/%3E%3C/g%3E%3C/svg%3E");
+.swatch-label {
+  display: block;
+  width: 100%;
+  padding: 2px 4px;
+  font-size: 8px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(transparent, rgba(0,0,0,0.6));
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 /* Pantone Color Chips Grid */
