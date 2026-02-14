@@ -209,8 +209,22 @@
         </div>
         
         <!-- Pantone Color Chips -->
-        <h3 class="panel-title mt">Color Chips</h3>
+        <h3 class="panel-title mt">{{ boardColors.length > 0 ? 'Board Colors' : 'Color Chips' }}</h3>
         <div class="pantone-grid">
+          <!-- Dynamic colors extracted from board images -->
+          <div 
+            v-for="chip in boardColors" 
+            :key="chip.id"
+            class="pantone-card board-color"
+            :title="chip.name"
+            @click="addPantone(chip)"
+          >
+            <div class="pantone-color" :style="{ backgroundColor: chip.color }"></div>
+            <div class="pantone-label">
+              <span class="pantone-code">{{ chip.code }}</span>
+            </div>
+          </div>
+          <!-- Static pantone chips -->
           <div 
             v-for="chip in stickers.filter(s => s.type === 'pantone')" 
             :key="chip.id"
@@ -273,9 +287,9 @@
             <img :src="item.image_url" :alt="item.title" class="item-img" draggable="false" />
             <span class="item-remove" @mousedown.stop @click="removeItem(item.id)">×</span>
             <div class="resize-handle" @mousedown.stop="startResize($event, item)"></div>
-            <!-- Remove Background Button -->
+            <!-- Remove Background Button (hidden after bg already removed) -->
             <button
-              v-if="selectedItem === item.id && !item.removingBg"
+              v-if="selectedItem === item.id && !item.removingBg && !item.bgRemoved"
               class="remove-bg-btn"
               @mousedown.stop
               @click.stop="removeBackground(item)"
@@ -811,28 +825,39 @@ const searchProducts = async () => {
   if (!searchQuery.value.trim()) return
   loading.value = true
   try {
-    const response = await api.get(`/api/search/?q=${encodeURIComponent(searchQuery.value)}&limit=12`)
-    products.value = response.data.deals || []
+    const response = await fetch(
+      `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(searchQuery.value)}&page=1&country=US`,
+      {
+        headers: {
+          'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
+          'x-rapidapi-key': '8b4defb9f1msh2f2a139618fa11ep1a3ca8jsn88f8d4935e04'
+        }
+      }
+    )
+    const data = await response.json()
+    const items = data?.data?.products || []
+    products.value = items.slice(0, 12).map((p, idx) => ({
+      id: p.asin || idx,
+      title: p.product_title,
+      price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
+      image_url: p.product_photo,
+      source: 'Amazon',
+      url: p.product_url
+    }))
   } catch (error) {
-    products.value = getMockProducts()
+    console.error('Product search failed:', error)
+    products.value = []
   } finally {
     loading.value = false
   }
 }
 
-const getMockProducts = () => [
-  { id: 1, title: 'Classic Shirt', price: 45.99, image_url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=200&q=80' },
-  { id: 2, title: 'Denim Jeans', price: 89.00, image_url: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=200&q=80' },
-  { id: 3, title: 'White Sneakers', price: 120.00, image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200&q=80' },
-  { id: 4, title: 'Leather Bag', price: 295.00, image_url: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=200&q=80' },
-]
-
-// Canvas operations
+// Canvas operations — products appear at 200px for visibility
 const addToCanvas = (product) => {
   const canvas = canvasRef.value
   if (!canvas) return
   
-  const size = 120
+  const size = 200
   const x = Math.random() * (canvasWidth.value - size - 20) + 10
   const y = Math.random() * (canvasHeight.value - size - 20) + 10
   
@@ -844,6 +869,9 @@ const addToCanvas = (product) => {
     height: size,
     zIndex: canvasItems.value.length + 1
   })
+  
+  // Re-extract board colors when new image is added
+  setTimeout(() => extractColorsFromImages(), 500)
 }
 
 const handleDragStart = (e, product) => {
@@ -859,12 +887,15 @@ const handleDrop = (e) => {
     canvasItems.value.push({
       ...product,
       id: Date.now() + Math.random(),
-      x: e.clientX - rect.left - 60,
-      y: e.clientY - rect.top - 60,
-      width: 120,
-      height: 120,
+      x: e.clientX - rect.left - 100,
+      y: e.clientY - rect.top - 100,
+      width: 200,
+      height: 200,
       zIndex: canvasItems.value.length + 1
     })
+    
+    // Re-extract board colors when new image is dropped
+    setTimeout(() => extractColorsFromImages(), 500)
   } catch (err) {}
 }
 
@@ -928,6 +959,8 @@ const stopResize = () => {
 const removeItem = (id) => {
   canvasItems.value = canvasItems.value.filter(i => i.id !== id)
   if (selectedItem.value === id) selectedItem.value = null
+  // Re-extract board colors after removing an image
+  setTimeout(() => extractColorsFromImages(), 300)
 }
 
 // Image Upload Handler
@@ -966,6 +999,9 @@ const handleImageUpload = (event) => {
         height,
         zIndex: canvasItems.value.length + textElements.value.length + 1
       })
+      
+      // Re-extract board colors when new image is uploaded
+      setTimeout(() => extractColorsFromImages(), 500)
     }
     img.src = e.target.result
   }
@@ -1142,6 +1178,7 @@ const removeBackground = async (item) => {
     reader.onload = (e) => {
       item.image_url = e.target.result
       item.removingBg = false
+      item.bgRemoved = true
       showNotification('Background removed!')
     }
     reader.readAsDataURL(blob)
@@ -1150,6 +1187,101 @@ const removeBackground = async (item) => {
     item.removingBg = false
     showNotification('Background removal failed. Try a different image.')
   }
+}
+
+// Dynamic color extraction from canvas images
+const boardColors = ref([])
+
+const extractColorsFromImages = () => {
+  const items = canvasItems.value
+  if (items.length === 0) {
+    boardColors.value = []
+    return
+  }
+  
+  const allColors = []
+  let processed = 0
+  const total = Math.min(items.length, 6) // Sample max 6 images
+  
+  items.slice(0, 6).forEach((item) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        canvas.width = 50
+        canvas.height = 50
+        ctx.drawImage(img, 0, 0, 50, 50)
+        
+        // Sample colors from key positions
+        const positions = [
+          [12, 12], [25, 12], [37, 12],
+          [12, 25], [25, 25], [37, 25],
+          [12, 37], [25, 37], [37, 37]
+        ]
+        
+        positions.forEach(([x, y]) => {
+          const pixel = ctx.getImageData(x, y, 1, 1).data
+          if (pixel[3] > 128) { // Skip transparent pixels
+            allColors.push({ r: pixel[0], g: pixel[1], b: pixel[2] })
+          }
+        })
+      } catch (e) {
+        // CORS or other error — skip
+      }
+      
+      processed++
+      if (processed >= total) {
+        // Cluster colors to find dominant ones
+        boardColors.value = clusterColors(allColors)
+      }
+    }
+    img.onerror = () => {
+      processed++
+      if (processed >= total) {
+        boardColors.value = clusterColors(allColors)
+      }
+    }
+    img.src = item.image_url
+  })
+}
+
+// Simple color clustering to find dominant colors
+const clusterColors = (colors) => {
+  if (colors.length === 0) return []
+  
+  // Remove very similar colors (within distance 40)
+  const unique = []
+  for (const c of colors) {
+    const isDuplicate = unique.some(u => 
+      Math.abs(u.r - c.r) + Math.abs(u.g - c.g) + Math.abs(u.b - c.b) < 60
+    )
+    // Skip near-white and near-black
+    const brightness = (c.r + c.g + c.b) / 3
+    if (!isDuplicate && brightness > 20 && brightness < 240) {
+      unique.push(c)
+    }
+  }
+  
+  // Sort by saturation (more colorful first)
+  unique.sort((a, b) => {
+    const satA = Math.max(a.r, a.g, a.b) - Math.min(a.r, a.g, a.b)
+    const satB = Math.max(b.r, b.g, b.b) - Math.min(b.r, b.g, b.b)
+    return satB - satA
+  })
+  
+  // Take top 6 distinct colors
+  return unique.slice(0, 6).map((c, i) => {
+    const hex = `#${c.r.toString(16).padStart(2, '0')}${c.g.toString(16).padStart(2, '0')}${c.b.toString(16).padStart(2, '0')}`
+    return {
+      id: `bc-${i}`,
+      type: 'pantone',
+      name: `Board Color ${i + 1}`,
+      color: hex,
+      code: hex.toUpperCase()
+    }
+  })
 }
 
 const removeDecoration = (id) => {
