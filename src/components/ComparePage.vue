@@ -3,191 +3,333 @@
     <NavBar />
 
     <main class="compare-content">
+      <!-- Header -->
       <div class="compare-header">
-        <h1 class="compare-title">Compare Products</h1>
-        <p class="compare-subtitle">Side-by-side comparison of up to 3 products</p>
+        <div class="header-top">
+          <div>
+            <h1 class="compare-title">Compare Products</h1>
+            <p class="compare-subtitle">Side-by-side comparison of up to 3 products</p>
+          </div>
+          <button v-if="compareItems.length > 0" class="clear-btn" @click="clearAll">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            Clear All
+          </button>
+        </div>
       </div>
 
       <!-- Empty State -->
       <div v-if="compareItems.length === 0" class="empty-state">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5">
-          <line x1="18" y1="20" x2="18" y2="10"/>
-          <line x1="12" y1="20" x2="12" y2="4"/>
-          <line x1="6" y1="20" x2="6" y2="14"/>
-        </svg>
+        <div class="empty-icon">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.2">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+        </div>
         <h2>No products to compare</h2>
         <p>Add products from any product page using the compare button</p>
         <router-link to="/" class="browse-btn">Browse Products</router-link>
       </div>
 
-      <!-- Comparison Table -->
-      <div v-else class="compare-table">
-        <!-- Product Images Row -->
-        <div class="compare-row images-row">
-          <div class="row-label"></div>
-          <div v-for="item in compareItems" :key="'img-' + item.id" class="compare-cell product-cell">
-            <button class="remove-btn" @click="removeItem(item.id)" title="Remove">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-            <img :src="item.image_url" :alt="item.title" class="compare-image" />
+      <!-- Product Cards Row -->
+      <div v-else class="compare-cards">
+        <div
+          v-for="(item, idx) in compareItems"
+          :key="item.id"
+          class="product-card"
+          :class="{ 'winner-card': overallWinner === item.id }"
+          :style="{ animationDelay: idx * 0.1 + 's' }"
+        >
+          <!-- Winner Crown -->
+          <div v-if="overallWinner === item.id && compareItems.length > 1" class="winner-crown">
+            <span class="crown-icon">👑</span>
+            <span class="crown-label">Best Value</span>
           </div>
-          <!-- Add Product Slot -->
-          <div v-if="compareItems.length < 3" class="compare-cell add-slot" @click="goHome">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="16"/>
-              <line x1="8" y1="12" x2="16" y2="12"/>
+
+          <!-- Remove Button -->
+          <button class="remove-btn" @click="removeItem(item.id)" title="Remove">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
-            <span>Add product</span>
-          </div>
-        </div>
+          </button>
 
-        <!-- Product Title -->
-        <div class="compare-row">
-          <div class="row-label">Product</div>
-          <div v-for="item in compareItems" :key="'title-' + item.id" class="compare-cell">
-            <router-link :to="'/product/' + item.id" class="product-link">{{ item.title }}</router-link>
+          <!-- Product Image -->
+          <div class="card-image-wrap">
+            <img :src="item.image_url" :alt="item.title" class="card-image" />
           </div>
-          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
-        </div>
 
-        <!-- Brand -->
-        <div class="compare-row">
-          <div class="row-label">Brand</div>
-          <div v-for="item in compareItems" :key="'brand-' + item.id" class="compare-cell">
-            {{ item.brand || '—' }}
-          </div>
-          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
-        </div>
-
-        <!-- Price -->
-        <div class="compare-row highlight">
-          <div class="row-label">Price</div>
-          <div v-for="item in compareItems" :key="'price-' + item.id" class="compare-cell price-cell">
-            <div>
-              <span class="price-value" :class="{ 'best-price': isBestPrice(item) }">
+          <!-- Card Info -->
+          <div class="card-info">
+            <router-link :to="'/product/' + item.id" class="card-title">{{ item.title }}</router-link>
+            <span class="card-brand">{{ item.brand || extractBrand(item) }}</span>
+            <div class="card-price-row">
+              <span class="card-price" :class="{ 'best-price': isBestPrice(item) }">
                 ${{ formatPrice(item.price) }}
               </span>
-              <span v-if="item.original_price && parseFloat(item.original_price) > parseFloat(item.price)" class="original-price">
+              <span v-if="item.original_price && parseFloat(item.original_price) > parseFloat(item.price)" class="card-original">
                 ${{ formatPrice(item.original_price) }}
               </span>
             </div>
-            <span v-if="isBestPrice(item) && compareItems.length > 1" class="best-badge">Best Price</span>
-            <span v-if="item.original_price && parseFloat(item.original_price) > parseFloat(item.price)" class="savings-badge">
-              Save {{ Math.round(((parseFloat(item.original_price) - parseFloat(item.price)) / parseFloat(item.original_price)) * 100) }}%
-            </span>
+            <span v-if="isBestPrice(item) && compareItems.length > 1" class="best-badge">Lowest Price</span>
+            <span v-if="getSavings(item) > 0" class="savings-badge">Save {{ getSavings(item) }}%</span>
           </div>
-          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
+
+          <!-- Shop Button -->
+          <a :href="item.url" target="_blank" rel="noopener" class="shop-btn">Shop This Item →</a>
         </div>
 
-        <!-- Store -->
-        <div class="compare-row">
-          <div class="row-label">Store</div>
-          <div v-for="item in compareItems" :key="'store-' + item.id" class="compare-cell">
-            {{ item.merchant_name || item.source || '—' }}
+        <!-- Add Product Slot -->
+        <div v-if="compareItems.length < 3" class="product-card add-card" @click="goHome">
+          <div class="add-card-inner">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            <span class="add-label">Add Product</span>
+            <span class="add-hint">Browse and add to compare</span>
           </div>
-          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
-        </div>
-
-        <!-- Style -->
-        <div class="compare-row">
-          <div class="row-label">Style</div>
-          <div v-for="item in compareItems" :key="'style-' + item.id" class="compare-cell">
-            <span class="tag">{{ extractStyle(item) }}</span>
-          </div>
-          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
-        </div>
-
-        <!-- Available Sizes -->
-        <div class="compare-row">
-          <div class="row-label">Available Sizes</div>
-          <div v-for="item in compareItems" :key="'sizes-' + item.id" class="compare-cell">
-            <div class="size-chips">
-              <span v-for="size in getSizes(item)" :key="size" class="size-chip">{{ size }}</span>
-            </div>
-          </div>
-          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
-        </div>
-
-        <!-- Available Colors -->
-        <div class="compare-row">
-          <div class="row-label">Colors</div>
-          <div v-for="item in compareItems" :key="'colors-' + item.id" class="compare-cell">
-            <div class="color-chips">
-              <span v-for="color in getColors(item)" :key="color" class="color-dot" :style="{ background: color }" :title="color"></span>
-            </div>
-          </div>
-          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
-        </div>
-
-        <!-- Condition -->
-        <div class="compare-row">
-          <div class="row-label">Condition</div>
-          <div v-for="item in compareItems" :key="'cond-' + item.id" class="compare-cell">
-            {{ item.condition || 'New' }}
-          </div>
-          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
-        </div>
-
-        <!-- Description -->
-        <div class="compare-row">
-          <div class="row-label">Details</div>
-          <div v-for="item in compareItems" :key="'desc-' + item.id" class="compare-cell description-cell">
-            <p class="desc-text">{{ getDescription(item) }}</p>
-          </div>
-          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
-        </div>
-
-        <!-- Material -->
-        <div class="compare-row">
-          <div class="row-label">Material</div>
-          <div v-for="item in compareItems" :key="'mat-' + item.id" class="compare-cell">
-            <span class="tag">{{ getMaterial(item) }}</span>
-          </div>
-          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
-        </div>
-
-        <!-- Fit -->
-        <div class="compare-row">
-          <div class="row-label">Fit</div>
-          <div v-for="item in compareItems" :key="'fit-' + item.id" class="compare-cell">
-            {{ getFit(item) }}
-          </div>
-          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
-        </div>
-
-        <!-- Shop Buttons -->
-        <div class="compare-row actions-row">
-          <div class="row-label"></div>
-          <div v-for="item in compareItems" :key="'action-' + item.id" class="compare-cell">
-            <a :href="item.url" target="_blank" rel="noopener" class="shop-btn">Shop Item</a>
-          </div>
-          <div v-if="compareItems.length < 3" class="compare-cell empty-cell"></div>
         </div>
       </div>
 
-      <!-- Clear All -->
-      <div v-if="compareItems.length > 0" class="clear-section">
-        <button class="clear-btn" @click="clearAll">Clear All</button>
+      <!-- Comparison Details -->
+      <div v-if="compareItems.length > 1" class="comparison-section">
+        <h2 class="section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+          Comparison Details
+        </h2>
+
+        <!-- Price Bar Chart -->
+        <div class="comp-row" v-if="visibleRows.price">
+          <button class="row-toggle" @click="toggleRow('price')">
+            <span class="row-label">Price Comparison</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="row-content">
+            <div class="price-bars">
+              <div v-for="item in compareItems" :key="'bar-' + item.id" class="price-bar-row">
+                <span class="bar-label">{{ truncateTitle(item.title, 20) }}</span>
+                <div class="bar-track">
+                  <div
+                    class="bar-fill"
+                    :class="{ 'bar-best': isBestPrice(item) }"
+                    :style="{ width: getPriceBarWidth(item) + '%' }"
+                  ></div>
+                </div>
+                <span class="bar-value" :class="{ 'best-price': isBestPrice(item) }">${{ formatPrice(item.price) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Store -->
+        <div class="comp-row" v-if="visibleRows.store">
+          <button class="row-toggle" @click="toggleRow('store')">
+            <span class="row-label">Store</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="row-content">
+            <div class="comp-grid">
+              <div v-for="item in compareItems" :key="'store-' + item.id" class="comp-cell">
+                <span class="cell-value">{{ item.merchant_name || item.source || '—' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Style -->
+        <div class="comp-row" v-if="visibleRows.style">
+          <button class="row-toggle" @click="toggleRow('style')">
+            <span class="row-label">Style</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="row-content">
+            <div class="comp-grid">
+              <div v-for="item in compareItems" :key="'style-' + item.id" class="comp-cell">
+                <span class="tag">{{ extractStyle(item) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sizes -->
+        <div class="comp-row" v-if="visibleRows.sizes">
+          <button class="row-toggle" @click="toggleRow('sizes')">
+            <span class="row-label">Available Sizes</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="row-content">
+            <div class="comp-grid">
+              <div v-for="item in compareItems" :key="'sizes-' + item.id" class="comp-cell">
+                <div class="size-chips">
+                  <span v-for="size in getSizes(item)" :key="size" class="size-chip">{{ size }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Colors -->
+        <div class="comp-row" v-if="visibleRows.colors">
+          <button class="row-toggle" @click="toggleRow('colors')">
+            <span class="row-label">Colors</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="row-content">
+            <div class="comp-grid">
+              <div v-for="item in compareItems" :key="'colors-' + item.id" class="comp-cell">
+                <div class="color-chips">
+                  <span v-for="color in getColors(item)" :key="color" class="color-dot" :style="{ background: color }" :title="color"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Material -->
+        <div class="comp-row" v-if="visibleRows.material">
+          <button class="row-toggle" @click="toggleRow('material')">
+            <span class="row-label">Material</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="row-content">
+            <div class="comp-grid">
+              <div v-for="item in compareItems" :key="'mat-' + item.id" class="comp-cell">
+                <span class="tag">{{ getMaterial(item) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fit -->
+        <div class="comp-row" v-if="visibleRows.fit">
+          <button class="row-toggle" @click="toggleRow('fit')">
+            <span class="row-label">Fit</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="row-content">
+            <div class="comp-grid">
+              <div v-for="item in compareItems" :key="'fit-' + item.id" class="comp-cell">
+                <span class="cell-value">{{ getFit(item) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Condition -->
+        <div class="comp-row" v-if="visibleRows.condition">
+          <button class="row-toggle" @click="toggleRow('condition')">
+            <span class="row-label">Condition</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="row-content">
+            <div class="comp-grid">
+              <div v-for="item in compareItems" :key="'cond-' + item.id" class="comp-cell">
+                <span class="cell-value">{{ item.condition || 'New' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Details -->
+        <div class="comp-row" v-if="visibleRows.details">
+          <button class="row-toggle" @click="toggleRow('details')">
+            <span class="row-label">Details</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="row-content">
+            <div class="comp-grid">
+              <div v-for="item in compareItems" :key="'desc-' + item.id" class="comp-cell">
+                <p class="desc-text">{{ getDescription(item) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toggle hidden rows -->
+        <div class="toggle-all-bar">
+          <button class="toggle-all-btn" @click="showAllRows = !showAllRows">
+            {{ showAllRows ? 'Show Less' : 'Show All Categories' }}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ rotated: showAllRows }">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Verdict -->
+      <div v-if="compareItems.length > 1" class="verdict-panel">
+        <h3 class="verdict-title">
+          <span class="verdict-icon">⚡</span>
+          Quick Verdict
+        </h3>
+        <div class="verdict-items">
+          <div v-for="v in verdicts" :key="v.label" class="verdict-item">
+            <span class="verdict-badge" :class="v.type">{{ v.type === 'winner' ? '🏆' : '✓' }}</span>
+            <span class="verdict-text">
+              <strong>{{ v.label }}</strong> — {{ v.reason }}
+            </span>
+          </div>
+        </div>
       </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import NavBar from './NavBar.vue'
 
 const router = useRouter()
 const compareItems = ref([])
+const showAllRows = ref(false)
 
+// Toggle-able rows
+const visibleRows = reactive({
+  price: true,
+  store: true,
+  style: true,
+  sizes: true,
+  colors: true,
+  material: false,
+  fit: false,
+  condition: false,
+  details: false,
+})
+
+watch(showAllRows, (val) => {
+  visibleRows.material = val
+  visibleRows.fit = val
+  visibleRows.condition = val
+  visibleRows.details = val
+})
+
+const toggleRow = (key) => {
+  visibleRows[key] = !visibleRows[key]
+}
+
+// Data
 const loadCompareItems = () => {
   const items = JSON.parse(localStorage.getItem('fyndaCompare') || '[]')
-  // Limit to 3
   compareItems.value = items.slice(0, 3)
 }
 
@@ -196,37 +338,129 @@ const removeItem = (id) => {
   const filtered = items.filter(item => item.id !== id)
   localStorage.setItem('fyndaCompare', JSON.stringify(filtered))
   compareItems.value = filtered.slice(0, 3)
+  window.dispatchEvent(new CustomEvent('compare-updated'))
 }
 
 const clearAll = () => {
   localStorage.setItem('fyndaCompare', '[]')
   compareItems.value = []
+  window.dispatchEvent(new CustomEvent('compare-updated'))
 }
 
-const goHome = () => {
-  router.push('/')
-}
+const goHome = () => router.push('/')
 
+// Formatting
 const formatPrice = (price) => {
   if (!price) return '0.00'
   return parseFloat(price).toFixed(2)
 }
 
+const truncateTitle = (title, max) => {
+  if (!title) return ''
+  return title.length > max ? title.slice(0, max) + '…' : title
+}
+
 const isBestPrice = (item) => {
   if (compareItems.value.length < 2) return false
   const prices = compareItems.value.map(i => parseFloat(i.price) || Infinity)
-  const minPrice = Math.min(...prices)
-  return parseFloat(item.price) === minPrice
+  return parseFloat(item.price) === Math.min(...prices)
 }
 
-// Extract style from title keywords
+const getSavings = (item) => {
+  if (!item.original_price || parseFloat(item.original_price) <= parseFloat(item.price)) return 0
+  return Math.round(((parseFloat(item.original_price) - parseFloat(item.price)) / parseFloat(item.original_price)) * 100)
+}
+
+const getPriceBarWidth = (item) => {
+  const prices = compareItems.value.map(i => parseFloat(i.price) || 0)
+  const max = Math.max(...prices)
+  if (max === 0) return 0
+  return Math.round((parseFloat(item.price) / max) * 100)
+}
+
+// Overall winner (most "wins")
+const overallWinner = computed(() => {
+  if (compareItems.value.length < 2) return null
+  const scores = {}
+  compareItems.value.forEach(item => { scores[item.id] = 0 })
+
+  // Best price wins a point
+  const prices = compareItems.value.map(i => parseFloat(i.price) || Infinity)
+  const bestPriceIdx = prices.indexOf(Math.min(...prices))
+  if (bestPriceIdx >= 0) scores[compareItems.value[bestPriceIdx].id] += 2
+
+  // Most colors
+  const colorCounts = compareItems.value.map(i => getColors(i).length)
+  const maxColors = Math.max(...colorCounts)
+  compareItems.value.forEach((item, i) => {
+    if (colorCounts[i] === maxColors) scores[item.id] += 1
+  })
+
+  // Most savings
+  const savings = compareItems.value.map(i => getSavings(i))
+  const maxSaving = Math.max(...savings)
+  if (maxSaving > 0) {
+    compareItems.value.forEach((item, i) => {
+      if (savings[i] === maxSaving) scores[item.id] += 1
+    })
+  }
+
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1])
+  return sorted[0]?.[0] || null
+})
+
+// Verdicts
+const verdicts = computed(() => {
+  if (compareItems.value.length < 2) return []
+  const v = []
+  const prices = compareItems.value.map(i => parseFloat(i.price) || Infinity)
+  const minPrice = Math.min(...prices)
+  const cheapest = compareItems.value.find(i => parseFloat(i.price) === minPrice)
+  if (cheapest) {
+    v.push({
+      type: 'winner',
+      label: truncateTitle(cheapest.title, 30),
+      reason: `Lowest price at $${formatPrice(cheapest.price)}`
+    })
+  }
+
+  const savings = compareItems.value.map(i => getSavings(i))
+  const maxSaving = Math.max(...savings)
+  if (maxSaving > 0) {
+    const bestDeal = compareItems.value[savings.indexOf(maxSaving)]
+    v.push({
+      type: 'info',
+      label: truncateTitle(bestDeal.title, 30),
+      reason: `Biggest discount at ${maxSaving}% off`
+    })
+  }
+
+  const colorCounts = compareItems.value.map(i => getColors(i).length)
+  const maxColors = Math.max(...colorCounts)
+  const mostColors = compareItems.value[colorCounts.indexOf(maxColors)]
+  if (mostColors && maxColors > 1) {
+    v.push({
+      type: 'info',
+      label: truncateTitle(mostColors.title, 30),
+      reason: `Most color options (${maxColors})`
+    })
+  }
+
+  return v
+})
+
+// Extraction helpers
+const extractBrand = (item) => {
+  const title = (item.title || '').split(' ')
+  return title[0] || 'Unknown'
+}
+
 const extractStyle = (item) => {
   const title = (item.title || '').toLowerCase()
   const styles = ['casual', 'formal', 'sporty', 'vintage', 'streetwear', 'bohemian', 'minimalist', 'classic', 'modern', 'elegant']
   for (const style of styles) {
     if (title.includes(style)) return style.charAt(0).toUpperCase() + style.slice(1)
   }
-  // Infer from product type
   if (title.match(/sneaker|trainer|running/)) return 'Sporty'
   if (title.match(/blazer|suit|dress shirt/)) return 'Formal'
   if (title.match(/hoodie|sweatshirt|jogger/)) return 'Casual'
@@ -234,19 +468,13 @@ const extractStyle = (item) => {
   return 'Everyday'
 }
 
-// Generate plausible sizes from product type
 const getSizes = (item) => {
   const title = (item.title || '').toLowerCase()
-  if (title.match(/shoe|sneaker|boot|sandal|heel|loafer|trainer/)) {
-    return ['6', '7', '8', '9', '10', '11']
-  }
-  if (title.match(/ring/)) {
-    return ['5', '6', '7', '8', '9']
-  }
+  if (title.match(/shoe|sneaker|boot|sandal|heel|loafer|trainer/)) return ['6', '7', '8', '9', '10', '11']
+  if (title.match(/ring/)) return ['5', '6', '7', '8', '9']
   return ['XS', 'S', 'M', 'L', 'XL']
 }
 
-// Extract colors from title or generate common ones
 const getColors = (item) => {
   const title = (item.title || '').toLowerCase()
   const colorMap = {
@@ -254,7 +482,7 @@ const getColors = (item) => {
     'navy': '#1e3a5f', 'green': '#16a34a', 'pink': '#ec4899', 'beige': '#d4b896',
     'brown': '#8b5e3c', 'grey': '#9ca3af', 'gray': '#9ca3af', 'gold': '#d4a017',
     'silver': '#c0c0c0', 'cream': '#fffdd0', 'maroon': '#800000', 'olive': '#808000',
-    'tan': '#d2b48c', 'coral': '#ff7f50', 'teal': '#008080', 'ivory': '#fffff0',
+    'tan': '#d2b48c', 'coral': '#ff7f50', 'teal': '#008080',
     'burgundy': '#800020', 'khaki': '#c3b091', 'yellow': '#eab308', 'purple': '#9333ea',
     'orange': '#ea580c',
   }
@@ -266,7 +494,6 @@ const getColors = (item) => {
   return found
 }
 
-// Extract description, truncated
 const getDescription = (item) => {
   if (item.description) {
     return item.description.length > 120 ? item.description.slice(0, 120) + '…' : item.description
@@ -274,23 +501,18 @@ const getDescription = (item) => {
   return 'No description available'
 }
 
-// Extract material from description or title
 const getMaterial = (item) => {
   const text = ((item.description || '') + ' ' + (item.title || '')).toLowerCase()
   const materials = [
     'cotton', 'polyester', 'silk', 'linen', 'wool', 'cashmere', 'viscose',
     'rayon', 'nylon', 'spandex', 'leather', 'suede', 'denim', 'velvet',
-    'satin', 'chiffon', 'tweed', 'jersey', 'modal', 'elastane', 'lycra',
-    'canvas', 'mesh', 'latex', 'corduroy', 'fleece', 'organza'
+    'satin', 'chiffon', 'tweed', 'jersey', 'modal', 'elastane',
+    'canvas', 'mesh', 'corduroy', 'fleece'
   ]
   const found = materials.filter(m => text.includes(m))
-  if (found.length > 0) {
-    return found.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(', ')
-  }
-  return 'Not specified'
+  return found.length > 0 ? found.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(', ') : 'Not specified'
 }
 
-// Extract fit info from description or title
 const getFit = (item) => {
   const text = ((item.description || '') + ' ' + (item.title || '')).toLowerCase()
   const fits = [
@@ -299,10 +521,7 @@ const getFit = (item) => {
     'straight', 'wide leg', 'skinny', 'flared', 'a-line', 'midi', 'maxi', 'mini'
   ]
   const found = fits.filter(f => text.includes(f))
-  if (found.length > 0) {
-    return found.map(f => f.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')).join(', ')
-  }
-  return 'Standard'
+  return found.length > 0 ? found.map(f => f.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')).join(', ') : 'Standard'
 }
 
 onMounted(() => {
@@ -311,335 +530,50 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap');
+
 .compare-page {
   min-height: 100vh;
   background: #fafafa;
 }
 
 .compare-content {
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 2rem 2rem 4rem;
 }
 
+/* Header */
 .compare-header {
   margin-bottom: 2rem;
 }
 
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
 .compare-title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 400;
   color: #1a1a1a;
-  margin-bottom: 0.25rem;
+  margin: 0 0 0.25rem 0;
 }
 
 .compare-subtitle {
-  font-size: 0.85rem;
-  color: #888;
-}
-
-/* Empty State */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  text-align: center;
-}
-
-.empty-state h2 {
   font-family: 'Inter', sans-serif;
-  font-size: 1.15rem;
-  font-weight: 500;
-  color: #555;
-  margin: 1rem 0 0.5rem;
-}
-
-.empty-state p {
-  font-size: 0.85rem;
-  color: #999;
-  margin-bottom: 1.5rem;
-}
-
-.browse-btn {
-  padding: 0.75rem 1.5rem;
-  background: #1a1a1a;
-  color: #fff;
-  text-decoration: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: background 0.2s ease;
-}
-
-.browse-btn:hover {
-  background: #333;
-}
-
-/* Compare Table */
-.compare-table {
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.compare-row {
-  display: grid;
-  grid-template-columns: 140px repeat(auto-fill, minmax(200px, 1fr));
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.compare-row:last-child {
-  border-bottom: none;
-}
-
-.compare-row.highlight {
-  background: #fafafa;
-}
-
-.row-label {
-  padding: 1rem 1.25rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  border-right: 1px solid #f0f0f0;
-}
-
-.compare-cell {
-  padding: 1rem 1.25rem;
   font-size: 0.88rem;
-  color: #333;
-  display: flex;
-  align-items: center;
-  border-right: 1px solid #f0f0f0;
-}
-
-.compare-cell:last-child {
-  border-right: none;
-}
-
-.empty-cell {
-  background: #fafafa;
-}
-
-/* Images Row */
-.images-row .compare-cell {
-  padding: 1.5rem 1rem;
-  justify-content: center;
-  position: relative;
-}
-
-.product-cell {
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.compare-image {
-  width: 200px;
-  height: 260px;
-  object-fit: cover;
-  border-radius: 10px;
-  border: 1px solid #eee;
-}
-
-.remove-btn {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid #ddd;
-  background: #fff;
-  color: #999;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.remove-btn:hover {
-  background: #fee2e2;
-  border-color: #fca5a5;
-  color: #dc2626;
-}
-
-/* Add Slot */
-.add-slot {
-  flex-direction: column;
-  gap: 0.5rem;
-  justify-content: center;
-  cursor: pointer;
-  background: #fafafa;
-  transition: background 0.2s ease;
-  min-height: 220px;
-}
-
-.add-slot:hover {
-  background: #f0f0f0;
-}
-
-.add-slot span {
-  font-size: 0.8rem;
-  color: #bbb;
-}
-
-/* Product Link */
-.product-link {
-  color: #1a1a1a;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.85rem;
-  line-height: 1.4;
-  transition: color 0.2s ease;
-}
-
-.product-link:hover {
-  color: #3b82f6;
-}
-
-/* Price */
-.price-value {
-  font-weight: 700;
-  font-size: 1rem;
-  color: #1a1a1a;
-}
-
-.price-value.best-price {
-  color: #16a34a;
-}
-
-.best-badge {
-  display: inline-block;
-  margin-left: 0.5rem;
-  padding: 2px 8px;
-  background: #ecfdf5;
-  color: #16a34a;
-  font-size: 0.68rem;
-  font-weight: 600;
-  border-radius: 4px;
-}
-
-.price-cell {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.original-price {
-  font-size: 0.78rem;
-  color: #999;
-  text-decoration: line-through;
-  margin-left: 0.5rem;
-}
-
-.savings-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  background: #fef3c7;
-  color: #b45309;
-  font-size: 0.68rem;
-  font-weight: 600;
-  border-radius: 4px;
-}
-
-.description-cell {
-  align-items: flex-start;
-}
-
-.desc-text {
-  font-size: 0.8rem;
-  color: #666;
-  line-height: 1.5;
+  color: #888;
   margin: 0;
 }
 
-/* Tags */
-.tag {
-  padding: 4px 10px;
-  background: #f3f4f6;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  color: #555;
-}
-
-/* Size Chips */
-.size-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.size-chip {
-  padding: 3px 8px;
-  background: #f3f4f6;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: #555;
-}
-
-/* Color Dots */
-.color-chips {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.color-dot {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid #e5e5e5;
-  cursor: default;
-  transition: transform 0.15s ease;
-}
-
-.color-dot:hover {
-  transform: scale(1.15);
-}
-
-/* Shop Button */
-.actions-row .compare-cell {
-  padding: 1.25rem;
-}
-
-.shop-btn {
-  display: block;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: #1a1a1a;
-  color: #fff;
-  text-decoration: none;
-  text-align: center;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: background 0.2s ease;
-}
-
-.shop-btn:hover {
-  background: #333;
-}
-
-/* Clear Section */
-.clear-section {
-  display: flex;
-  justify-content: center;
-  margin-top: 1.5rem;
-}
-
 .clear-btn {
-  padding: 0.6rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
   background: none;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -655,25 +589,655 @@ onMounted(() => {
   color: #dc2626;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .compare-row {
-    grid-template-columns: 100px repeat(auto-fill, minmax(150px, 1fr));
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 2rem;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.empty-state h2 {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #555;
+  margin: 0 0 0.5rem;
+}
+
+.empty-state p {
+  font-size: 0.85rem;
+  color: #999;
+  margin: 0 0 1.5rem;
+}
+
+.browse-btn {
+  padding: 0.75rem 2rem;
+  background: #1a1a1a;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.browse-btn:hover {
+  background: #333;
+  transform: translateY(-1px);
+}
+
+/* ======================== */
+/* Product Cards            */
+/* ======================== */
+.compare-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.product-card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 16px;
+  padding: 1.5rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  animation: cardFadeIn 0.5s ease both;
+  transition: all 0.25s ease;
+}
+
+.product-card:hover {
+  border-color: #d0d0d0;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+.winner-card {
+  border-color: #86efac;
+  background: linear-gradient(180deg, #f0fdf4 0%, #fff 40%);
+}
+
+.winner-card:hover {
+  border-color: #4ade80;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Winner Crown */
+.winner-crown {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #86efac;
+  padding: 4px 12px;
+  border-radius: 20px;
+  z-index: 2;
+  animation: crownBounce 0.6s ease 0.3s both;
+}
+
+.crown-icon {
+  font-size: 14px;
+}
+
+.crown-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #16a34a;
+  letter-spacing: 0.3px;
+}
+
+@keyframes crownBounce {
+  0% { transform: translateX(-50%) scale(0); }
+  60% { transform: translateX(-50%) scale(1.15); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+/* Remove Button */
+.remove-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #eee;
+  background: #fff;
+  color: #bbb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  z-index: 2;
+}
+
+.remove-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+/* Card Image */
+.card-image-wrap {
+  width: 100%;
+  aspect-ratio: 3/4;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  background: #f5f5f5;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .card-image {
+  transform: scale(1.03);
+}
+
+/* Card Info */
+.card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 1rem;
+}
+
+.card-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-decoration: none;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.2s ease;
+}
+
+.card-title:hover {
+  color: #3b82f6;
+}
+
+.card-brand {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.card-price {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.card-price.best-price {
+  color: #16a34a;
+}
+
+.card-original {
+  font-size: 0.82rem;
+  color: #999;
+  text-decoration: line-through;
+}
+
+.best-badge {
+  display: inline-block;
+  width: fit-content;
+  padding: 3px 10px;
+  background: #ecfdf5;
+  color: #16a34a;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 6px;
+  margin-top: 2px;
+}
+
+.savings-badge {
+  display: inline-block;
+  width: fit-content;
+  padding: 3px 10px;
+  background: #fef3c7;
+  color: #b45309;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+/* Shop Button */
+.shop-btn {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: #1a1a1a;
+  color: #fff;
+  text-decoration: none;
+  text-align: center;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  margin-top: auto;
+}
+
+.shop-btn:hover {
+  background: #333;
+  transform: translateY(-1px);
+}
+
+/* Add Card */
+.add-card {
+  border: 2px dashed #e0e0e0;
+  background: transparent;
+  cursor: pointer;
+  min-height: 400px;
+}
+
+.add-card:hover {
+  border-color: #bbb;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.add-card-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.add-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #999;
+}
+
+.add-hint {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  color: #ccc;
+}
+
+/* ======================== */
+/* Comparison Section       */
+/* ======================== */
+.comparison-section {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Comparison Row */
+.comp-row {
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.comp-row:last-of-type {
+  border-bottom: none;
+}
+
+.row-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.row-toggle:hover {
+  color: #3b82f6;
+}
+
+.row-toggle svg {
+  transition: transform 0.2s ease;
+  color: #ccc;
+}
+
+.row-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.row-content {
+  padding: 0 0 16px;
+  animation: fadeSlideDown 0.25s ease;
+}
+
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.comp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.comp-cell {
+  padding: 8px 0;
+}
+
+.cell-value {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  color: #333;
+}
+
+/* Price Bars */
+.price-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.price-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bar-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  color: #666;
+  min-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bar-track {
+  flex: 1;
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: #d1d5db;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.bar-fill.bar-best {
+  background: linear-gradient(90deg, #4ade80, #16a34a);
+}
+
+.bar-value {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+  min-width: 70px;
+  text-align: right;
+}
+
+.bar-value.best-price {
+  color: #16a34a;
+}
+
+/* Tags, chips, dots */
+.tag {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.size-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.size-chip {
+  padding: 4px 10px;
+  background: #f3f4f6;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.color-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.color-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #e5e5e5;
+  cursor: default;
+  transition: transform 0.15s ease;
+}
+
+.color-dot:hover {
+  transform: scale(1.2);
+}
+
+.desc-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  color: #666;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Toggle All */
+.toggle-all-bar {
+  display: flex;
+  justify-content: center;
+  padding-top: 12px;
+}
+
+.toggle-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: none;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-all-btn:hover {
+  border-color: #bbb;
+  color: #555;
+}
+
+.toggle-all-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.toggle-all-btn svg.rotated {
+  transform: rotate(180deg);
+}
+
+/* ======================== */
+/* Quick Verdict            */
+/* ======================== */
+.verdict-panel {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+}
+
+.verdict-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 1rem 0;
+}
+
+.verdict-icon {
+  font-size: 1.1rem;
+}
+
+.verdict-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.verdict-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #fafafa;
+  border-radius: 10px;
+}
+
+.verdict-badge {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.verdict-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+.verdict-text strong {
+  color: #1a1a1a;
+}
+
+/* ======================== */
+/* Responsive               */
+/* ======================== */
+@media (max-width: 900px) {
+  .compare-content {
+    padding: 1.5rem 1rem 3rem;
   }
 
-  .row-label {
-    font-size: 0.7rem;
-    padding: 0.75rem;
+  .compare-cards {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  .compare-cell {
-    padding: 0.75rem;
-    font-size: 0.8rem;
+  .add-card {
+    min-height: 200px;
   }
 
-  .compare-image {
-    width: 100px;
-    height: 130px;
+  .comparison-section {
+    padding: 1rem 1.25rem;
+  }
+
+  .bar-label {
+    min-width: 80px;
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .compare-title {
+    font-size: 1.5rem;
+  }
+
+  .header-top {
+    flex-direction: column;
+    gap: 12px;
   }
 }
 </style>

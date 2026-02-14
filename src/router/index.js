@@ -8,6 +8,7 @@ import StoryboardPage from '../components/StoryboardPage.vue'
 import ProfilePage from '../components/ProfilePage.vue'
 import BrandPage from '../components/BrandPage.vue'
 import ComparePage from '../components/ComparePage.vue'
+import ClosetPage from '../components/ClosetPage.vue'
 import ExplorePage from '../components/ExplorePage.vue'
 import CategoryLandingPage from '../components/CategoryLandingPage.vue'
 
@@ -112,6 +113,12 @@ const routes = [
         path: '/compare',
         name: 'Compare',
         component: ComparePage,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/closet',
+        name: 'Closet',
+        component: ClosetPage,
         meta: { requiresAuth: true }
     },
     // Shop category pages - require auth

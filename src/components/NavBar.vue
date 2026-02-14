@@ -21,6 +21,13 @@
               <span v-if="compareCount > 0" class="compare-badge">{{ compareCount }}</span>
             </div>
           </router-link>
+          <router-link to="/closet" class="nav-link-icon" title="My Closet">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L3 7v1h18V7L12 2z"/>
+              <line x1="12" y1="8" x2="12" y2="16"/>
+              <path d="M8 16a4 4 0 0 0 8 0"/>
+            </svg>
+          </router-link>
           <router-link to="/storyboard" class="nav-link-icon" title="Fashion Board">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="7" height="7" rx="1"/>
@@ -61,6 +68,7 @@
       <template v-if="isAuthenticated">
         <router-link to="/profile" class="mobile-link" @click="mobileMenuOpen = false">Profile</router-link>
         <router-link to="/compare" class="mobile-link" @click="mobileMenuOpen = false">Compare</router-link>
+        <router-link to="/closet" class="mobile-link" @click="mobileMenuOpen = false">My Closet</router-link>
         <router-link to="/storyboard" class="mobile-link" @click="mobileMenuOpen = false">Fashion Board</router-link>
         <button class="mobile-link logout" @click="handleLogout">Sign Out</button>
       </template>
