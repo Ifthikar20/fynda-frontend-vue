@@ -5,8 +5,11 @@
     <main class="main-content">
       <!-- Hero Section -->
       <section class="hero-section">
-        <h1 class="hero-title">{{ categoryTitle }}</h1>
-        <p class="hero-subtitle">Search across hundreds of brands. Find the best deals.</p>
+        <div class="hero-rotating">
+          <transition name="hero-fade" mode="out-in">
+            <h1 class="hero-title" :key="heroPhrase">{{ heroPhrase }}</h1>
+          </transition>
+        </div>
         
         <!-- AI-Style Search Box -->
         <div class="ai-search-container">
@@ -436,6 +439,22 @@ const categoryTitles = {
 }
 
 const categoryTitle = computed(() => categoryTitles[currentCategory.value])
+
+// Rotating hero phrases
+const heroPhrases = [
+  'All Brands, All Clothes',
+  'Find What You Like',
+  'Ask for the Best Deal',
+  'All Jeans, All Denim',
+  'Search Across Hundreds of Brands',
+]
+const heroIdx = ref(0)
+const heroPhrase = computed(() => currentCategory.value === 'all' ? heroPhrases[heroIdx.value] : categoryTitle.value)
+let heroTimer = null
+const startHeroRotation = () => {
+  heroTimer = setInterval(() => { heroIdx.value = (heroIdx.value + 1) % heroPhrases.length }, 3000)
+}
+const stopHeroRotation = () => { if (heroTimer) { clearInterval(heroTimer); heroTimer = null } }
 
 // Get card size - creates varied masonry pattern
 const getCardSize = (index) => {
@@ -1138,6 +1157,7 @@ const gateLoginWithApple = () => {
 onMounted(() => {
   loadFeaturedContent()
   loadTrending()
+  startHeroRotation()
   
   // Rotate quick suggestions every 5 seconds
   suggestionRotateInterval = setInterval(() => {
@@ -1152,6 +1172,7 @@ onUnmounted(() => {
   if (suggestionRotateInterval) {
     clearInterval(suggestionRotateInterval)
   }
+  stopHeroRotation()
 })
 </script>
 
@@ -1195,6 +1216,13 @@ a {
   padding: 3rem 0 2rem;
 }
 
+.hero-rotating {
+  min-height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .hero-title {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: clamp(2rem, 4vw, 3rem);
@@ -1202,6 +1230,12 @@ a {
   color: #1a1a1a;
   margin-bottom: 0.4rem;
 }
+
+/* Hero fade transition */
+.hero-fade-enter-active { animation: heroIn 0.5s ease; }
+.hero-fade-leave-active { animation: heroOut 0.3s ease; }
+@keyframes heroIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes heroOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-12px); } }
 
 .hero-subtitle {
   font-size: 1rem;
