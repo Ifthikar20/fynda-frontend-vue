@@ -98,19 +98,11 @@
         </div>
       </div>
 
-      <!-- CTA Section -->
-      <div class="cta-section">
-        <h2>Create Your Own Fashion Board</h2>
-        <p>Design stunning mood boards with our easy-to-use Fashion Board tool.</p>
-        <router-link to="/register" class="create-btn">Get Started Free</router-link>
-      </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="shared-footer">
-      <p>Created with <strong>Fynda</strong> Fashion Board</p>
-      <router-link to="/">fynda.shop</router-link>
-    </footer>
+      <!-- Footer + CTA -->
+      <footer class="shared-footer">
+        <span class="footer-text">Created with <strong>Fynda</strong> Fashion Board</span>
+        <router-link to="/register" class="create-btn">Create Your Own — Free</router-link>
+      </footer>
   </div>
 </template>
 
@@ -452,64 +444,36 @@ onMounted(async () => {
   box-shadow: 8px 8px 0 rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.08);
 }
 
-/* CTA Section */
-.cta-section {
-  text-align: center;
-  padding: 1rem 1.5rem;
+/* Footer + CTA merged */
+.shared-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid #e5e5e5;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  max-width: 360px;
 }
 
-.cta-section h2 {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #1a1a1a;
-  margin: 0 0 0.25rem;
-}
-
-.cta-section p {
+.footer-text {
   color: #888;
-  margin: 0 0 0.75rem;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 .create-btn {
   display: inline-block;
-  padding: 0.5rem 1.25rem;
+  padding: 0.4rem 1rem;
   background: #1a1a1a;
   color: #fff;
   border-radius: 6px;
   text-decoration: none;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
   transition: background 0.2s ease;
 }
 
 .create-btn:hover {
   background: #333;
-}
-
-/* Footer */
-.shared-footer {
-  padding: 1.5rem;
-  text-align: center;
-  border-top: 1px solid #e5e5e5;
-  background: #fff;
-}
-
-.shared-footer p {
-  margin: 0 0 0.25rem;
-  color: #888;
-  font-size: 0.85rem;
-}
-
-.shared-footer a {
-  color: #1a1a1a;
-  font-weight: 500;
-  text-decoration: none;
 }
 
 @media (max-width: 768px) {
