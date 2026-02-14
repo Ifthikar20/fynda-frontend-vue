@@ -65,17 +65,17 @@
               <span class="item-price">${{ formatPrice(item.price) }}</span>
             </div>
             <div class="item-actions">
-              <button class="act-btn act-heart" :class="{ active: isWishlisted(item.id) }" @click.stop="toggleWishlist(item.id)">
-                <svg width="14" height="14" viewBox="0 0 24 24" :fill="isWishlisted(item.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              <button class="btn-shadcn" :class="isWishlisted(item.id) ? 'btn-default' : 'btn-outline'" @click.stop="toggleWishlist(item.id)">
+                {{ isWishlisted(item.id) ? 'Saved' : 'Save' }}
               </button>
-              <button class="act-btn act-board" @click.stop="moveToFashionBoard(item)" title="Fashion Board">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              <button class="btn-shadcn btn-outline" @click.stop="moveToFashionBoard(item)">
+                Board
               </button>
-              <button class="act-btn act-cal" @click.stop="openDatePicker(item)" title="Schedule">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <button class="btn-shadcn btn-outline" @click.stop="openDatePicker(item)">
+                Plan
               </button>
-              <button class="act-btn act-remove" @click.stop="removeFromCloset(item.id)" title="Remove">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <button class="btn-shadcn btn-ghost-danger" @click.stop="removeFromCloset(item.id)">
+                Remove
               </button>
             </div>
           </div>
@@ -602,18 +602,28 @@ watch(wishlistIds, (ids) => {
 .item-title { font-size: 0.82rem; font-weight: 500; color: #333; margin: 0 0 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
 .item-price { font-size: 0.88rem; font-weight: 700; color: #111; }
 
-/* Action Buttons — always visible at bottom */
-.item-actions { display: flex; align-items: center; justify-content: space-around; padding: 6px 8px 10px; border-top: 1px solid #f3f3f3; margin-top: auto; }
-.act-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #eee; background: #fafafa; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; color: #999; }
-.act-btn:hover { transform: scale(1.1); }
-.act-heart { color: #ccc; }
-.act-heart:hover, .act-heart.active { color: #ef4444; background: #fef2f2; border-color: #fecaca; }
-.act-board { color: #ccc; }
-.act-board:hover { color: #3b82f6; background: #eff6ff; border-color: #bfdbfe; }
-.act-cal { color: #ccc; }
-.act-cal:hover { color: #10b981; background: #ecfdf5; border-color: #a7f3d0; }
-.act-remove { color: #ccc; }
-.act-remove:hover { color: #ef4444; background: #fef2f2; border-color: #fecaca; }
+/* Shadcn-style Action Buttons */
+.item-actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px 10px; margin-top: auto; border-top: 1px solid #f0f0f0; }
+.btn-shadcn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 30px; padding: 0 12px;
+  border-radius: 6px; border: 1px solid transparent;
+  font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 500;
+  cursor: pointer; transition: all 0.15s ease;
+  white-space: nowrap; line-height: 1;
+}
+.btn-default {
+  background: #111; color: #fff; border-color: #111;
+}
+.btn-default:hover { background: #333; border-color: #333; }
+.btn-outline {
+  background: #fff; color: #333; border-color: #d4d4d8;
+}
+.btn-outline:hover { background: #f4f4f5; border-color: #a1a1aa; color: #111; }
+.btn-ghost-danger {
+  background: transparent; color: #a1a1aa; border-color: transparent;
+}
+.btn-ghost-danger:hover { background: #fef2f2; color: #dc2626; }
 
 /* ========== CALENDAR ========== */
 .cal-header { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 1.5rem; }
