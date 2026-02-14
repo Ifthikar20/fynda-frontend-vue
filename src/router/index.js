@@ -78,6 +78,7 @@ const routes = [
         path: '/product/:id',
         name: 'ProductDetail',
         component: ProductDetailPage,
+        meta: { requiresAuth: true }
     },
     {
         // Redirect legacy outfit routes to storyboard
