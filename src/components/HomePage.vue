@@ -78,26 +78,6 @@
         </div>
       </section>
 
-      <!-- Explore Brands Section (Homepage Only) -->
-      <section v-if="!hasSearched && currentCategory === 'all'" class="brands-section">
-        <h2 class="section-title">Explore Brands</h2>
-        <div class="brands-grid">
-          <div 
-            v-for="(brand, idx) in featuredBrands" 
-            :key="brand.name" 
-            class="brand-card brand-enter"
-            :style="{ '--i': idx }"
-            @click="searchBrand(brand.name)"
-          >
-            <div class="brand-logo-container">
-              <span class="brand-initial">{{ brand.initial }}</span>
-            </div>
-            <span class="brand-name">{{ brand.name }}</span>
-            <span class="brand-category">{{ brand.category }}</span>
-          </div>
-        </div>
-      </section>
-      
       <!-- Trending Section -->
       <section v-if="!hasSearched && trendingDeals.length > 0" class="products-section">
         <h2 class="section-title">Trending Now</h2>
@@ -105,8 +85,9 @@
           <div 
             v-for="(deal, index) in visibleTrendingDeals" 
             :key="'trending-' + deal.id" 
-            class="masonry-item"
+            class="masonry-item card-enter"
             :class="getCardSize(index)"
+            :style="{ '--i': index }"
             @click="openDeal(deal)"
           >
             <div class="card-image">
@@ -1699,6 +1680,22 @@ a {
   transition: transform 0.2s ease;
   border-radius: 12px;
   overflow: hidden;
+}
+
+.masonry-item.card-enter {
+  animation: cardFadeIn 0.25s ease both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .masonry-item:hover {
