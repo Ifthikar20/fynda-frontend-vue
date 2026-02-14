@@ -53,6 +53,15 @@
             </svg>
           </button>
 
+          <!-- Save to Closet -->
+          <button class="closet-save-btn" :class="{ saved: isInCloset(item.id) }" @click="saveToCloset(item)" :title="isInCloset(item.id) ? 'Saved to Closet' : 'Save to Closet'">
+            <svg width="14" height="14" viewBox="0 0 24 24" :fill="isInCloset(item.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L3 7v1h18V7L12 2z"/>
+              <line x1="12" y1="8" x2="12" y2="16"/>
+              <path d="M8 16a4 4 0 0 0 8 0"/>
+            </svg>
+          </button>
+
           <!-- Product Image -->
           <div class="card-image-wrap">
             <img :src="item.image_url" :alt="item.title" class="card-image" />
@@ -349,6 +358,34 @@ const clearAll = () => {
 
 const goHome = () => router.push('/')
 
+// Closet integration
+const closetIds = ref(new Set())
+
+const loadClosetIds = () => {
+  const closet = JSON.parse(localStorage.getItem('fyndaCloset') || '[]')
+  closetIds.value = new Set(closet.map(i => i.id))
+}
+
+const isInCloset = (id) => closetIds.value.has(id)
+
+const saveToCloset = (item) => {
+  const closet = JSON.parse(localStorage.getItem('fyndaCloset') || '[]')
+  if (closet.some(c => c.id === item.id)) return // already saved
+
+  closet.push({
+    id: item.id,
+    title: item.title,
+    price: item.price,
+    image_url: item.image_url,
+    product_url: item.url || '',
+    brand: item.brand || '',
+    source: 'compare',
+    savedAt: new Date().toISOString()
+  })
+  localStorage.setItem('fyndaCloset', JSON.stringify(closet))
+  closetIds.value = new Set([...closetIds.value, item.id])
+}
+
 // Formatting
 const formatPrice = (price) => {
   if (!price) return '0.00'
@@ -526,11 +563,43 @@ const getFit = (item) => {
 
 onMounted(() => {
   loadCompareItems()
+  loadClosetIds()
 })
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap');
+
+/* Save to Closet button on cards */
+.closet-save-btn {
+  position: absolute;
+  top: 10px;
+  right: 38px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.closet-save-btn:hover {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #16a34a;
+}
+
+.closet-save-btn.saved {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #16a34a;
+}
 
 .compare-page {
   min-height: 100vh;

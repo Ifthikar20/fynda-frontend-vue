@@ -14,7 +14,7 @@
         </div>
         <div>
           <h1 class="closet-title">My Closet</h1>
-          <p class="closet-subtitle">Your personal wardrobe • {{ allItems.length }} item{{ allItems.length !== 1 ? 's' : '' }}</p>
+          <p class="closet-subtitle">Your personal vault • {{ allItems.length }} item{{ allItems.length !== 1 ? 's' : '' }}</p>
         </div>
       </div>
 
@@ -81,7 +81,7 @@
             </svg>
           </div>
           <h3>Your closet is empty</h3>
-          <p>Start shopping and save items to build your wardrobe</p>
+          <p>Save items from product pages, compare, or your fashion board</p>
           <router-link to="/" class="browse-btn">Start Shopping</router-link>
         </div>
 
@@ -100,9 +100,10 @@
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                   </svg>
                 </button>
-                <button class="overlay-btn" @click.stop="addToOutfit(item)" title="Add to Outfit">
+                <button class="overlay-btn board-btn" @click.stop="moveToFashionBoard(item)" title="Move to Fashion Board">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+                    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
                   </svg>
                 </button>
                 <button class="overlay-btn remove" @click.stop="removeFromCloset(item.id)" title="Remove">
@@ -111,40 +112,11 @@
                   </svg>
                 </button>
               </div>
-              <span v-if="item.category" class="item-cat-tag">{{ getCategoryEmoji(item.category) }}</span>
+              <span v-if="item.source" class="item-source-tag">{{ getSourceLabel(item.source) }}</span>
             </div>
             <div class="item-info">
               <p class="item-title">{{ item.title }}</p>
               <span class="item-price">${{ formatPrice(item.price) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- OUTFITS TAB -->
-      <div v-if="activeTab === 'outfits'" class="tab-content">
-        <div v-if="outfits.length === 0" class="empty-section">
-          <h3>No outfits yet</h3>
-          <p>Create your first outfit by combining items from your closet</p>
-          <button class="browse-btn" @click="openOutfitBuilder">Create First Outfit</button>
-        </div>
-
-        <div v-else class="outfits-grid">
-          <div v-for="outfit in outfits" :key="outfit.id" class="outfit-card">
-            <button class="outfit-remove" @click="removeOutfit(outfit.id)">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-            <div class="outfit-preview">
-              <div v-for="slot in ['top', 'bottom', 'shoes', 'accessory']" :key="slot" class="outfit-slot-preview">
-                <img v-if="outfit.items[slot]" :src="outfit.items[slot].image_url" :alt="slot" />
-                <span v-else class="slot-empty">{{ getSlotEmoji(slot) }}</span>
-              </div>
-            </div>
-            <div class="outfit-info">
-              <p class="outfit-name">{{ outfit.name }}</p>
-              <p class="outfit-date">{{ formatDate(outfit.created) }}</p>
             </div>
           </div>
         </div>
@@ -172,6 +144,12 @@
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                   </svg>
                 </button>
+                <button class="overlay-btn board-btn" @click.stop="moveToFashionBoard(item)" title="Move to Fashion Board">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                  </svg>
+                </button>
               </div>
             </div>
             <div class="item-info">
@@ -182,102 +160,33 @@
         </div>
       </div>
 
-      <!-- FAB: Create Outfit -->
-      <button class="fab" @click="openOutfitBuilder" title="Create Outfit">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-      </button>
-
-      <!-- Outfit Builder Modal -->
+      <!-- Toast notification -->
       <Teleport to="body">
-        <div v-if="showBuilder" class="modal-backdrop" @click.self="showBuilder = false">
-          <div class="builder-modal">
-            <div class="builder-header">
-              <h2>Create Outfit</h2>
-              <button class="builder-close" @click="showBuilder = false">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-
-            <input v-model="newOutfitName" type="text" placeholder="Outfit name (e.g. Date Night)" class="builder-name-input" />
-
-            <div class="builder-slots">
-              <div
-                v-for="slot in outfitSlots"
-                :key="slot.key"
-                class="builder-slot"
-                :class="{ filled: builderItems[slot.key] }"
-                @click="selectSlot(slot.key)"
-              >
-                <div v-if="builderItems[slot.key]" class="slot-filled">
-                  <img :src="builderItems[slot.key].image_url" :alt="slot.label" class="slot-image" />
-                  <button class="slot-remove" @click.stop="builderItems[slot.key] = null">×</button>
-                </div>
-                <div v-else class="slot-placeholder">
-                  <span class="slot-emoji">{{ slot.emoji }}</span>
-                  <span class="slot-label">{{ slot.label }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Item picker within builder -->
-            <div v-if="activeSlot" class="builder-picker">
-              <p class="picker-label">Select a {{ activeSlot }} from your closet:</p>
-              <div class="picker-grid">
-                <div
-                  v-for="item in allItems"
-                  :key="item.id"
-                  class="picker-item"
-                  @click="assignToSlot(item)"
-                >
-                  <img :src="item.image_url" :alt="item.title" />
-                </div>
-              </div>
-            </div>
-
-            <button class="builder-save" :disabled="!canSaveOutfit" @click="saveOutfit">
-              Save Outfit
-            </button>
+        <Transition name="toast">
+          <div v-if="toast" class="toast" :class="toast.type">
+            {{ toast.message }}
           </div>
-        </div>
+        </Transition>
       </Teleport>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import NavBar from './NavBar.vue'
 
+const router = useRouter()
 const activeTab = ref('all')
 const activeCategory = ref('all')
 const searchQuery = ref('')
 const sortBy = ref('recent')
-const showBuilder = ref(false)
-const activeSlot = ref(null)
-const newOutfitName = ref('')
+const toast = ref(null)
 
 // Data from localStorage
 const allItems = ref([])
 const wishlistIds = ref(new Set())
-const outfits = ref([])
-
-const builderItems = reactive({
-  top: null,
-  bottom: null,
-  shoes: null,
-  accessory: null,
-})
-
-const outfitSlots = [
-  { key: 'top', label: 'Top', emoji: '👕' },
-  { key: 'bottom', label: 'Bottom', emoji: '👖' },
-  { key: 'shoes', label: 'Shoes', emoji: '👟' },
-  { key: 'accessory', label: 'Accessory', emoji: '💍' },
-]
 
 const categories = computed(() => {
   const cats = [
@@ -298,7 +207,6 @@ const categories = computed(() => {
 
 const tabs = computed(() => [
   { key: 'all', label: 'All Items', count: allItems.value.length },
-  { key: 'outfits', label: 'Outfits', count: outfits.value.length },
   { key: 'wishlist', label: 'Wishlist', count: wishlistIds.value.size },
 ])
 
@@ -322,7 +230,7 @@ const filteredItems = computed(() => {
   if (sortBy.value === 'price-low') items.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0))
   else if (sortBy.value === 'price-high') items.sort((a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0))
   else if (sortBy.value === 'name') items.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
-  // 'recent' is default order
+  // 'recent' is default order (newest first)
 
   return items
 })
@@ -352,61 +260,28 @@ const removeFromCloset = (id) => {
   newSet.delete(id)
   wishlistIds.value = newSet
   localStorage.setItem('fyndaClosetWishlist', JSON.stringify([...newSet]))
+
+  showToast('Removed from closet')
 }
 
-const addToOutfit = (item) => {
-  showBuilder.value = true
-  // Auto-assign to first empty slot
-  for (const slot of outfitSlots) {
-    if (!builderItems[slot.key]) {
-      builderItems[slot.key] = item
-      break
-    }
+const moveToFashionBoard = (item) => {
+  // Store the item in a temp key that StoryboardPage reads
+  const boardItems = JSON.parse(localStorage.getItem('fyndaBoardIncoming') || '[]')
+  // Avoid duplicates
+  if (!boardItems.find(b => b.id === item.id)) {
+    boardItems.push({
+      id: item.id,
+      title: item.title,
+      price: item.price,
+      image_url: item.image_url,
+      product_url: item.product_url || '',
+      brand: item.brand || '',
+      addedAt: new Date().toISOString(),
+    })
+    localStorage.setItem('fyndaBoardIncoming', JSON.stringify(boardItems))
   }
-}
-
-// Outfit builder
-const openOutfitBuilder = () => {
-  showBuilder.value = true
-  activeSlot.value = null
-  newOutfitName.value = ''
-  builderItems.top = null
-  builderItems.bottom = null
-  builderItems.shoes = null
-  builderItems.accessory = null
-}
-
-const selectSlot = (key) => {
-  activeSlot.value = activeSlot.value === key ? null : key
-}
-
-const assignToSlot = (item) => {
-  if (activeSlot.value) {
-    builderItems[activeSlot.value] = item
-    activeSlot.value = null
-  }
-}
-
-const canSaveOutfit = computed(() => {
-  return newOutfitName.value.trim() && Object.values(builderItems).some(v => v !== null)
-})
-
-const saveOutfit = () => {
-  if (!canSaveOutfit.value) return
-  const outfit = {
-    id: Date.now().toString(),
-    name: newOutfitName.value.trim(),
-    created: new Date().toISOString(),
-    items: { ...builderItems },
-  }
-  outfits.value.push(outfit)
-  localStorage.setItem('fyndaClosetOutfits', JSON.stringify(outfits.value))
-  showBuilder.value = false
-}
-
-const removeOutfit = (id) => {
-  outfits.value = outfits.value.filter(o => o.id !== id)
-  localStorage.setItem('fyndaClosetOutfits', JSON.stringify(outfits.value))
+  showToast('Added to Fashion Board ✨')
+  setTimeout(() => router.push('/storyboard'), 800)
 }
 
 // Helpers
@@ -415,27 +290,54 @@ const formatPrice = (price) => {
   return parseFloat(price).toFixed(2)
 }
 
-const formatDate = (iso) => {
-  if (!iso) return ''
-  const d = new Date(iso)
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+const getSourceLabel = (source) => {
+  const map = { product: '🛍️', compare: '⚖️', storyboard: '🎨' }
+  return map[source] || '🏷️'
 }
 
-const getCategoryEmoji = (cat) => {
-  const map = { tops: '👕', bottoms: '👖', shoes: '👟', bags: '👜', outerwear: '🧥', accessories: '💍', dresses: '👗' }
-  return map[cat] || '🏷️'
+const showToast = (message, type = 'success') => {
+  toast.value = { message, type }
+  setTimeout(() => { toast.value = null }, 2500)
 }
 
-const getSlotEmoji = (slot) => {
-  const map = { top: '👕', bottom: '👖', shoes: '👟', accessory: '💍' }
-  return map[slot] || '+'
+// Migrate old userLibrary data → fyndaCloset (one-time)
+const migrateLibrary = () => {
+  const oldLibrary = JSON.parse(localStorage.getItem('userLibrary') || '[]')
+  if (oldLibrary.length === 0) return
+
+  const current = JSON.parse(localStorage.getItem('fyndaCloset') || '[]')
+  const existingIds = new Set(current.map(i => i.id))
+  let added = 0
+
+  for (const item of oldLibrary) {
+    if (!existingIds.has(item.id)) {
+      current.push({
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        image_url: item.image_url,
+        product_url: item.product_url || '',
+        brand: item.brand || '',
+        source: 'product',
+        savedAt: item.savedAt || new Date().toISOString(),
+      })
+      added++
+    }
+  }
+
+  if (added > 0) {
+    localStorage.setItem('fyndaCloset', JSON.stringify(current))
+  }
+
+  // Clear old key after migration
+  localStorage.removeItem('userLibrary')
 }
 
 // Load from localStorage
 onMounted(() => {
+  migrateLibrary()
   allItems.value = JSON.parse(localStorage.getItem('fyndaCloset') || '[]')
   wishlistIds.value = new Set(JSON.parse(localStorage.getItem('fyndaClosetWishlist') || '[]'))
-  outfits.value = JSON.parse(localStorage.getItem('fyndaClosetOutfits') || '[]')
 })
 </script>
 
@@ -527,9 +429,7 @@ onMounted(() => {
   gap: 6px;
 }
 
-.tab-btn:hover {
-  color: #555;
-}
+.tab-btn:hover { color: #555; }
 
 .tab-btn.active {
   background: #fff;
@@ -568,9 +468,7 @@ onMounted(() => {
   transition: border-color 0.2s ease;
 }
 
-.search-box:focus-within {
-  border-color: #aaa;
-}
+.search-box:focus-within { border-color: #aaa; }
 
 .search-input {
   border: none;
@@ -582,9 +480,7 @@ onMounted(() => {
   width: 140px;
 }
 
-.search-input::placeholder {
-  color: #ccc;
-}
+.search-input::placeholder { color: #ccc; }
 
 .sort-select {
   padding: 7px 12px;
@@ -624,10 +520,7 @@ onMounted(() => {
   transition: all 0.2s ease;
 }
 
-.chip:hover {
-  border-color: #bbb;
-  color: #333;
-}
+.chip:hover { border-color: #bbb; color: #333; }
 
 .chip.active {
   background: #1a1a1a;
@@ -640,9 +533,7 @@ onMounted(() => {
   color: #fff;
 }
 
-.chip-emoji {
-  font-size: 0.9rem;
-}
+.chip-emoji { font-size: 0.9rem; }
 
 .chip-count {
   font-size: 0.68rem;
@@ -799,12 +690,17 @@ onMounted(() => {
   background: #fff0f0;
 }
 
+.overlay-btn.board-btn:hover {
+  background: #f0f4ff;
+  color: #3b82f6;
+}
+
 .overlay-btn.remove:hover {
   background: #fee2e2;
   color: #dc2626;
 }
 
-.item-cat-tag {
+.item-source-tag {
   position: absolute;
   bottom: 8px;
   left: 8px;
@@ -840,410 +736,56 @@ onMounted(() => {
 }
 
 /* ======================== */
-/* Outfits Grid             */
+/* Toast                    */
 /* ======================== */
-.outfits-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.25rem;
-}
-
-.outfit-card {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 14px;
-  padding: 1.25rem;
-  position: relative;
-  transition: all 0.25s ease;
-}
-
-.outfit-card:hover {
-  border-color: #ddd;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.06);
-}
-
-.outfit-remove {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 1px solid #eee;
-  background: #fff;
-  color: #bbb;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.outfit-remove:hover {
-  background: #fee2e2;
-  border-color: #fca5a5;
-  color: #dc2626;
-}
-
-.outfit-preview {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.outfit-slot-preview {
-  aspect-ratio: 3/4;
-  border-radius: 8px;
-  background: #f5f5f5;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.outfit-slot-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.slot-empty {
-  font-size: 1.2rem;
-  opacity: 0.4;
-}
-
-.outfit-info {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.outfit-name {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0;
-}
-
-.outfit-date {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.75rem;
-  color: #999;
-  margin: 0;
-}
-
-/* ======================== */
-/* FAB                      */
-/* ======================== */
-.fab {
+.toast {
   position: fixed;
   bottom: 2rem;
-  right: 2rem;
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  border: none;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 28px;
   background: #1a1a1a;
   color: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-  transition: all 0.2s ease;
-  z-index: 50;
-}
-
-.fab:hover {
-  background: #333;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 28px rgba(0,0,0,0.25);
-}
-
-/* ======================== */
-/* Outfit Builder Modal     */
-/* ======================== */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.4);
-  backdrop-filter: blur(4px);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.builder-modal {
-  background: #fff;
-  border-radius: 20px;
-  padding: 2rem;
-  width: 100%;
-  max-width: 600px;
-  max-height: 85vh;
-  overflow-y: auto;
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.builder-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.25rem;
-}
-
-.builder-header h2 {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1.4rem;
-  font-weight: 400;
-  color: #1a1a1a;
-  margin: 0;
-}
-
-.builder-close {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid #eee;
-  background: #fff;
-  color: #888;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.builder-close:hover {
-  background: #f5f5f5;
-  color: #333;
-}
-
-.builder-name-input {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #e5e5e5;
-  border-radius: 10px;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.9rem;
-  color: #333;
-  outline: none;
-  margin-bottom: 1.25rem;
-  transition: border-color 0.2s ease;
-  box-sizing: border-box;
-}
-
-.builder-name-input:focus {
-  border-color: #aaa;
-}
-
-.builder-slots {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 1.25rem;
-}
-
-.builder-slot {
-  aspect-ratio: 3/4;
-  border: 2px dashed #e0e0e0;
   border-radius: 12px;
-  cursor: pointer;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.builder-slot:hover {
-  border-color: #bbb;
-}
-
-.builder-slot.filled {
-  border-style: solid;
-  border-color: #e0e0e0;
-}
-
-.slot-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.slot-emoji {
-  font-size: 1.3rem;
-}
-
-.slot-label {
   font-family: 'Inter', sans-serif;
-  font-size: 0.72rem;
-  color: #bbb;
-}
-
-.slot-filled {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.slot-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.slot-remove {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(0,0,0,0.5);
-  color: #fff;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.builder-picker {
-  margin-bottom: 1.25rem;
-}
-
-.picker-label {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.82rem;
-  color: #888;
-  margin: 0 0 8px;
-}
-
-.picker-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.picker-item {
-  aspect-ratio: 3/4;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: all 0.15s ease;
-}
-
-.picker-item:hover {
-  border-color: #1a1a1a;
-}
-
-.picker-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.builder-save {
-  width: 100%;
-  padding: 12px;
-  background: #1a1a1a;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  z-index: 300;
 }
 
-.builder-save:hover {
-  background: #333;
-}
+.toast.success { background: #1a1a1a; }
 
-.builder-save:disabled {
-  background: #e5e5e5;
-  color: #999;
-  cursor: not-allowed;
+.toast-enter-active { animation: toastIn 0.3s ease; }
+.toast-leave-active { animation: toastOut 0.2s ease; }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to { opacity: 0; transform: translateX(-50%) translateY(20px); }
 }
 
 /* ======================== */
 /* Responsive               */
 /* ======================== */
 @media (max-width: 1024px) {
-  .items-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  .items-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .closet-content {
-    padding: 1.5rem 1rem 5rem;
-  }
-
-  .items-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
-  .tabs-bar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .tabs-actions {
-    width: 100%;
-  }
-
-  .search-input {
-    width: 100px;
-  }
-
-  .builder-slots {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .picker-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
+  .closet-content { padding: 1rem 1rem 4rem; }
+  .items-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .tabs-bar { flex-direction: column; align-items: stretch; }
+  .tabs-actions { justify-content: space-between; }
+  .closet-title { font-size: 1.5rem; }
 }
 
 @media (max-width: 480px) {
-  .closet-title {
-    font-size: 1.5rem;
-  }
-
-  .category-chips {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 4px;
-  }
-
-  .chip {
-    white-space: nowrap;
-  }
+  .items-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .item-info { padding: 8px 10px; }
+  .item-title { font-size: 0.75rem; }
 }
 </style>

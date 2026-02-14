@@ -110,41 +110,6 @@
             </div>
           </div>
           
-          <!-- My Library Tab -->
-          <div v-if="activeTab === 'library'" class="tab-content">
-            <div class="section-header">
-              <h2>My Library</h2>
-              <p>Products you've saved for later</p>
-            </div>
-            
-            <div v-if="libraryItems.length === 0" class="empty-state">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-              </svg>
-              <h3>Your library is empty</h3>
-              <p>Save products from product pages to view them here</p>
-              <router-link to="/" class="btn-primary">Explore Products</router-link>
-            </div>
-            
-            <div v-else class="library-grid">
-              <div v-for="item in libraryItems" :key="item.id" class="library-card" @click="goToProduct(item.id)">
-                <img :src="item.image_url" :alt="item.title" class="library-image" />
-                <div class="library-info">
-                  <span class="library-brand">{{ item.brand }}</span>
-                  <h4>{{ item.title }}</h4>
-                  <span class="library-price">${{ item.price }}</span>
-                  <span class="library-date">Saved {{ formatDate(item.savedAt) }}</span>
-                </div>
-                <button class="remove-btn" @click.stop="removeFromLibrary(item.id)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-          
           <!-- Settings Tab -->
           <div v-if="activeTab === 'settings'" class="tab-content">
             <div class="section-header">
@@ -471,7 +436,6 @@ const { state, currentUser, logout, updateProfile } = useAuth()
 // Tabs configuration
 const tabs = [
   { id: 'profile', label: 'Profile', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' },
-  { id: 'library', label: 'My Library', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>' },
   { id: 'settings', label: 'Settings', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' },
   { id: 'notifications', label: 'Notifications', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>' },
   { id: 'privacy', label: 'Privacy & Cookies', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
@@ -554,22 +518,6 @@ const loginProvider = computed(() => {
 // Saved deals
 const savedDeals = ref([])
 
-// Library items (from localStorage)
-const libraryItems = ref([])
-
-const loadLibraryItems = () => {
-  try {
-    libraryItems.value = JSON.parse(localStorage.getItem('userLibrary') || '[]')
-  } catch (e) {
-    libraryItems.value = []
-  }
-}
-
-const removeFromLibrary = (productId) => {
-  libraryItems.value = libraryItems.value.filter(item => item.id !== productId)
-  localStorage.setItem('userLibrary', JSON.stringify(libraryItems.value))
-}
-
 const formatDate = (dateString) => {
   if (!dateString) return ''
   const date = new Date(dateString)
@@ -606,9 +554,6 @@ onMounted(async () => {
   
   // Fetch saved deals
   await fetchSavedDeals()
-  
-  // Load library items from localStorage
-  loadLibraryItems()
 })
 
 const fetchPreferences = async () => {
@@ -1270,70 +1215,6 @@ const deleteAccount = async () => {
   color: #888;
 }
 
-/* Library Grid */
-.library-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
-}
-
-.library-card {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 12px;
-  overflow: hidden;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.library-card:hover {
-  border-color: #1a1a1a;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-.library-image {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-}
-
-.library-info {
-  padding: 14px;
-}
-
-.library-brand {
-  display: block;
-  font-size: 11px;
-  text-transform: uppercase;
-  color: #888;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
-}
-
-.library-info h4 {
-  font-size: 14px;
-  font-weight: 500;
-  color: #111;
-  margin-bottom: 8px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.library-price {
-  font-size: 16px;
-  font-weight: 600;
-  color: #111;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.library-date {
-  font-size: 11px;
-  color: #aaa;
-}
 
 .remove-btn {
   position: absolute;

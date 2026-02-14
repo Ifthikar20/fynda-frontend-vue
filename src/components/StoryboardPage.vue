@@ -1679,6 +1679,32 @@ onMounted(() => {
       console.error('Failed to parse product data:', e)
     }
   }
+
+  // Check for items sent from Closet → Fashion Board
+  try {
+    const incoming = JSON.parse(localStorage.getItem('fyndaBoardIncoming') || '[]')
+    if (incoming.length > 0) {
+      incoming.forEach((item, i) => {
+        const x = 50 + (i * 30)
+        const y = 50 + (i * 30)
+        canvasItems.value.push({
+          id: Date.now() + Math.random() + i,
+          title: item.title || 'Closet Item',
+          image_url: item.image_url,
+          price: item.price,
+          product_url: item.product_url || '',
+          x, y,
+          width: 200,
+          height: 200,
+          zIndex: canvasItems.value.length + textElements.value.length + 1
+        })
+      })
+      // Clear the incoming queue
+      localStorage.removeItem('fyndaBoardIncoming')
+    }
+  } catch (e) {
+    console.error('Failed to load incoming board items:', e)
+  }
 })
 
 onUnmounted(() => {

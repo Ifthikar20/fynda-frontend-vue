@@ -54,7 +54,7 @@
               Shop item
             </a>
             
-            <!-- Add to Fashion Board + Library Row -->
+            <!-- Add to Fashion Board + Closet Row -->
             <div class="action-row">
               <button class="outfit-btn" @click="goToFashionBoard">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -66,10 +66,12 @@
                 Add to Fashion Board
               </button>
               
-              <!-- Library Button - Small -->
-              <button class="library-btn" :class="{ saved: isInLibrary }" @click="toggleLibrary" :title="isInLibrary ? 'Saved to Library' : 'Add to Library'">
-                <svg width="18" height="18" viewBox="0 0 24 24" :fill="isInLibrary ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+              <!-- Save to Closet Button -->
+              <button class="closet-btn" :class="{ saved: isInCloset }" @click="toggleCloset" :title="isInCloset ? 'Saved to Closet' : 'Save to Closet'">
+                <svg width="18" height="18" viewBox="0 0 24 24" :fill="isInCloset ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2L3 7v1h18V7L12 2z"/>
+                  <line x1="12" y1="8" x2="12" y2="16"/>
+                  <path d="M8 16a4 4 0 0 0 8 0"/>
                 </svg>
               </button>
             </div>
@@ -190,7 +192,7 @@ const showPriceDetails = ref(true)
 const activeFilter = ref('all')
 const sortBy = ref('featured')
 const upvotedProducts = ref({})
-const isInLibrary = ref(false)
+const isInCloset = ref(false)
 const isInCompare = ref(false)
 
 // Computed
@@ -334,44 +336,45 @@ const goToBrand = (brandName) => {
   }
 }
 
-// Library functions
-const toggleLibrary = () => {
+// Closet functions
+const toggleCloset = () => {
   if (!isAuthenticated.value) {
     router.push({ name: 'Login', query: { redirect: route.fullPath } })
     return
   }
   
-  isInLibrary.value = !isInLibrary.value
+  isInCloset.value = !isInCloset.value
   
-  // Get current library from localStorage
-  const library = JSON.parse(localStorage.getItem('userLibrary') || '[]')
+  // Get current closet from localStorage
+  const closet = JSON.parse(localStorage.getItem('fyndaCloset') || '[]')
   
-  if (isInLibrary.value) {
-    // Add to library
+  if (isInCloset.value) {
+    // Add to closet
     const productData = {
       id: product.value.id,
       title: product.value.title,
       price: product.value.price,
       image_url: product.value.image_url,
-      brand: product.value.brand || product.value.merchant_name,
-      url: product.value.url,
+      product_url: product.value.url || '',
+      brand: product.value.brand || product.value.merchant_name || '',
+      source: 'product',
       savedAt: new Date().toISOString()
     }
-    library.push(productData)
+    closet.push(productData)
   } else {
-    // Remove from library
-    const index = library.findIndex(item => item.id === product.value.id)
+    // Remove from closet
+    const index = closet.findIndex(item => item.id === product.value.id)
     if (index > -1) {
-      library.splice(index, 1)
+      closet.splice(index, 1)
     }
   }
   
-  localStorage.setItem('userLibrary', JSON.stringify(library))
+  localStorage.setItem('fyndaCloset', JSON.stringify(closet))
 }
 
-const checkLibraryStatus = () => {
-  const library = JSON.parse(localStorage.getItem('userLibrary') || '[]')
-  isInLibrary.value = library.some(item => item.id === product.value.id)
+const checkClosetStatus = () => {
+  const closet = JSON.parse(localStorage.getItem('fyndaCloset') || '[]')
+  isInCloset.value = closet.some(item => item.id === product.value.id)
 }
 
 // Compare functions
@@ -523,7 +526,7 @@ watch(() => route.params.id, (newId) => {
 }, { immediate: true })
 
 onMounted(() => {
-  checkLibraryStatus()
+  checkClosetStatus()
   checkCompareStatus()
 })
 </script>
@@ -948,8 +951,8 @@ onMounted(() => {
   margin-top: 0;
 }
 
-/* Library Button - Small Icon */
-.library-btn {
+/* Closet Button - Small Icon */
+.closet-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -965,16 +968,16 @@ onMounted(() => {
   transition: all 0.2s ease;
 }
 
-.library-btn:hover {
+.closet-btn:hover {
   background: #333;
   transform: scale(1.05);
 }
 
-.library-btn.saved {
+.closet-btn.saved {
   background: #10b981;
 }
 
-.library-btn.saved:hover {
+.closet-btn.saved:hover {
   background: #059669;
 }
 
