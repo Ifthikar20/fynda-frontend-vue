@@ -273,6 +273,25 @@
             <img :src="item.image_url" :alt="item.title" class="item-img" draggable="false" />
             <span class="item-remove" @mousedown.stop @click="removeItem(item.id)">×</span>
             <div class="resize-handle" @mousedown.stop="startResize($event, item)"></div>
+            <!-- Remove Background Button -->
+            <button
+              v-if="selectedItem === item.id && !item.removingBg"
+              class="remove-bg-btn"
+              @mousedown.stop
+              @click.stop="removeBackground(item)"
+              title="Remove background"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 5h14v14H5z" opacity="0.3"/>
+                <path d="M12 3v18M3 12h18" stroke-dasharray="3 3"/>
+              </svg>
+              Remove BG
+            </button>
+            <!-- BG Removal Loading -->
+            <div v-if="item.removingBg" class="bg-removal-loading">
+              <div class="spinner-small"></div>
+              <span>Removing...</span>
+            </div>
           </div>
           
           <!-- Text Elements -->
@@ -438,6 +457,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../stores/authStore'
 import api from '../utils/api'
 import NavBar from './NavBar.vue'
+import { removeBackground as removeBgLib } from '@imgly/background-removal'
 
 const router = useRouter()
 const route = useRoute()
@@ -563,37 +583,55 @@ const stickers = ref([
   { id: 'p6', type: 'pantone', name: 'Blush', color: '#e8b4b8', code: '14-1714' },
 ])
 
-// Decorative elements - flowers, tags, sticky notes, pins
+// Decorative elements - realistic detailed stickers
 const decorations = ref([
-  // Dried Flowers
-  { id: 'd1', type: 'decoration', name: 'Dried Flower', category: 'flower', 
-    svg: '<svg viewBox="0 0 40 60"><circle cx="20" cy="12" r="8" fill="#d4a574"/><circle cx="12" cy="18" r="6" fill="#c9956c"/><circle cx="28" cy="18" r="6" fill="#c9956c"/><path d="M20 20 L20 55" stroke="#6b5b47" stroke-width="2"/><path d="M20 35 Q10 30 8 40" stroke="#6b5b47" stroke-width="1.5" fill="none"/></svg>' },
-  { id: 'd2', type: 'decoration', name: 'Yellow Flower', category: 'flower',
-    svg: '<svg viewBox="0 0 40 60"><circle cx="20" cy="15" r="10" fill="#f4a620"/><circle cx="20" cy="15" r="4" fill="#8b5a2b"/><path d="M20 25 L20 55" stroke="#5a7247" stroke-width="2"/></svg>' },
-  { id: 'd3', type: 'decoration', name: 'Lavender', category: 'flower',
-    svg: '<svg viewBox="0 0 30 60"><ellipse cx="15" cy="8" rx="4" ry="6" fill="#9b7bb8"/><ellipse cx="15" cy="16" rx="4" ry="6" fill="#9b7bb8"/><ellipse cx="15" cy="24" rx="3" ry="5" fill="#9b7bb8"/><path d="M15 28 L15 55" stroke="#6b7b5a" stroke-width="2"/></svg>' },
-  // Sticky Notes
-  { id: 'd4', type: 'decoration', name: 'Yellow Note', category: 'note',
-    svg: '<svg viewBox="0 0 60 60"><path d="M0 0 L60 0 L60 50 L50 60 L0 60 Z" fill="#fff9c4"/><path d="M50 60 L50 50 L60 50" fill="#f0e68c"/></svg>' },
-  { id: 'd5', type: 'decoration', name: 'Pink Note', category: 'note',
-    svg: '<svg viewBox="0 0 60 60"><path d="M0 0 L60 0 L60 50 L50 60 L0 60 Z" fill="#ffc9c9"/><path d="M50 60 L50 50 L60 50" fill="#ffb3b3"/></svg>' },
-  { id: 'd6', type: 'decoration', name: 'Blue Note', category: 'note',
-    svg: '<svg viewBox="0 0 60 60"><path d="M0 0 L60 0 L60 50 L50 60 L0 60 Z" fill="#c5e1f5"/><path d="M50 60 L50 50 L60 50" fill="#a8d4f0"/></svg>' },
-  // Tags
-  { id: 'd7', type: 'decoration', name: 'Kraft Tag', category: 'tag',
-    svg: '<svg viewBox="0 0 40 60"><path d="M5 15 L20 0 L35 15 L35 55 Q35 60 30 60 L10 60 Q5 60 5 55 Z" fill="#d4c4a8"/><circle cx="20" cy="12" r="4" fill="none" stroke="#8b7355" stroke-width="1.5"/><path d="M18 8 Q22 3 26 8" stroke="#8b7355" stroke-width="1" fill="none"/></svg>' },
-  { id: 'd8', type: 'decoration', name: 'White Tag', category: 'tag',
-    svg: '<svg viewBox="0 0 40 60"><path d="M5 15 L20 0 L35 15 L35 55 Q35 60 30 60 L10 60 Q5 60 5 55 Z" fill="#fafafa" stroke="#ddd" stroke-width="1"/><circle cx="20" cy="12" r="4" fill="none" stroke="#999" stroke-width="1.5"/></svg>' },
-  // Pins and Clips
-  { id: 'd9', type: 'decoration', name: 'Gold Pin', category: 'pin',
-    svg: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="url(#goldPin)"/><defs><radialGradient id="goldPin" cx="30%" cy="30%"><stop offset="0%" stop-color="#ffd700"/><stop offset="100%" stop-color="#b8860b"/></radialGradient></defs></svg>' },
-  { id: 'd10', type: 'decoration', name: 'Silver Pin', category: 'pin',
-    svg: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="url(#silverPin)"/><defs><radialGradient id="silverPin" cx="30%" cy="30%"><stop offset="0%" stop-color="#e8e8e8"/><stop offset="100%" stop-color="#a0a0a0"/></radialGradient></defs></svg>' },
-  // Tape
-  { id: 'd11', type: 'decoration', name: 'Washi Tape', category: 'tape',
-    svg: '<svg viewBox="0 0 80 24"><rect x="0" y="0" width="80" height="24" fill="#f5e6d3" opacity="0.85"/><path d="M0 8 L80 8 M0 16 L80 16" stroke="#e8d4bc" stroke-width="1"/></svg>' },
-  { id: 'd12', type: 'decoration', name: 'Paper Tear', category: 'paper',
-    svg: '<svg viewBox="0 0 80 30"><path d="M0 5 Q5 0 10 5 Q15 8 20 3 Q25 7 30 4 Q35 8 40 5 Q45 2 50 6 Q55 3 60 7 Q65 4 70 6 Q75 3 80 5 L80 25 Q75 28 70 25 Q65 22 60 26 Q55 23 50 27 Q45 24 40 26 Q35 23 30 27 Q25 24 20 26 Q15 23 10 27 Q5 24 0 26 Z" fill="#f5f0e8"/></svg>' },
+  // Realistic Flowers
+  { id: 'd1', type: 'decoration', name: 'Rose', category: 'flower', 
+    svg: '<svg viewBox="0 0 50 70"><defs><radialGradient id="roseG" cx="50%" cy="40%"><stop offset="0%" stop-color="#f2a0a8"/><stop offset="60%" stop-color="#e85d75"/><stop offset="100%" stop-color="#c73e5a"/></radialGradient></defs><path d="M25 8 C20 2 12 4 10 12 C8 20 16 24 22 20 C18 28 10 26 8 18 C4 24 8 32 18 30 C12 36 6 32 6 24 C2 30 6 38 16 38 C10 42 4 38 4 30" fill="url(#roseG)" opacity="0.9"/><circle cx="25" cy="18" r="10" fill="url(#roseG)"/><path d="M25 28 Q24 35 23 42 Q22 50 24 60" stroke="#4a7a3f" stroke-width="2.5" fill="none"/><path d="M24 38 Q18 34 14 38 Q18 40 24 38" fill="#5a8a4f"/><path d="M25 45 Q30 40 34 43 Q30 46 25 45" fill="#5a8a4f"/></svg>' },
+  { id: 'd2', type: 'decoration', name: 'Peony', category: 'flower',
+    svg: '<svg viewBox="0 0 55 70"><defs><radialGradient id="peonyG" cx="50%" cy="40%"><stop offset="0%" stop-color="#fde7ef"/><stop offset="50%" stop-color="#f5b5c8"/><stop offset="100%" stop-color="#e88aa5"/></radialGradient></defs><ellipse cx="28" cy="22" rx="18" ry="16" fill="url(#peonyG)"/><ellipse cx="20" cy="18" rx="12" ry="10" fill="#f5c0d0" opacity="0.7"/><ellipse cx="35" cy="18" rx="10" ry="9" fill="#f5c0d0" opacity="0.6"/><ellipse cx="28" cy="12" rx="8" ry="7" fill="#fde7ef" opacity="0.8"/><circle cx="28" cy="20" r="5" fill="#f0a0b5"/><path d="M28 34 L28 62" stroke="#5a7a4f" stroke-width="2.5" fill="none"/><path d="M28 42 Q22 38 18 42" stroke="#5a7a4f" stroke-width="1.5" fill="none"/></svg>' },
+  { id: 'd3', type: 'decoration', name: 'Eucalyptus', category: 'flower',
+    svg: '<svg viewBox="0 0 40 80"><path d="M20 5 Q19 20 18 40 Q17 55 20 75" stroke="#6b8a5e" stroke-width="2" fill="none"/><ellipse cx="14" cy="12" rx="6" ry="9" fill="#8aad7a" transform="rotate(-20 14 12)" opacity="0.85"/><ellipse cx="26" cy="20" rx="6" ry="9" fill="#7da06d" transform="rotate(15 26 20)" opacity="0.85"/><ellipse cx="13" cy="30" rx="6" ry="9" fill="#8aad7a" transform="rotate(-15 13 30)" opacity="0.8"/><ellipse cx="27" cy="40" rx="6" ry="8" fill="#7da06d" transform="rotate(18 27 40)" opacity="0.8"/><ellipse cx="15" cy="50" rx="5" ry="8" fill="#8aad7a" transform="rotate(-12 15 50)" opacity="0.75"/><ellipse cx="25" cy="58" rx="5" ry="7" fill="#7da06d" transform="rotate(10 25 58)" opacity="0.75"/></svg>' },
+  { id: 'd4', type: 'decoration', name: 'Cherry Blossom', category: 'flower',
+    svg: '<svg viewBox="0 0 50 65"><path d="M25 30 Q22 40 20 55" stroke="#8b6b5a" stroke-width="2" fill="none"/><path d="M22 38 Q15 35 12 30" stroke="#8b6b5a" stroke-width="1.5" fill="none"/><g transform="translate(25,15)"><circle r="3" fill="#f5c6d0"/><ellipse cx="0" cy="-8" rx="4" ry="6" fill="#fad0d8"/><ellipse cx="7" cy="-3" rx="4" ry="6" fill="#f5b8c8" transform="rotate(72)"/><ellipse cx="5" cy="6" rx="4" ry="6" fill="#fad0d8" transform="rotate(144)"/><ellipse cx="-5" cy="6" rx="4" ry="6" fill="#f5b8c8" transform="rotate(216)"/><ellipse cx="-7" cy="-3" rx="4" ry="6" fill="#fad0d8" transform="rotate(288)"/></g><g transform="translate(12,28) scale(0.6)"><circle r="2" fill="#f5c6d0"/><ellipse cx="0" cy="-6" rx="3" ry="5" fill="#fad0d8"/><ellipse cx="5" cy="-2" rx="3" ry="5" fill="#f5b8c8" transform="rotate(72)"/><ellipse cx="4" cy="4" rx="3" ry="5" fill="#fad0d8" transform="rotate(144)"/><ellipse cx="-4" cy="4" rx="3" ry="5" fill="#f5b8c8" transform="rotate(216)"/><ellipse cx="-5" cy="-2" rx="3" ry="5" fill="#fad0d8" transform="rotate(288)"/></g></svg>' },
+  { id: 'd5', type: 'decoration', name: 'Pampas Grass', category: 'flower',
+    svg: '<svg viewBox="0 0 40 80"><path d="M20 30 Q19 45 20 75" stroke="#c9b896" stroke-width="2" fill="none"/><path d="M20 8 Q18 15 16 25 Q14 18 12 12 Q15 6 20 8" fill="#e8d8c0" opacity="0.9"/><path d="M20 8 Q22 15 24 25 Q26 18 28 12 Q25 6 20 8" fill="#ddd0b8" opacity="0.85"/><path d="M20 5 Q17 12 14 20 Q11 14 10 8 Q14 3 20 5" fill="#f0e4d0" opacity="0.8"/><path d="M20 5 Q23 12 26 20 Q29 14 30 8 Q26 3 20 5" fill="#e8dcc8" opacity="0.78"/><path d="M20 3 Q16 8 15 15" stroke="#d4c4a8" stroke-width="0.8" fill="none"/><path d="M20 3 Q24 8 25 15" stroke="#d4c4a8" stroke-width="0.8" fill="none"/></svg>' },
+  { id: 'd6', type: 'decoration', name: 'Wildflower', category: 'flower',
+    svg: '<svg viewBox="0 0 35 65"><path d="M18 25 Q17 35 16 55" stroke="#5a7a4f" stroke-width="1.8" fill="none"/><path d="M17 35 Q12 32 9 35" stroke="#5a7a4f" stroke-width="1" fill="none"/><g transform="translate(18,12)"><circle r="4" fill="#f4d03f"/><ellipse cx="0" cy="-7" rx="3" ry="5" fill="#fff"/><ellipse cx="6" cy="-2" rx="3" ry="5" fill="#fff" transform="rotate(72)"/><ellipse cx="4" cy="5" rx="3" ry="5" fill="#fff" transform="rotate(144)"/><ellipse cx="-4" cy="5" rx="3" ry="5" fill="#fff" transform="rotate(216)"/><ellipse cx="-6" cy="-2" rx="3" ry="5" fill="#fff" transform="rotate(288)"/></g></svg>' },
+  // Fashion Elements
+  { id: 'd7', type: 'decoration', name: 'Scissors', category: 'fashion',
+    svg: '<svg viewBox="0 0 50 50"><defs><linearGradient id="steelG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#d0d0d0"/><stop offset="50%" stop-color="#a0a0a0"/><stop offset="100%" stop-color="#808080"/></linearGradient></defs><ellipse cx="12" cy="38" rx="8" ry="10" fill="none" stroke="url(#steelG)" stroke-width="2.5"/><ellipse cx="38" cy="38" rx="8" ry="10" fill="none" stroke="url(#steelG)" stroke-width="2.5"/><path d="M16 30 L28 10" stroke="url(#steelG)" stroke-width="3" stroke-linecap="round"/><path d="M34 30 L22 10" stroke="url(#steelG)" stroke-width="3" stroke-linecap="round"/><circle cx="25" cy="20" r="2" fill="#888"/></svg>' },
+  { id: 'd8', type: 'decoration', name: 'Thread Spool', category: 'fashion',
+    svg: '<svg viewBox="0 0 40 50"><defs><linearGradient id="spoolG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e8c9a0"/><stop offset="100%" stop-color="#c4a070"/></linearGradient></defs><ellipse cx="20" cy="8" rx="14" ry="6" fill="url(#spoolG)"/><rect x="6" y="8" width="28" height="28" fill="url(#spoolG)"/><ellipse cx="20" cy="36" rx="14" ry="6" fill="#b8905a"/><rect x="8" y="12" width="24" height="20" rx="2" fill="#e06070"/><path d="M8 16 L32 16 M8 20 L32 20 M8 24 L32 24 M8 28 L32 28" stroke="#c84858" stroke-width="0.8"/><path d="M20 8 Q35 12 32 20" stroke="#e06070" stroke-width="1" fill="none"/></svg>' },
+  { id: 'd9', type: 'decoration', name: 'Hanger', category: 'fashion',
+    svg: '<svg viewBox="0 0 60 45"><path d="M30 5 Q30 0 30 5" stroke="#888" stroke-width="2"/><circle cx="30" cy="5" r="3" fill="none" stroke="#999" stroke-width="2"/><path d="M30 8 L5 30 Q2 32 5 34 L30 34 L55 34 Q58 32 55 30 Z" fill="none" stroke="#aaa" stroke-width="2.5" stroke-linejoin="round"/><path d="M5 34 L55 34" stroke="#999" stroke-width="2"/></svg>' },
+  { id: 'd10', type: 'decoration', name: 'Bow Ribbon', category: 'fashion',
+    svg: '<svg viewBox="0 0 60 40"><path d="M30 20 Q15 5 5 10 Q0 15 10 20 Q0 25 5 30 Q15 35 30 20" fill="#e8a0b0" stroke="#d08090" stroke-width="1"/><path d="M30 20 Q45 5 55 10 Q60 15 50 20 Q60 25 55 30 Q45 35 30 20" fill="#e8a0b0" stroke="#d08090" stroke-width="1"/><circle cx="30" cy="20" r="4" fill="#d08090"/><path d="M26 22 Q28 35 26 40" stroke="#d08090" stroke-width="2" fill="none"/><path d="M34 22 Q32 35 34 40" stroke="#d08090" stroke-width="2" fill="none"/></svg>' },
+  // Sticky Notes (improved with shadow and lines)
+  { id: 'd11', type: 'decoration', name: 'Yellow Note', category: 'note',
+    svg: '<svg viewBox="0 0 65 65"><defs><filter id="noteSh"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.15"/></filter></defs><path d="M2 2 L63 0 L63 52 L50 63 L0 63 Z" fill="#fff9c4" filter="url(#noteSh)"/><path d="M50 63 L50 50 L63 52" fill="#f0e68c"/><path d="M8 18 L50 18 M8 28 L45 28 M8 38 L48 38 M8 48 L35 48" stroke="#e0d8a0" stroke-width="0.5"/></svg>' },
+  { id: 'd12', type: 'decoration', name: 'Pink Note', category: 'note',
+    svg: '<svg viewBox="0 0 65 65"><defs><filter id="noteSh2"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.15"/></filter></defs><path d="M2 2 L63 0 L63 52 L50 63 L0 63 Z" fill="#ffe0e8" filter="url(#noteSh2)"/><path d="M50 63 L50 50 L63 52" fill="#f5b8c8"/><path d="M8 18 L50 18 M8 28 L45 28 M8 38 L48 38 M8 48 L35 48" stroke="#e8b0c0" stroke-width="0.5"/></svg>' },
+  // Tags (improved with string detail)
+  { id: 'd13', type: 'decoration', name: 'Kraft Tag', category: 'tag',
+    svg: '<svg viewBox="0 0 42 65"><defs><filter id="tagSh"><feDropShadow dx="1" dy="1" stdDeviation="1.5" flood-opacity="0.12"/></filter></defs><path d="M5 15 L21 0 L37 15 L37 57 Q37 62 32 62 L10 62 Q5 62 5 57 Z" fill="#d4c4a8" filter="url(#tagSh)"/><path d="M7 17 L21 3 L35 17" fill="#c4b498" opacity="0.5"/><circle cx="21" cy="12" r="4" fill="none" stroke="#8b7355" stroke-width="1.8"/><path d="M19 8 Q21 2 26 6" stroke="#a08060" stroke-width="1.2" fill="none"/><path d="M10 30 L32 30 M10 38 L28 38 M10 46 L30 46" stroke="#b8a888" stroke-width="0.5"/></svg>' },
+  { id: 'd14', type: 'decoration', name: 'Black Tag', category: 'tag',
+    svg: '<svg viewBox="0 0 42 65"><path d="M5 15 L21 0 L37 15 L37 57 Q37 62 32 62 L10 62 Q5 62 5 57 Z" fill="#2a2a2a"/><circle cx="21" cy="12" r="4" fill="none" stroke="#555" stroke-width="1.5"/><path d="M19 8 Q21 2 26 6" stroke="#666" stroke-width="1" fill="none"/><path d="M10 30 L32 30 M10 38 L28 38" stroke="#444" stroke-width="0.5"/></svg>' },
+  // Pins and Clips (improved)
+  { id: 'd15', type: 'decoration', name: 'Push Pin', category: 'pin',
+    svg: '<svg viewBox="0 0 24 30"><defs><radialGradient id="pushPinG" cx="40%" cy="30%"><stop offset="0%" stop-color="#ff6b6b"/><stop offset="100%" stop-color="#c0392b"/></radialGradient></defs><circle cx="12" cy="10" r="8" fill="url(#pushPinG)"/><circle cx="10" cy="8" r="2" fill="rgba(255,255,255,0.35)"/><path d="M12 18 L12 28" stroke="#888" stroke-width="1.5" stroke-linecap="round"/></svg>' },
+  { id: 'd16', type: 'decoration', name: 'Paper Clip', category: 'pin',
+    svg: '<svg viewBox="0 0 20 45"><path d="M6 5 Q6 2 10 2 Q14 2 14 5 L14 35 Q14 40 10 40 Q6 40 6 35 L6 12 Q6 9 10 9 Q14 9 14 12 L14 30" fill="none" stroke="#c0c0c0" stroke-width="2" stroke-linecap="round"/></svg>' },
+  // Tape (improved)
+  { id: 'd17', type: 'decoration', name: 'Washi Tape', category: 'tape',
+    svg: '<svg viewBox="0 0 90 26"><defs><pattern id="washiP" x="0" y="0" width="10" height="26" patternUnits="userSpaceOnUse"><rect width="5" height="26" fill="#f5e0c8" opacity="0.6"/><rect x="5" width="5" height="26" fill="#f0d4b0" opacity="0.6"/></pattern></defs><rect x="0" y="0" width="90" height="26" fill="url(#washiP)" rx="1"/><path d="M0 0 L3 2 L0 4 L3 6 L0 8 L3 10 L0 12 L3 14 L0 16 L3 18 L0 20 L3 22 L0 24 L0 26" stroke="none" fill="rgba(0,0,0,0.05)"/><path d="M90 0 L87 2 L90 4 L87 6 L90 8 L87 10 L90 12 L87 14 L90 16 L87 18 L90 20 L87 22 L90 24 L90 26" stroke="none" fill="rgba(0,0,0,0.05)"/></svg>' },
+  { id: 'd18', type: 'decoration', name: 'Masking Tape', category: 'tape',
+    svg: '<svg viewBox="0 0 90 22"><rect x="0" y="0" width="90" height="22" fill="#e8dcc8" opacity="0.82" rx="1"/><path d="M0 0 L2 1 L0 3 L2 4 L0 6 L2 7 L0 9 L2 10 L0 12 L2 13 L0 15 L2 16 L0 18 L2 19 L0 21 L0 22" fill="rgba(0,0,0,0.04)"/></svg>' },
+  // Nature/Mood
+  { id: 'd19', type: 'decoration', name: 'Butterfly', category: 'nature',
+    svg: '<svg viewBox="0 0 50 40"><path d="M25 20 Q15 5 5 10 Q0 18 10 22 Q5 28 8 35 Q15 38 25 20" fill="#c8a8e0" opacity="0.85"/><path d="M25 20 Q35 5 45 10 Q50 18 40 22 Q45 28 42 35 Q35 38 25 20" fill="#b898d0" opacity="0.85"/><path d="M25 10 L25 35" stroke="#6a5a7a" stroke-width="1.5"/><path d="M24 10 Q20 5 18 3" stroke="#6a5a7a" stroke-width="0.8" fill="none"/><path d="M26 10 Q30 5 32 3" stroke="#6a5a7a" stroke-width="0.8" fill="none"/><circle cx="15" cy="15" r="3" fill="#a080c0" opacity="0.5"/><circle cx="35" cy="15" r="3" fill="#9070b0" opacity="0.5"/></svg>' },
+  { id: 'd20', type: 'decoration', name: 'Feather', category: 'nature',
+    svg: '<svg viewBox="0 0 25 70"><path d="M12 5 Q10 20 8 35 Q6 50 12 65" stroke="#8b7355" stroke-width="1" fill="none"/><path d="M12 5 Q8 10 5 18 Q3 25 6 30 Q8 25 12 20" fill="#c4a882" opacity="0.7"/><path d="M12 5 Q16 10 19 18 Q21 25 18 30 Q16 25 12 20" fill="#b89870" opacity="0.7"/><path d="M12 20 Q7 28 5 35 Q4 40 7 44 Q9 38 12 32" fill="#c4a882" opacity="0.6"/><path d="M12 20 Q17 28 19 35 Q20 40 17 44 Q15 38 12 32" fill="#b89870" opacity="0.6"/></svg>' },
 ])
 
 // Canvas decorations state
@@ -603,10 +641,10 @@ const canvasDecorations = ref([])
 const canvasStickers = ref([])
 
 const aspectRatios = [
-  { name: 'landscape', label: '16:9', width: 1100, height: 620 },
-  { name: 'square', label: '1:1', width: 780, height: 780 },
-  { name: 'portrait', label: '4:5', width: 640, height: 800 },
-  { name: 'story', label: '9:16', width: 460, height: 820 },
+  { name: 'landscape', label: '16:9', width: 1400, height: 788 },
+  { name: 'square', label: '1:1', width: 1000, height: 1000 },
+  { name: 'portrait', label: '4:5', width: 820, height: 1025 },
+  { name: 'story', label: '9:16', width: 580, height: 1031 },
 ]
 
 // Classical Fonts
@@ -685,8 +723,8 @@ const layoutTemplates = [
 const selectedBackground = ref('ivory')
 const selectedBackgroundStyle = ref({ background: '#FFFFF0' })
 const selectedRatio = ref('landscape')
-const canvasWidth = ref(1100)
-const canvasHeight = ref(620)
+const canvasWidth = ref(1400)
+const canvasHeight = ref(788)
 const canvasItems = ref([])
 const textElements = ref([])
 const selectedItem = ref(null)
@@ -1061,26 +1099,17 @@ const addDecoration = (deco) => {
   const centerY = canvasHeight.value / 2 - 30
   
   // Size based on category
-  let width = 50, height = 60
-  if (deco.category === 'flower') {
-    width = 35
-    height = 55
-  } else if (deco.category === 'note') {
-    width = 70
-    height = 70
-  } else if (deco.category === 'tag') {
-    width = 40
-    height = 60
-  } else if (deco.category === 'pin') {
-    width = 20
-    height = 20
-  } else if (deco.category === 'tape') {
-    width = 90
-    height = 28
-  } else if (deco.category === 'paper') {
-    width = 100
-    height = 35
+  const sizes = {
+    flower: { width: 55, height: 80 },
+    fashion: { width: 60, height: 60 },
+    note: { width: 80, height: 80 },
+    tag: { width: 48, height: 72 },
+    pin: { width: 28, height: 35 },
+    tape: { width: 110, height: 32 },
+    nature: { width: 60, height: 55 },
+    paper: { width: 100, height: 35 },
   }
+  const { width, height } = sizes[deco.category] || { width: 60, height: 60 }
   
   canvasDecorations.value.push({
     id: `deco-${Date.now()}`,
@@ -1094,6 +1123,33 @@ const addDecoration = (deco) => {
     rotation: Math.random() * 20 - 10,
     zIndex: 150 + canvasDecorations.value.length
   })
+}
+
+// Background Removal
+const removeBackground = async (item) => {
+  if (item.removingBg) return
+  item.removingBg = true
+  
+  try {
+    const blob = await removeBgLib(item.image_url, {
+      progress: (key, current, total) => {
+        // Progress callback — could be used for progress bar
+      }
+    })
+    
+    // Convert blob to data URL
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      item.image_url = e.target.result
+      item.removingBg = false
+      showNotification('Background removed!')
+    }
+    reader.readAsDataURL(blob)
+  } catch (err) {
+    console.error('Background removal failed:', err)
+    item.removingBg = false
+    showNotification('Background removal failed. Try a different image.')
+  }
 }
 
 const removeDecoration = (id) => {
@@ -1788,7 +1844,7 @@ onUnmounted(() => {
 /* Main Layout */
 .main-content {
   display: grid;
-  grid-template-columns: 220px 1fr 180px;
+  grid-template-columns: 230px 1fr 190px;
   gap: 0.75rem;
   padding: 0.75rem;
   height: calc(100vh - 60px);
@@ -2112,7 +2168,7 @@ onUnmounted(() => {
 /* Decorations Grid */
 .decorations-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 0.35rem;
 }
 
@@ -2152,10 +2208,10 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
   max-height: calc(100vh - 80px);
-  overflow: hidden;
+  overflow: auto;
+  padding: 0.5rem;
 }
 
 .storyboard-canvas {
@@ -2239,6 +2295,58 @@ onUnmounted(() => {
 .canvas-item:hover .resize-handle,
 .canvas-item.selected .resize-handle {
   opacity: 1;
+}
+
+/* Remove Background Button */
+.remove-bg-btn {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.2s;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+}
+
+.canvas-item.selected .remove-bg-btn {
+  opacity: 1;
+}
+
+.remove-bg-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+/* BG Removal Loading Overlay */
+.bg-removal-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  border-radius: inherit;
+  z-index: 20;
+}
+
+.bg-removal-loading span {
+  font-size: 11px;
+  font-weight: 500;
+  color: #333;
 }
 
 /* Frame Toggle Button */

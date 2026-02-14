@@ -83,9 +83,10 @@
         <h2 class="section-title">Explore Brands</h2>
         <div class="brands-grid">
           <div 
-            v-for="brand in featuredBrands" 
+            v-for="(brand, idx) in featuredBrands" 
             :key="brand.name" 
-            class="brand-card"
+            class="brand-card brand-enter"
+            :style="{ '--i': idx }"
             @click="searchBrand(brand.name)"
           >
             <div class="brand-logo-container">
@@ -1425,6 +1426,22 @@ a {
   align-items: center;
   cursor: pointer;
   transition: transform 0.2s ease;
+}
+
+.brand-card.brand-enter {
+  animation: brandFadeIn 0.35s ease both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+@keyframes brandFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .brand-card:hover { transform: translateY(-2px); }
