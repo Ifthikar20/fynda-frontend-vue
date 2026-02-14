@@ -24,7 +24,6 @@
           <div class="link-group">
             <h4 class="link-title">Company</h4>
             <router-link to="/about" class="link">About Us</router-link>
-            <router-link to="/careers" class="link">Careers</router-link>
             <a href="https://blog.fynda.com" class="link" target="_blank">Blog</a>
           </div>
           

@@ -20,7 +20,6 @@ import AboutPage from '../components/pages/AboutPage.vue'
 import PrivacyPage from '../components/pages/PrivacyPage.vue'
 import TermsPage from '../components/pages/TermsPage.vue'
 import ContactPage from '../components/pages/ContactPage.vue'
-import CareersPage from '../components/pages/CareersPage.vue'
 import HelpCenterPage from '../components/pages/HelpCenterPage.vue'
 import CookiesPage from '../components/pages/CookiesPage.vue'
 import CategoryPage from '../components/pages/CategoryPage.vue'
@@ -127,11 +126,6 @@ const routes = [
         path: '/about',
         name: 'About',
         component: AboutPage
-    },
-    {
-        path: '/careers',
-        name: 'Careers',
-        component: CareersPage
     },
     // Support pages - public
     {

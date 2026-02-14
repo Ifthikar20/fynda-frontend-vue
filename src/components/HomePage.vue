@@ -257,7 +257,6 @@
             <div class="footer-column">
               <h4>Company</h4>
               <router-link to="/about">About Us</router-link>
-              <router-link to="/careers">Careers</router-link>
               <a href="https://blog.fynda.com" target="_blank" rel="noopener">Blog</a>
             </div>
             
