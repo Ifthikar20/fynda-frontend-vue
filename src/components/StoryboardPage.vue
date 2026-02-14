@@ -284,6 +284,24 @@
             <!-- Pin decoration -->
             <div v-if="item.showPin" class="item-pin"></div>
             <img :src="item.image_url" :alt="item.title" class="item-img" draggable="false" />
+            
+            <!-- Price Tag Overlay -->
+            <span v-if="shareWithPrices && item.price" class="item-price-tag">
+              ${{ formatPrice(item.price) }}
+            </span>
+            
+            <!-- Product Link Badge -->
+            <a v-if="shareWithLinks && (item.product_url || item.url)" 
+               :href="item.product_url || item.url" 
+               target="_blank" rel="noopener"
+               class="item-link-badge"
+               @mousedown.stop
+               @click.stop
+               title="Open product page"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </a>
+            
             <span class="item-remove" @mousedown.stop @click="removeItem(item.id)">×</span>
             <div class="resize-handle" @mousedown.stop="startResize($event, item)"></div>
             <!-- Remove Background Button (hidden after bg already removed) -->
@@ -1666,6 +1684,8 @@ onMounted(() => {
           title: productData.title || 'Product',
           image_url: productData.image_url,
           price: productData.price,
+          url: productData.url || productData.product_url || '',
+          product_url: productData.url || productData.product_url || '',
           x, y,
           width: 200,
           height: 200,
@@ -2406,6 +2426,54 @@ onUnmounted(() => {
 .canvas-text:hover .item-remove,
 .canvas-sticker:hover .item-remove {
   opacity: 1;
+}
+
+/* Price Tag on Canvas Items */
+.item-price-tag {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Product Link Badge on Canvas Items */
+.item-link-badge {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  text-decoration: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  transition: all 0.15s ease;
+  z-index: 5;
+  opacity: 0;
+}
+
+.canvas-item:hover .item-link-badge {
+  opacity: 1;
+}
+
+.item-link-badge:hover {
+  background: #111;
+  color: #fff;
+  transform: scale(1.1);
 }
 
 .resize-handle {
