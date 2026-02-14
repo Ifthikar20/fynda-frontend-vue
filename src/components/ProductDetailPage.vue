@@ -54,36 +54,19 @@
               Shop item
             </a>
             
-            <!-- Add to Fashion Board + Closet Row -->
+            <!-- Action Buttons -->
             <div class="action-row">
               <button class="outfit-btn" @click="goToFashionBoard">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="7" height="7" rx="1"/>
-                  <rect x="14" y="3" width="7" height="7" rx="1"/>
-                  <rect x="3" y="14" width="7" height="7" rx="1"/>
-                  <rect x="14" y="14" width="7" height="7" rx="1"/>
-                </svg>
                 Add to Fashion Board
               </button>
-              
-              <!-- Save to Closet Button -->
-              <button class="closet-btn" :class="{ saved: isInCloset }" @click="toggleCloset" :title="isInCloset ? 'Saved to Closet' : 'Save to Closet'">
-                <svg width="18" height="18" viewBox="0 0 24 24" :fill="isInCloset ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2L3 7v1h18V7L12 2z"/>
-                  <line x1="12" y1="8" x2="12" y2="16"/>
-                  <path d="M8 16a4 4 0 0 0 8 0"/>
-                </svg>
+              <button class="closet-btn" :class="{ saved: isInCloset }" @click="toggleCloset">
+                {{ isInCloset ? 'Saved to Closet' : 'Save to Closet' }}
               </button>
             </div>
 
             <!-- Add to Compare -->
             <button class="compare-btn" :class="{ added: isInCompare }" @click="toggleCompare">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="20" x2="18" y2="10"/>
-                <line x1="12" y1="20" x2="12" y2="4"/>
-                <line x1="6" y1="20" x2="6" y2="14"/>
-              </svg>
-              {{ isInCompare ? 'Added to Compare ✓' : 'Add to Compare' }}
+              {{ isInCompare ? 'Added to Compare' : 'Add to Compare' }}
             </button>
           </div>
         </div>
@@ -916,28 +899,6 @@ onMounted(() => {
   background: #000;
 }
 
-/* Outfit Button */
-.outfit-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.875rem;
-  background: #fff;
-  color: #1a1a1a;
-  border: 1px solid #1a1a1a;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 0.75rem;
-}
-
-.outfit-btn:hover {
-  background: #f5f5f5;
-}
 
 /* Action Row */
 .action-row {
@@ -946,39 +907,60 @@ onMounted(() => {
   margin-top: 0.75rem;
 }
 
-.action-row .outfit-btn {
+/* Outfit Button - shadcn outline */
+.outfit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 1;
-  margin-top: 0;
+  padding: 0.75rem;
+  background: #fff;
+  color: #1a1a1a;
+  border: 1px solid #d4d4d8;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-/* Closet Button - Small Icon */
+.outfit-btn:hover {
+  background: #f4f4f5;
+  border-color: #a1a1aa;
+}
+
+/* Closet Button - shadcn default/outline toggle */
 .closet-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  min-width: 48px;
-  height: 48px;
-  padding: 0;
-  background: #1a1a1a;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
+  flex: 1;
+  padding: 0.75rem;
+  background: #fff;
+  color: #1a1a1a;
+  border: 1px solid #d4d4d8;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .closet-btn:hover {
-  background: #333;
-  transform: scale(1.05);
+  background: #f4f4f5;
+  border-color: #a1a1aa;
 }
 
 .closet-btn.saved {
-  background: #10b981;
+  background: #111;
+  color: #fff;
+  border-color: #111;
 }
 
 .closet-btn.saved:hover {
-  background: #059669;
+  background: #333;
 }
 
 /* Compare Button - Full Width */

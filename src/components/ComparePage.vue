@@ -40,27 +40,10 @@
           :class="{ 'winner-card': overallWinner === item.id }"
           :style="{ animationDelay: idx * 0.1 + 's' }"
         >
-          <!-- Winner Crown -->
+          <!-- Winner Badge -->
           <div v-if="overallWinner === item.id && compareItems.length > 1" class="winner-crown">
-            <span class="crown-icon">👑</span>
             <span class="crown-label">Best Value</span>
           </div>
-
-          <!-- Remove Button -->
-          <button class="remove-btn" @click="removeItem(item.id)" title="Remove">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-
-          <!-- Save to Closet -->
-          <button class="closet-save-btn" :class="{ saved: isInCloset(item.id) }" @click="saveToCloset(item)" :title="isInCloset(item.id) ? 'Saved to Closet' : 'Save to Closet'">
-            <svg width="14" height="14" viewBox="0 0 24 24" :fill="isInCloset(item.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2L3 7v1h18V7L12 2z"/>
-              <line x1="12" y1="8" x2="12" y2="16"/>
-              <path d="M8 16a4 4 0 0 0 8 0"/>
-            </svg>
-          </button>
 
           <!-- Product Image -->
           <div class="card-image-wrap">
@@ -84,7 +67,15 @@
           </div>
 
           <!-- Shop Button -->
-          <a :href="item.url" target="_blank" rel="noopener" class="shop-btn">Shop This Item →</a>
+          <a :href="item.url" target="_blank" rel="noopener" class="shop-btn">Shop This Item</a>
+
+          <!-- Action Buttons -->
+          <div class="card-actions">
+            <button class="btn-s" :class="isInCloset(item.id) ? 'btn-s-filled' : 'btn-s-outline'" @click="saveToCloset(item)">
+              {{ isInCloset(item.id) ? 'Saved' : 'Save to Closet' }}
+            </button>
+            <button class="btn-s btn-s-danger" @click="removeItem(item.id)">Remove</button>
+          </div>
         </div>
 
         <!-- Add Product Slot -->
@@ -287,12 +278,11 @@
       <!-- Quick Verdict -->
       <div v-if="compareItems.length > 1" class="verdict-panel">
         <h3 class="verdict-title">
-          <span class="verdict-icon">⚡</span>
           Quick Verdict
         </h3>
         <div class="verdict-items">
           <div v-for="v in verdicts" :key="v.label" class="verdict-item">
-            <span class="verdict-badge" :class="v.type">{{ v.type === 'winner' ? '🏆' : '✓' }}</span>
+            <span class="verdict-badge" :class="v.type">{{ v.type === 'winner' ? 'W' : '-' }}</span>
             <span class="verdict-text">
               <strong>{{ v.label }}</strong> — {{ v.reason }}
             </span>
@@ -570,36 +560,32 @@ onMounted(() => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap');
 
-/* Save to Closet button on cards */
-.closet-save-btn {
-  position: absolute;
-  top: 10px;
-  right: 38px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid #e5e5e5;
-  background: #fff;
-  color: #888;
-  cursor: pointer;
+/* Shadcn-style action buttons */
+.card-actions {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  z-index: 2;
+  gap: 8px;
+  margin-top: 0.75rem;
 }
-
-.closet-save-btn:hover {
-  background: #f0fdf4;
-  border-color: #86efac;
-  color: #16a34a;
+.btn-s {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 32px; padding: 0 14px;
+  border-radius: 6px; border: 1px solid transparent;
+  font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 500;
+  cursor: pointer; transition: all 0.15s ease;
+  white-space: nowrap; line-height: 1;
 }
-
-.closet-save-btn.saved {
-  background: #dcfce7;
-  border-color: #86efac;
-  color: #16a34a;
+.btn-s-filled {
+  background: #111; color: #fff; border-color: #111;
 }
+.btn-s-filled:hover { background: #333; }
+.btn-s-outline {
+  background: #fff; color: #333; border-color: #d4d4d8;
+}
+.btn-s-outline:hover { background: #f4f4f5; border-color: #a1a1aa; }
+.btn-s-danger {
+  background: transparent; color: #a1a1aa; border-color: transparent;
+}
+.btn-s-danger:hover { background: #fef2f2; color: #dc2626; }
 
 .compare-page {
   min-height: 100vh;
@@ -793,30 +779,7 @@ onMounted(() => {
   100% { transform: translateX(-50%) scale(1); }
 }
 
-/* Remove Button */
-.remove-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid #eee;
-  background: #fff;
-  color: #bbb;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-  z-index: 2;
-}
 
-.remove-btn:hover {
-  background: #fee2e2;
-  border-color: #fca5a5;
-  color: #dc2626;
-}
 
 /* Card Image */
 .card-image-wrap {
