@@ -10,10 +10,7 @@
             <h1 class="compare-title">Compare Products</h1>
             <p class="compare-subtitle">Side-by-side comparison of up to 3 products</p>
           </div>
-          <button v-if="compareItems.length > 0" class="clear-btn" @click="clearAll">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
+          <button v-if="compareItems.length > 0" class="btn-s btn-s-danger" @click="clearAll">
             Clear All
           </button>
         </div>
@@ -74,7 +71,9 @@
             <button class="btn-s" :class="isInCloset(item.id) ? 'btn-s-filled' : 'btn-s-outline'" @click="saveToCloset(item)">
               {{ isInCloset(item.id) ? 'Saved' : 'Save to Closet' }}
             </button>
-            <button class="btn-s btn-s-danger" @click="removeItem(item.id)">Remove</button>
+            <button class="btn-s btn-s-outline" @click="removeItem(item.id)" title="Remove">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
           </div>
         </div>
 
@@ -91,187 +90,114 @@
       </div>
 
       <!-- Comparison Details -->
-      <div v-if="compareItems.length > 1" class="comparison-section">
+      <div v-if="compareItems.length > 0" class="comparison-section">
         <h2 class="section-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
-          </svg>
-          Comparison Details
+          Side-by-Side Comparison
         </h2>
 
-        <!-- Price Bar Chart -->
-        <div class="comp-row" v-if="visibleRows.price">
-          <button class="row-toggle" @click="toggleRow('price')">
-            <span class="row-label">Price Comparison</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <div class="row-content">
-            <div class="price-bars">
-              <div v-for="item in compareItems" :key="'bar-' + item.id" class="price-bar-row">
-                <span class="bar-label">{{ truncateTitle(item.title, 20) }}</span>
-                <div class="bar-track">
-                  <div
-                    class="bar-fill"
-                    :class="{ 'bar-best': isBestPrice(item) }"
-                    :style="{ width: getPriceBarWidth(item) + '%' }"
-                  ></div>
-                </div>
-                <span class="bar-value" :class="{ 'best-price': isBestPrice(item) }">${{ formatPrice(item.price) }}</span>
-              </div>
+        <!-- Product Images Row -->
+        <div class="comp-row">
+          <div class="row-label-static">Product</div>
+          <div class="comp-grid">
+            <div v-for="item in compareItems" :key="'img-' + item.id" class="comp-cell comp-cell-img">
+              <img :src="item.image_url" :alt="item.title" class="comp-product-img" />
+              <span class="comp-product-name">{{ truncateTitle(item.title, 30) }}</span>
+            </div>
+          </div>
+        </div>
+        <!-- Price -->
+        <div class="comp-row">
+          <div class="row-label-static">Price</div>
+          <div class="comp-grid">
+            <div v-for="item in compareItems" :key="'price-' + item.id" class="comp-cell">
+              <span class="cell-value" :class="{ 'best-price': isBestPrice(item) }">${{ formatPrice(item.price) }}</span>
+              <span v-if="isBestPrice(item) && compareItems.length > 1" class="best-badge">Lowest</span>
             </div>
           </div>
         </div>
 
         <!-- Store -->
-        <div class="comp-row" v-if="visibleRows.store">
-          <button class="row-toggle" @click="toggleRow('store')">
-            <span class="row-label">Store</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <div class="row-content">
-            <div class="comp-grid">
-              <div v-for="item in compareItems" :key="'store-' + item.id" class="comp-cell">
-                <span class="cell-value">{{ item.merchant_name || item.source || '—' }}</span>
-              </div>
+        <div class="comp-row">
+          <div class="row-label-static">Store</div>
+          <div class="comp-grid">
+            <div v-for="item in compareItems" :key="'store-' + item.id" class="comp-cell">
+              <span class="cell-value">{{ item.merchant_name || item.source || '---' }}</span>
             </div>
           </div>
         </div>
 
         <!-- Style -->
-        <div class="comp-row" v-if="visibleRows.style">
-          <button class="row-toggle" @click="toggleRow('style')">
-            <span class="row-label">Style</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <div class="row-content">
-            <div class="comp-grid">
-              <div v-for="item in compareItems" :key="'style-' + item.id" class="comp-cell">
-                <span class="tag">{{ extractStyle(item) }}</span>
-              </div>
+        <div class="comp-row">
+          <div class="row-label-static">Style</div>
+          <div class="comp-grid">
+            <div v-for="item in compareItems" :key="'style-' + item.id" class="comp-cell">
+              <span class="tag">{{ extractStyle(item) }}</span>
             </div>
           </div>
         </div>
 
         <!-- Sizes -->
-        <div class="comp-row" v-if="visibleRows.sizes">
-          <button class="row-toggle" @click="toggleRow('sizes')">
-            <span class="row-label">Available Sizes</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <div class="row-content">
-            <div class="comp-grid">
-              <div v-for="item in compareItems" :key="'sizes-' + item.id" class="comp-cell">
-                <div class="size-chips">
-                  <span v-for="size in getSizes(item)" :key="size" class="size-chip">{{ size }}</span>
-                </div>
+        <div class="comp-row">
+          <div class="row-label-static">Available Sizes</div>
+          <div class="comp-grid">
+            <div v-for="item in compareItems" :key="'sizes-' + item.id" class="comp-cell">
+              <div class="size-chips">
+                <span v-for="size in getSizes(item)" :key="size" class="size-chip">{{ size }}</span>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Colors -->
-        <div class="comp-row" v-if="visibleRows.colors">
-          <button class="row-toggle" @click="toggleRow('colors')">
-            <span class="row-label">Colors</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <div class="row-content">
-            <div class="comp-grid">
-              <div v-for="item in compareItems" :key="'colors-' + item.id" class="comp-cell">
-                <div class="color-chips">
-                  <span v-for="color in getColors(item)" :key="color" class="color-dot" :style="{ background: color }" :title="color"></span>
-                </div>
+        <div class="comp-row">
+          <div class="row-label-static">Colors</div>
+          <div class="comp-grid">
+            <div v-for="item in compareItems" :key="'colors-' + item.id" class="comp-cell">
+              <div class="color-chips">
+                <span v-for="color in getColors(item)" :key="color" class="color-dot" :style="{ background: color }" :title="color"></span>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Material -->
-        <div class="comp-row" v-if="visibleRows.material">
-          <button class="row-toggle" @click="toggleRow('material')">
-            <span class="row-label">Material</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <div class="row-content">
-            <div class="comp-grid">
-              <div v-for="item in compareItems" :key="'mat-' + item.id" class="comp-cell">
-                <span class="tag">{{ getMaterial(item) }}</span>
-              </div>
+        <div class="comp-row">
+          <div class="row-label-static">Material</div>
+          <div class="comp-grid">
+            <div v-for="item in compareItems" :key="'mat-' + item.id" class="comp-cell">
+              <span class="tag">{{ getMaterial(item) }}</span>
             </div>
           </div>
         </div>
 
         <!-- Fit -->
-        <div class="comp-row" v-if="visibleRows.fit">
-          <button class="row-toggle" @click="toggleRow('fit')">
-            <span class="row-label">Fit</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <div class="row-content">
-            <div class="comp-grid">
-              <div v-for="item in compareItems" :key="'fit-' + item.id" class="comp-cell">
-                <span class="cell-value">{{ getFit(item) }}</span>
-              </div>
+        <div class="comp-row">
+          <div class="row-label-static">Fit</div>
+          <div class="comp-grid">
+            <div v-for="item in compareItems" :key="'fit-' + item.id" class="comp-cell">
+              <span class="cell-value">{{ getFit(item) }}</span>
             </div>
           </div>
         </div>
 
         <!-- Condition -->
-        <div class="comp-row" v-if="visibleRows.condition">
-          <button class="row-toggle" @click="toggleRow('condition')">
-            <span class="row-label">Condition</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <div class="row-content">
-            <div class="comp-grid">
-              <div v-for="item in compareItems" :key="'cond-' + item.id" class="comp-cell">
-                <span class="cell-value">{{ item.condition || 'New' }}</span>
-              </div>
+        <div class="comp-row">
+          <div class="row-label-static">Condition</div>
+          <div class="comp-grid">
+            <div v-for="item in compareItems" :key="'cond-' + item.id" class="comp-cell">
+              <span class="cell-value">{{ item.condition || 'New' }}</span>
             </div>
           </div>
         </div>
 
         <!-- Details -->
-        <div class="comp-row" v-if="visibleRows.details">
-          <button class="row-toggle" @click="toggleRow('details')">
-            <span class="row-label">Details</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <div class="row-content">
-            <div class="comp-grid">
-              <div v-for="item in compareItems" :key="'desc-' + item.id" class="comp-cell">
-                <p class="desc-text">{{ getDescription(item) }}</p>
-              </div>
+        <div class="comp-row">
+          <div class="row-label-static">Details</div>
+          <div class="comp-grid">
+            <div v-for="item in compareItems" :key="'desc-' + item.id" class="comp-cell">
+              <p class="desc-text">{{ getDescription(item) }}</p>
             </div>
           </div>
-        </div>
-
-        <!-- Toggle hidden rows -->
-        <div class="toggle-all-bar">
-          <button class="toggle-all-btn" @click="showAllRows = !showAllRows">
-            {{ showAllRows ? 'Show Less' : 'Show All Categories' }}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ rotated: showAllRows }">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
         </div>
       </div>
 
@@ -969,61 +895,62 @@ onMounted(() => {
 
 /* Comparison Row */
 .comp-row {
-  border-bottom: 1px solid #f5f5f5;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 14px 0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .comp-row:last-of-type {
   border-bottom: none;
 }
 
-.row-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 12px 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 0.15s ease;
-}
-
-.row-toggle:hover {
-  color: #3b82f6;
-}
-
-.row-toggle svg {
-  transition: transform 0.2s ease;
-  color: #ccc;
-}
-
-.row-label {
+.row-label-static {
   font-family: 'Inter', sans-serif;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: #888;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-.row-content {
-  padding: 0 0 16px;
-  animation: fadeSlideDown 0.25s ease;
-}
-
-@keyframes fadeSlideDown {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
+  min-width: 120px;
+  padding-top: 4px;
 }
 
 .comp-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1rem;
+  flex: 1;
 }
 
 .comp-cell {
-  padding: 8px 0;
+  padding: 0;
+}
+
+.comp-cell-img {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.comp-product-img {
+  width: 100%;
+  max-width: 140px;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #eee;
+}
+
+.comp-product-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #555;
+  text-align: center;
+  line-height: 1.3;
 }
 
 .cell-value {
