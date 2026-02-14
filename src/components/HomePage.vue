@@ -914,13 +914,67 @@ const isFashionOrBeauty = (deal) => {
   return true
 }
 
-// Load trending deals — fashion & beauty focused (via Amazon RapidAPI)
+// Extract brand name from Amazon product title (first word/phrase before the product type)
+const extractBrand = (title) => {
+  if (!title) return 'Brand'
+  // Amazon titles typically start with the brand name
+  // e.g. "SPOSULEI Mens Skiing Jackets..." → "SPOSULEI"
+  // e.g. "Calvin Klein Women's Dress..." → "Calvin Klein"
+  const words = title.trim().split(/\s+/)
+  if (words.length === 0) return 'Brand'
+  
+  // Common product descriptor words that mark the end of the brand name
+  const descriptors = [
+    'mens', "men's", 'womens', "women's", 'unisex', 'kids', "kid's", 'boys', "boy's", 'girls', "girl's",
+    'casual', 'classic', 'vintage', 'slim', 'regular', 'relaxed', 'oversized', 'fitted', 'loose',
+    'long', 'short', 'mid', 'high', 'low', 'mini', 'maxi', 'plus',
+    'cotton', 'silk', 'linen', 'wool', 'polyester', 'denim', 'leather', 'fleece', 'knit',
+    'v-neck', 'crew', 'round', 'button', 'zip', 'pullover', 'hooded',
+    'summer', 'winter', 'spring', 'fall', 'lightweight', 'warm', 'waterproof',
+    '2024', '2025', '2026', 'new', 'pack', 'set', 'piece',
+  ]
+  
+  let brandWords = []
+  for (const word of words) {
+    const lower = word.toLowerCase().replace(/[^a-z]/g, '')
+    if (descriptors.includes(lower)) break
+    brandWords.push(word)
+    // Most brands are 1-3 words
+    if (brandWords.length >= 3) break
+  }
+  
+  return brandWords.join(' ').replace(/[,\-]$/, '') || words[0]
+}
+
+// Clothing keywords — items MUST contain one of these to appear on landing page
+const CLOTHING_KEYWORDS = [
+  'dress', 'shirt', 'blouse', 'top', 'tee', 't-shirt', 'tank',
+  'jacket', 'coat', 'blazer', 'hoodie', 'sweater', 'cardigan', 'pullover', 'sweatshirt',
+  'jeans', 'pants', 'trousers', 'shorts', 'skirt', 'leggings', 'joggers', 'chinos',
+  'sneakers', 'shoes', 'boots', 'heels', 'sandals', 'loafers', 'flats', 'pumps',
+  'handbag', 'purse', 'tote', 'clutch', 'backpack', 'crossbody', 'satchel',
+  'scarf', 'hat', 'beanie', 'cap', 'belt', 'tie', 'bow tie', 'gloves',
+  'suit', 'tuxedo', 'romper', 'jumpsuit', 'bodysuit', 'overalls',
+  'bikini', 'swimsuit', 'swimwear', 'lingerie', 'bra', 'underwear', 'boxers',
+  'vest', 'parka', 'windbreaker', 'poncho', 'cape',
+  'polo', 'henley', 'flannel', 'denim', 'corset',
+  'sunglasses', 'watch', 'bracelet', 'necklace', 'earrings', 'ring',
+  'socks', 'stockings', 'tights',
+]
+
+const isClothing = (title) => {
+  const lower = (title || '').toLowerCase()
+  return CLOTHING_KEYWORDS.some(kw => lower.includes(kw))
+}
+
+// Load trending deals — clothing only (via Amazon RapidAPI)
 const loadTrending = async () => {
   try {
     const fashionQueries = [
-      'women dress', 'sneakers', 'designer handbag', 'men jacket',
-      'skincare set', 'lipstick makeup', 'sunglasses fashion', 'jewelry gold',
-      'heels shoes women', 'denim jeans', 'blazer men', 'silk scarf'
+      'women dress summer', 'mens jacket', 'sneakers fashion',
+      'designer handbag women', 'denim jeans', 'womens blouse',
+      'mens blazer slim', 'heels shoes women', 'hoodie streetwear',
+      'womens skirt', 'mens polo shirt', 'crossbody bag'
     ]
     
     // Pick 3 random queries for variety
@@ -950,16 +1004,23 @@ const loadTrending = async () => {
         const products = res.value?.data?.products || []
         for (const p of products) {
           const id = p.asin || p.product_title
-          if (!seenIds.has(id) && p.product_photo && isFashionOrBeauty({ title: p.product_title, image_url: p.product_photo })) {
+          const title = p.product_title || ''
+          if (
+            !seenIds.has(id) && 
+            p.product_photo && 
+            isClothing(title) &&
+            isFashionOrBeauty({ title, image_url: p.product_photo })
+          ) {
             seenIds.add(id)
+            const brand = extractBrand(title)
             allDeals.push({
               id: id,
-              title: p.product_title,
+              title: title,
               price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
               original_price: p.product_original_price ? p.product_original_price.replace(/[^0-9.]/g, '') : null,
               image_url: p.product_photo,
               source: 'Amazon',
-              merchant_name: 'Amazon',
+              merchant_name: brand,
               url: p.product_url,
               rating: p.product_star_rating,
               reviews: p.product_num_ratings,
