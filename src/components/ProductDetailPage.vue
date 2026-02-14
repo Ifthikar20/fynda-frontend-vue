@@ -316,6 +316,10 @@ const goToProduct = (id) => {
 }
 
 const goToFashionBoard = () => {
+  if (!isAuthenticated.value) {
+    router.push({ name: 'Login', query: { redirect: route.fullPath } })
+    return
+  }
   router.push({
     path: '/storyboard',
     query: { product: JSON.stringify(product.value) }
@@ -333,7 +337,7 @@ const goToBrand = (brandName) => {
 // Library functions
 const toggleLibrary = () => {
   if (!isAuthenticated.value) {
-    router.push('/login')
+    router.push({ name: 'Login', query: { redirect: route.fullPath } })
     return
   }
   
@@ -372,6 +376,10 @@ const checkLibraryStatus = () => {
 
 // Compare functions
 const toggleCompare = () => {
+  if (!isAuthenticated.value) {
+    router.push({ name: 'Login', query: { redirect: route.fullPath } })
+    return
+  }
   const compareList = JSON.parse(localStorage.getItem('fyndaCompare') || '[]')
   const productId = product.value.id
   const index = compareList.findIndex(item => item.id === productId)
