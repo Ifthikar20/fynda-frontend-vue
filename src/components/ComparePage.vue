@@ -202,19 +202,7 @@
       </div>
 
       <!-- Quick Verdict -->
-      <div v-if="compareItems.length > 1" class="verdict-panel">
-        <h3 class="verdict-title">
-          Quick Verdict
-        </h3>
-        <div class="verdict-items">
-          <div v-for="v in verdicts" :key="v.label" class="verdict-item">
-            <span class="verdict-badge" :class="v.type">{{ v.type === 'winner' ? 'W' : '-' }}</span>
-            <span class="verdict-text">
-              <strong>{{ v.label }}</strong> — {{ v.reason }}
-            </span>
-          </div>
-        </div>
-      </div>
+
     </main>
   </div>
 </template>

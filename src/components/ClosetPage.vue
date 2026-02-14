@@ -523,14 +523,14 @@ watch(wishlistIds, (ids) => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap');
 * { font-family: 'Inter', sans-serif; }
 .closet-page { min-height: 100vh; background: #fafafa; }
 .closet-content { max-width: 1400px; margin: 0 auto; padding: 2rem 2rem 6rem; }
 
 /* Header */
 .closet-header { display: flex; align-items: center; gap: 14px; margin-bottom: 2rem; }
-.closet-title { font-size: 1.8rem; font-weight: 700; color: #111; margin: 0; }
+.closet-title { font-family: 'Playfair Display', Georgia, serif; font-size: 2rem; font-weight: 400; color: #1a1a1a; margin: 0; }
 .closet-subtitle { font-size: 0.85rem; color: #888; margin: 2px 0 0; }
 
 /* Tabs */
