@@ -19,10 +19,6 @@
           </button>
         </div>
         <div class="tabs-actions" v-if="activeTab === 'all'">
-          <div class="search-box">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input v-model="searchQuery" type="text" placeholder="Filter items..." class="search-input" />
-          </div>
           <select v-model="sortBy" class="sort-select">
             <option value="recent">Recently Added</option>
             <option value="price-low">Price: Low to High</option>
@@ -33,6 +29,16 @@
       </div>
 
       <!-- Category Chips (no emojis) -->
+      <!-- Search Bar (All Items) -->
+      <div v-if="activeTab === 'all'" class="closet-search">
+        <svg class="closet-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input v-model="searchQuery" type="text" placeholder="Search your closet..." class="closet-search-input" />
+        <button v-if="searchQuery" class="closet-search-clear" @click="searchQuery = ''">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Category Chips -->
       <div class="category-chips" v-if="activeTab === 'all'">
         <button class="chip" :class="{ active: activeCategory === 'all' }" @click="activeCategory = 'all'">All</button>
         <button v-for="cat in categories" :key="cat.key" class="chip" :class="{ active: activeCategory === cat.key }" @click="activeCategory = cat.key">
@@ -53,24 +59,24 @@
           <div v-for="(item, idx) in filteredItems" :key="item.id" class="item-card" :style="{ animationDelay: (idx % 12) * 0.04 + 's' }">
             <div class="item-image-wrap">
               <img :src="item.image_url" :alt="item.title" class="item-image" />
-              <div class="item-overlay">
-                <button class="ov-btn" :class="{ hearted: isWishlisted(item.id) }" @click.stop="toggleWishlist(item.id)" title="Wishlist">
-                  <svg width="15" height="15" viewBox="0 0 24 24" :fill="isWishlisted(item.id) ? '#fff' : 'none'" stroke="#fff" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                </button>
-                <button class="ov-btn" @click.stop="moveToFashionBoard(item)" title="Move to Fashion Board">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                </button>
-                <button class="ov-btn" @click.stop="openDatePicker(item)" title="Schedule to Wear">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                </button>
-                <button class="ov-btn ov-remove" @click.stop="removeFromCloset(item.id)" title="Remove">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-              </div>
             </div>
             <div class="item-info">
               <p class="item-title">{{ item.title }}</p>
               <span class="item-price">${{ formatPrice(item.price) }}</span>
+            </div>
+            <div class="item-actions">
+              <button class="act-btn act-heart" :class="{ active: isWishlisted(item.id) }" @click.stop="toggleWishlist(item.id)">
+                <svg width="14" height="14" viewBox="0 0 24 24" :fill="isWishlisted(item.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              </button>
+              <button class="act-btn act-board" @click.stop="moveToFashionBoard(item)" title="Fashion Board">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              </button>
+              <button class="act-btn act-cal" @click.stop="openDatePicker(item)" title="Schedule">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </button>
+              <button class="act-btn act-remove" @click.stop="removeFromCloset(item.id)" title="Remove">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
             </div>
           </div>
         </div>
@@ -90,12 +96,17 @@
         <div class="cal-weekdays">
           <span v-for="d in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="d">{{ d }}</span>
         </div>
+        <!-- Calendar hint -->
+        <div v-if="Object.keys(calendarData).length === 0" class="cal-hint">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Click any date to plan your outfit, or use the calendar icon on your items</span>
+        </div>
         <div class="cal-grid">
           <div v-for="(cell, i) in calendarCells" :key="i" class="cal-cell" :class="{ empty: !cell.day, today: cell.isToday, 'has-items': cell.items && cell.items.length }" @click="cell.day && openDayModal(cell)">
             <span v-if="cell.day" class="cal-day-num">{{ cell.day }}</span>
             <div v-if="cell.items && cell.items.length" class="cal-thumbs">
-              <img v-for="(th, ti) in cell.items.slice(0, 2)" :key="ti" :src="th.image_url" class="cal-thumb" />
-              <span v-if="cell.items.length > 2" class="cal-more">+{{ cell.items.length - 2 }}</span>
+              <img v-for="(th, ti) in cell.items.slice(0, 3)" :key="ti" :src="th.image_url" class="cal-thumb" />
+              <span v-if="cell.items.length > 3" class="cal-more">+{{ cell.items.length - 3 }}</span>
             </div>
           </div>
         </div>
@@ -551,11 +562,17 @@ watch(wishlistIds, (ids) => {
 .tab-count { font-size: 0.7rem; font-weight: 600; background: #e5e7eb; color: #666; padding: 1px 7px; border-radius: 10px; }
 .tab-btn.active .tab-count { background: #111; color: #fff; }
 .tabs-actions { display: flex; align-items: center; gap: 10px; }
-.search-box { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; }
-.search-box:focus-within { border-color: #aaa; }
-.search-input { border: none; background: none; outline: none; font-size: 0.82rem; color: #333; width: 140px; }
-.search-input::placeholder { color: #ccc; }
 .sort-select { padding: 7px 12px; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; font-size: 0.82rem; color: #555; cursor: pointer; outline: none; }
+
+/* Search Bar */
+.closet-search { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #fff; border: 2px solid #e5e5e5; border-radius: 28px; margin-bottom: 1.25rem; transition: border-color 0.2s, box-shadow 0.2s; }
+.closet-search:focus-within { border-color: #111; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+.closet-search-icon { flex-shrink: 0; color: #bbb; }
+.closet-search:focus-within .closet-search-icon { color: #555; }
+.closet-search-input { flex: 1; border: none; background: none; outline: none; font-size: 0.9rem; color: #333; font-family: 'Inter', sans-serif; }
+.closet-search-input::placeholder { color: #ccc; }
+.closet-search-clear { width: 24px; height: 24px; border-radius: 50%; border: none; background: #eee; color: #888; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+.closet-search-clear:hover { background: #ddd; color: #555; }
 
 /* Category Chips */
 .category-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.5rem; }
@@ -574,24 +591,29 @@ watch(wishlistIds, (ids) => {
 
 /* Items Grid */
 .items-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
-.item-card { background: #fff; border: 1px solid #eee; border-radius: 14px; overflow: hidden; animation: cardIn 0.35s ease both; transition: all 0.25s; }
+.item-card { background: #fff; border: 1px solid #eee; border-radius: 14px; overflow: hidden; animation: cardIn 0.35s ease both; transition: all 0.25s; display: flex; flex-direction: column; }
 .item-card:hover { border-color: #ddd; box-shadow: 0 6px 24px rgba(0,0,0,0.06); transform: translateY(-2px); }
 @keyframes cardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .item-image-wrap { position: relative; aspect-ratio: 3/4; overflow: hidden; background: #f5f5f5; }
 .item-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
 .item-card:hover .item-image { transform: scale(1.04); }
 
-/* Overlay Buttons — FIXED: dark translucent bg, white icons */
-.item-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.15); display: flex; align-items: flex-start; justify-content: flex-end; gap: 5px; padding: 8px; opacity: 0; transition: opacity 0.2s; }
-.item-card:hover .item-overlay { opacity: 1; }
-.ov-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(0,0,0,0.45); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; backdrop-filter: blur(4px); }
-.ov-btn:hover { background: rgba(0,0,0,0.7); transform: scale(1.1); }
-.ov-btn.hearted { background: #dc2626; }
-.ov-btn.ov-remove:hover { background: #dc2626; }
-
-.item-info { padding: 12px 14px; }
+.item-info { padding: 10px 12px 4px; }
 .item-title { font-size: 0.82rem; font-weight: 500; color: #333; margin: 0 0 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
 .item-price { font-size: 0.88rem; font-weight: 700; color: #111; }
+
+/* Action Buttons — always visible at bottom */
+.item-actions { display: flex; align-items: center; justify-content: space-around; padding: 6px 8px 10px; border-top: 1px solid #f3f3f3; margin-top: auto; }
+.act-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #eee; background: #fafafa; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; color: #999; }
+.act-btn:hover { transform: scale(1.1); }
+.act-heart { color: #ccc; }
+.act-heart:hover, .act-heart.active { color: #ef4444; background: #fef2f2; border-color: #fecaca; }
+.act-board { color: #ccc; }
+.act-board:hover { color: #3b82f6; background: #eff6ff; border-color: #bfdbfe; }
+.act-cal { color: #ccc; }
+.act-cal:hover { color: #10b981; background: #ecfdf5; border-color: #a7f3d0; }
+.act-remove { color: #ccc; }
+.act-remove:hover { color: #ef4444; background: #fef2f2; border-color: #fecaca; }
 
 /* ========== CALENDAR ========== */
 .cal-header { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 1.5rem; }
@@ -600,16 +622,19 @@ watch(wishlistIds, (ids) => {
 .cal-nav:hover { background: #f3f4f6; border-color: #bbb; }
 .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; margin-bottom: 4px; }
 .cal-weekdays span { font-size: 0.72rem; font-weight: 600; color: #999; text-transform: uppercase; padding: 6px 0; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-.cal-cell { min-height: 80px; border: 1px solid #f0f0f0; border-radius: 8px; padding: 4px; cursor: pointer; transition: all 0.15s; background: #fff; position: relative; }
+.cal-hint { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #f9fafb; border: 1px dashed #ddd; border-radius: 10px; margin-bottom: 1rem; }
+.cal-hint span { font-size: 0.82rem; color: #888; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-cell { min-height: 90px; border: 1px solid #f0f0f0; border-radius: 10px; padding: 6px; cursor: pointer; transition: all 0.15s; background: #fff; position: relative; display: flex; flex-direction: column; }
 .cal-cell.empty { background: transparent; border-color: transparent; cursor: default; }
-.cal-cell:not(.empty):hover { background: #f8f8ff; border-color: #ddd; }
-.cal-cell.today { border-color: #111; }
-.cal-cell.today .cal-day-num { background: #111; color: #fff; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
-.cal-day-num { font-size: 0.75rem; font-weight: 600; color: #555; display: inline-block; margin-bottom: 2px; }
-.cal-thumbs { display: flex; gap: 2px; flex-wrap: wrap; }
-.cal-thumb { width: 28px; height: 28px; border-radius: 4px; object-fit: cover; }
-.cal-more { font-size: 0.6rem; font-weight: 600; color: #888; background: #f0f0f0; border-radius: 4px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+.cal-cell:not(.empty):hover { background: #f5f7ff; border-color: #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.cal-cell.today { border-color: #111; border-width: 2px; }
+.cal-cell.today .cal-day-num { background: #111; color: #fff; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; }
+.cal-cell.has-items { background: #fafbff; }
+.cal-day-num { font-size: 0.75rem; font-weight: 600; color: #555; display: inline-block; margin-bottom: 4px; }
+.cal-thumbs { display: flex; gap: 3px; flex-wrap: wrap; margin-top: auto; }
+.cal-thumb { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; border: 1px solid #eee; }
+.cal-more { font-size: 0.62rem; font-weight: 700; color: #666; background: #f0f0f0; border-radius: 6px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
 .cal-stats { display: flex; justify-content: center; gap: 2rem; margin-top: 2rem; padding: 1.25rem; background: #fff; border-radius: 14px; border: 1px solid #eee; }
 .stat-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .stat-label { font-size: 0.72rem; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
