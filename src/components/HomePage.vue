@@ -914,29 +914,66 @@ const handleSearch = async () => {
     })
     
     try {
+      // Step 1: Get AI response + extracted search query from backend
       const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
       const history = chatMessages.value
         .filter(m => !m.products)
         .map(m => ({ role: m.role, text: m.text }))
       
-      const response = await fetch(`${apiUrl}/api/chat/`, {
+      const chatResponse = await fetch(`${apiUrl}/api/chat/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMessage, history }),
       })
-      const data = await response.json()
+      const chatData = await chatResponse.json()
+      const aiText = chatData.response || 'Let me find that for you.'
+      const extractedQuery = chatData.search_query || userMessage
       
+      // Step 2: Search Amazon directly with the extracted query (same as Classic mode)
+      const amazonResponse = await fetch(
+        `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(extractedQuery)}&page=1&country=US`,
+        {
+          headers: {
+            'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
+            'x-rapidapi-key': 'ad5affb386msh86b1de74187a3cep186fbejsn29e5c0f03e34'
+          }
+        }
+      )
+      const amazonData = await amazonResponse.json()
+      const products = (amazonData?.data?.products || []).map((p, idx) => ({
+        id: p.asin || idx,
+        title: p.product_title,
+        price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
+        original_price: p.product_original_price ? p.product_original_price.replace(/[^0-9.]/g, '') : null,
+        image_url: p.product_photo,
+        source: 'Amazon',
+        merchant_name: 'Amazon',
+        url: p.product_url,
+        rating: p.product_star_rating,
+        reviews: p.product_num_ratings,
+        is_prime: p.is_prime,
+        badge: p.product_badge || (p.is_best_seller ? 'Best Seller' : (p.is_amazon_choice ? 'Amazon Choice' : null)),
+        discount_percent: p.product_original_price && p.product_price
+          ? Math.round(((parseFloat(p.product_original_price.replace(/[^0-9.]/g, '')) - parseFloat(p.product_price.replace(/[^0-9.]/g, ''))) / parseFloat(p.product_original_price.replace(/[^0-9.]/g, ''))) * 100)
+          : null
+      }))
+      
+      // Add AI response + products to chat
       chatMessages.value.push({
         role: 'assistant',
-        text: data.response || 'Here are some options I found.',
-        products: data.products || [],
+        text: aiText,
+        products: products.slice(0, 6),  // Show top 6 in chat cards
       })
       
-      // Also populate the regular results grid
-      if (data.products && data.products.length > 0) {
-        deals.value = data.products.map(p => ({ ...p, image_url: p.image_url || p.image }))
+      // Populate the main results grid below
+      if (products.length > 0) {
+        deals.value = products
         hasSearched.value = true
-        lastSearchQuery.value = data.search_query || userMessage
+        lastSearchQuery.value = extractedQuery
+        activeGender.value = 'all'
+        activeSize.value = 'All'
+        sortBy.value = 'relevance'
+        visibleCount.value = 12
       }
     } catch (error) {
       console.error('Chat failed:', error)
