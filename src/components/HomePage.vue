@@ -562,7 +562,7 @@ const filteredDeals = computed(() => {
   }
   
   // Size filter
-  if (activeSize.value !== 'All') {
+  if (activeSize.value.toLowerCase() !== 'all') {
     const size = activeSize.value.toLowerCase()
     result = result.filter(deal => {
       const title = (deal.title || '').toLowerCase()
@@ -928,6 +928,7 @@ const handleSearch = async () => {
       const chatData = await chatResponse.json()
       const aiText = chatData.response || 'Let me find that for you.'
       const extractedQuery = chatData.search_query || userMessage
+      const maxPrice = chatData.max_price || null
       
       // Step 2: Search Amazon directly with the extracted query (same as Classic mode)
       const amazonResponse = await fetch(
@@ -958,16 +959,24 @@ const handleSearch = async () => {
           : null
       }))
       
+      // Apply price filter if GPT extracted a max_price
+      const filteredProducts = maxPrice
+        ? products.filter(p => {
+            const price = parseFloat(p.price)
+            return !isNaN(price) && price <= maxPrice
+          })
+        : products
+      
       // Add AI response + products to chat
       chatMessages.value.push({
         role: 'assistant',
         text: aiText,
-        products: products.slice(0, 6),  // Show top 6 in chat cards
+        products: filteredProducts.slice(0, 6),  // Show top 6 in chat cards
       })
       
       // Populate the main results grid below
-      if (products.length > 0) {
-        deals.value = products
+      if (filteredProducts.length > 0) {
+        deals.value = filteredProducts
         hasSearched.value = true
         lastSearchQuery.value = extractedQuery
         activeGender.value = 'all'
