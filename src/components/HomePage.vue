@@ -446,7 +446,7 @@ const incrementSearchCount = () => {
 
 // Gender & size filter state
 const activeGender = ref('all')
-const activeSize = ref('all')
+const activeSize = ref('All')
 const detectedGender = ref(null)
 
 const genderOptions = [
