@@ -4,9 +4,6 @@
       <div class="footer-main">
         <div class="footer-brand">
           <router-link to="/" class="footer-logo">
-            <svg class="logo-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-            </svg>
             <span class="logo-text">Fynda</span>
           </router-link>
           <p class="footer-tagline">AI-powered deal discovery across all major marketplaces and social media.</p>

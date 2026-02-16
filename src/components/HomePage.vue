@@ -4,11 +4,55 @@
     
     <main class="main-content">
       <!-- Hero Section -->
-      <section class="hero-section">
-        <div class="hero-rotating">
+      <section class="hero-section" :class="{ 'hero-chat-mode': aiMode }">
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+          <span :class="{ active: !aiMode }" @click="aiMode = false">Classic</span>
+          <button class="toggle-track" :class="{ on: aiMode }" @click="aiMode = !aiMode">
+            <span class="toggle-thumb"></span>
+          </button>
+          <span :class="{ active: aiMode }" @click="aiMode = true">AI Chat</span>
+        </div>
+
+        <!-- Classic hero title (hidden in chat mode after first message) -->
+        <div v-if="!aiMode || chatMessages.length === 0" class="hero-rotating">
           <transition name="hero-fade" mode="out-in">
-            <h1 class="hero-title" :key="heroPhrase">{{ heroPhrase }}</h1>
+            <h1 class="hero-title" :class="{ 'hero-title-small': aiMode }" :key="heroPhrase">
+              {{ aiMode ? 'Ask Fynda anything' : heroPhrase }}
+            </h1>
           </transition>
+        </div>
+
+        <!-- Chat Messages Area (AI mode only) -->
+        <div v-if="aiMode && chatMessages.length > 0" class="chat-messages" ref="chatMessagesEl">
+          <div
+            v-for="(msg, i) in chatMessages"
+            :key="i"
+            class="chat-bubble"
+            :class="msg.role"
+          >
+            <p>{{ msg.text }}</p>
+            <!-- Inline product cards after assistant messages -->
+            <div v-if="msg.products && msg.products.length > 0" class="chat-products">
+              <div
+                v-for="product in msg.products.slice(0, 6)"
+                :key="product.id"
+                class="chat-product-card"
+                @click="openDeal(product)"
+              >
+                <img :src="product.image_url" :alt="product.title" loading="lazy" />
+                <div class="chat-product-info">
+                  <span class="chat-product-title">{{ product.title }}</span>
+                  <span class="chat-product-price">${{ formatPrice(product.price) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-if="chatLoading" class="chat-bubble assistant">
+            <div class="chat-typing">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
         </div>
         
         <!-- AI-Style Search Box -->
@@ -43,9 +87,9 @@
               @focus="isSearchFocused = true"
               @blur="handleBlur"
               @paste="handlePaste"
-              :placeholder="pastedImage ? 'Add description (optional)...' : ''"
+              :placeholder="aiMode ? 'Ask me anything about fashion...' : (pastedImage ? 'Add description (optional)...' : '')"
             />
-            <span v-if="!searchQuery && !isSearchFocused && !pastedImage" class="ai-animated-placeholder">
+            <span v-if="!searchQuery && !isSearchFocused && !pastedImage && !aiMode" class="ai-animated-placeholder">
               {{ animatedPrompt }}
             </span>
             
@@ -61,12 +105,12 @@
             
             <!-- Search Button -->
             <button class="search-btn" @click="handleSearch">
-              Search
+              {{ aiMode ? 'Send' : 'Search' }}
             </button>
           </div>
           
-          <!-- Quick Suggestions (rotating) -->
-          <div class="quick-suggestions">
+          <!-- Quick Suggestions (hidden in AI mode once chat starts) -->
+          <div v-if="!aiMode || chatMessages.length === 0" class="quick-suggestions">
             <span class="suggestion-label">Try:</span>
             <transition-group name="suggestion-fade" tag="div" class="suggestion-pills">
               <button
@@ -380,6 +424,12 @@ const scrollSentinel = ref(null)
 const quotaWarning = ref('')
 const suggestedQuery = ref(null)
 let scrollObserver = null
+
+// AI Chat state
+const aiMode = ref(localStorage.getItem('fynda_ai_mode') === 'true')
+const chatMessages = ref([])
+const chatLoading = ref(false)
+const chatMessagesEl = ref(null)
 // Search gate state (3 free searches for non-auth users)
 const showLoginGate = ref(false)
 const FREE_SEARCH_LIMIT = 3
@@ -595,6 +645,15 @@ watch(visibleCount, () => {
       scrollObserver.observe(scrollSentinel.value)
     }
   })
+})
+
+// Persist AI mode toggle
+watch(aiMode, (val) => {
+  localStorage.setItem('fynda_ai_mode', val ? 'true' : 'false')
+  if (!val) {
+    chatMessages.value = []
+    chatLoading.value = false
+  }
 })
 
 // Format price
@@ -840,6 +899,64 @@ const handleSearch = async () => {
     incrementSearchCount()
   }
 
+  // AI Chat mode — call backend chat endpoint
+  if (aiMode.value) {
+    const userMessage = searchQuery.value.trim()
+    chatMessages.value.push({ role: 'user', text: userMessage })
+    searchQuery.value = ''
+    chatLoading.value = true
+    
+    // Scroll chat to bottom
+    nextTick(() => {
+      if (chatMessagesEl.value) {
+        chatMessagesEl.value.scrollTop = chatMessagesEl.value.scrollHeight
+      }
+    })
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+      const history = chatMessages.value
+        .filter(m => !m.products)
+        .map(m => ({ role: m.role, text: m.text }))
+      
+      const response = await fetch(`${apiUrl}/api/chat/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage, history }),
+      })
+      const data = await response.json()
+      
+      chatMessages.value.push({
+        role: 'assistant',
+        text: data.response || 'Here are some options I found.',
+        products: data.products || [],
+      })
+      
+      // Also populate the regular results grid
+      if (data.products && data.products.length > 0) {
+        deals.value = data.products.map(p => ({ ...p, image_url: p.image_url || p.image }))
+        hasSearched.value = true
+        lastSearchQuery.value = data.search_query || userMessage
+      }
+    } catch (error) {
+      console.error('Chat failed:', error)
+      chatMessages.value.push({
+        role: 'assistant',
+        text: 'Sorry, something went wrong. Please try again.',
+        products: [],
+      })
+    } finally {
+      chatLoading.value = false
+      nextTick(() => {
+        if (chatMessagesEl.value) {
+          chatMessagesEl.value.scrollTop = chatMessagesEl.value.scrollHeight
+        }
+      })
+    }
+    return
+  }
+
+  // Classic mode — direct Amazon search
   loading.value = true
   hasSearched.value = true
   lastSearchQuery.value = searchQuery.value
@@ -2285,5 +2402,204 @@ a {
 }
 .gate-register-link:hover {
   color: #000;
+}
+
+/* ========================================== */
+/* Mode Toggle                                */
+/* ========================================== */
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.mode-toggle span {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #aaa;
+  cursor: pointer;
+  transition: color 0.2s;
+  user-select: none;
+}
+
+.mode-toggle span.active {
+  color: #1a1a1a;
+}
+
+.toggle-track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  background: #ddd;
+  border-radius: 11px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+}
+
+.toggle-track.on {
+  background: #1a1a1a;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.toggle-track.on .toggle-thumb {
+  transform: translateX(18px);
+}
+
+/* ========================================== */
+/* Chat Mode                                  */
+/* ========================================== */
+.hero-chat-mode {
+  padding-top: 1.5rem;
+}
+
+.hero-title-small {
+  font-size: clamp(1.4rem, 2.5vw, 1.8rem) !important;
+  color: #666;
+}
+
+.chat-messages {
+  max-width: 640px;
+  margin: 0 auto 1rem;
+  max-height: 50vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 4px;
+  scroll-behavior: smooth;
+}
+
+.chat-bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  animation: bubbleIn 0.25s ease;
+}
+
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-bubble.user {
+  align-self: flex-end;
+  background: #1a1a1a;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bubble.assistant {
+  align-self: flex-start;
+  background: #f3f3f3;
+  color: #333;
+  border-bottom-left-radius: 4px;
+}
+
+.chat-bubble p {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.chat-bubble.user p {
+  font-size: 0.9rem;
+}
+
+/* Typing indicator */
+.chat-typing {
+  display: flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.chat-typing span {
+  width: 6px;
+  height: 6px;
+  background: #999;
+  border-radius: 50%;
+  animation: typingDot 1.2s infinite;
+}
+
+.chat-typing span:nth-child(2) { animation-delay: 0.2s; }
+.chat-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingDot {
+  0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+  30% { opacity: 1; transform: scale(1); }
+}
+
+/* Inline product cards in chat */
+.chat-products {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 0 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chat-products::-webkit-scrollbar {
+  height: 4px;
+}
+
+.chat-products::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 2px;
+}
+
+.chat-product-card {
+  flex: 0 0 130px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.chat-product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.chat-product-card img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+}
+
+.chat-product-info {
+  padding: 6px 8px;
+}
+
+.chat-product-title {
+  display: block;
+  font-size: 0.7rem;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.chat-product-price {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-top: 2px;
 }
 </style>

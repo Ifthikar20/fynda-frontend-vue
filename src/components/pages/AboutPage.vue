@@ -29,22 +29,38 @@
             <h2>How It Works</h2>
             <div class="feature-grid">
               <div class="feature-card">
-                <div class="feature-icon">🔍</div>
+                <div class="feature-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                </div>
                 <h3>Smart Search</h3>
                 <p>Natural language search powered by AI understands exactly what you're looking for</p>
               </div>
               <div class="feature-card">
-                <div class="feature-icon">🏪</div>
+                <div class="feature-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                  </svg>
+                </div>
                 <h3>Multi-Marketplace</h3>
                 <p>We search Amazon, eBay, Best Buy, TikTok Shop, and more simultaneously</p>
               </div>
               <div class="feature-card">
-                <div class="feature-icon">📸</div>
+                <div class="feature-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                </div>
                 <h3>Visual Search</h3>
                 <p>Upload a screenshot and find matching products across all platforms</p>
               </div>
               <div class="feature-card">
-                <div class="feature-icon">🔔</div>
+                <div class="feature-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                  </svg>
+                </div>
                 <h3>Price Alerts</h3>
                 <p>Set your target price and get notified when products drop</p>
               </div>
@@ -134,8 +150,15 @@ import Footer from '../Footer.vue'
 }
 
 .feature-icon {
-  font-size: 36px;
-  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  color: #333;
 }
 
 .feature-card h3 {
