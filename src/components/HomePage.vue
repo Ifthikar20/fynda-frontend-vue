@@ -917,7 +917,7 @@ const handleSearch = async () => {
       // Step 1: Get AI response + extracted search query from backend
       const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
       const history = chatMessages.value
-        .filter(m => !m.products)
+        .slice(-20)
         .map(m => ({ role: m.role, text: m.text }))
       
       const chatResponse = await fetch(`${apiUrl}/api/chat/`, {
