@@ -254,14 +254,18 @@
       </aside>
 
       <!-- Center: Canvas -->
-      <section class="canvas-section">
+      <section class="canvas-section" ref="canvasSectionRef">
         <div 
-          class="storyboard-canvas"
-          :style="canvasStyle"
-          ref="canvasRef"
-          @dragover.prevent
-          @drop="handleDrop"
+          class="canvas-scale-wrapper"
+          :style="scaleWrapperStyle"
         >
+          <div 
+            class="storyboard-canvas"
+            :style="canvasStyle"
+            ref="canvasRef"
+            @dragover.prevent
+            @drop="handleDrop"
+          >
           <!-- Placed Items (Images/Products) -->
           <div
             v-for="item in canvasItems"
@@ -420,6 +424,7 @@
             <span>Add text, stickers, and frames</span>
           </div>
         </div>
+        </div>
 
         <!-- Aspect Ratio Options -->
         <div class="aspect-options">
@@ -516,7 +521,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../stores/authStore'
 import api from '../utils/api'
@@ -707,10 +712,10 @@ const canvasDecorations = ref([])
 const canvasStickers = ref([])
 
 const aspectRatios = [
-  { name: 'landscape', label: '16:9', width: 1400, height: 788 },
-  { name: 'square', label: '1:1', width: 1000, height: 1000 },
-  { name: 'portrait', label: '4:5', width: 820, height: 1025 },
-  { name: 'story', label: '9:16', width: 580, height: 1031 },
+  { name: 'landscape', label: '16:9', width: 1120, height: 630 },
+  { name: 'square', label: '1:1', width: 800, height: 800 },
+  { name: 'portrait', label: '4:5', width: 640, height: 800 },
+  { name: 'story', label: '9:16', width: 450, height: 800 },
 ]
 
 // Classical Fonts
@@ -789,8 +794,10 @@ const layoutTemplates = [
 const selectedBackground = ref('ivory')
 const selectedBackgroundStyle = ref({ background: '#FFFFF0' })
 const selectedRatio = ref('landscape')
-const canvasWidth = ref(1400)
-const canvasHeight = ref(788)
+const canvasWidth = ref(1120)
+const canvasHeight = ref(630)
+const canvasSectionRef = ref(null)
+const canvasScale = ref(1)
 const canvasItems = ref([])
 const textElements = ref([])
 const selectedItem = ref(null)
@@ -825,28 +832,49 @@ let resizingItem = null
 let draggingItem = null
 let draggingTextItem = null
 
+// Compute scale to fit canvas in available space
+const updateCanvasScale = () => {
+  if (!canvasSectionRef.value) return
+  const sectionRect = canvasSectionRef.value.getBoundingClientRect()
+  const availableWidth = sectionRect.width - 24 // padding
+  const availableHeight = sectionRect.height - 24
+  const scaleX = availableWidth / canvasWidth.value
+  const scaleY = availableHeight / canvasHeight.value
+  canvasScale.value = Math.min(scaleX, scaleY, 1) // never scale up beyond 1
+}
+
+const scaleWrapperStyle = computed(() => ({
+  width: canvasWidth.value * canvasScale.value + 'px',
+  height: canvasHeight.value * canvasScale.value + 'px',
+}))
+
 // Computed — layer texture on top of background color
 const canvasStyle = computed(() => {
   const base = { ...selectedBackgroundStyle.value }
   const tex = selectedTextureStyle.value
+  const scale = canvasScale.value
+  
+  const common = {
+    width: canvasWidth.value + 'px',
+    height: canvasHeight.value + 'px',
+    transform: `scale(${scale})`,
+    transformOrigin: 'top left',
+  }
   
   // If a texture is active, overlay its backgroundImage on the current color
   if (tex.backgroundImage) {
-    // Keep the chosen color as backgroundColor, layer texture on top
     const bgColor = base.background || '#FFFFF0'
     return {
+      ...common,
       backgroundColor: bgColor,
       backgroundImage: tex.backgroundImage,
       backgroundSize: tex.backgroundSize || 'auto',
-      width: canvasWidth.value + 'px',
-      height: canvasHeight.value + 'px',
     }
   }
   
   return {
     ...base,
-    width: canvasWidth.value + 'px',
-    height: canvasHeight.value + 'px',
+    ...common,
   }
 })
 
@@ -882,6 +910,7 @@ const setAspectRatio = (ratio) => {
   selectedRatio.value = ratio.name
   canvasWidth.value = ratio.width
   canvasHeight.value = ratio.height
+  nextTick(() => updateCanvasScale())
 }
 
 // Search products
@@ -947,12 +976,13 @@ const handleDrop = (e) => {
     const product = JSON.parse(e.dataTransfer.getData('application/json'))
     const canvas = canvasRef.value
     const rect = canvas.getBoundingClientRect()
+    const scale = canvasScale.value
     
     canvasItems.value.push({
       ...product,
       id: Date.now() + Math.random(),
-      x: e.clientX - rect.left - 100,
-      y: e.clientY - rect.top - 100,
+      x: (e.clientX - rect.left) / scale - 100,
+      y: (e.clientY - rect.top) / scale - 100,
       width: 200,
       height: 200,
       zIndex: canvasItems.value.length + 1
@@ -969,9 +999,13 @@ const startDrag = (e, item) => {
   draggingItem = item.id
   item.zIndex = Math.max(...canvasItems.value.map(i => i.zIndex)) + 1
   
+  const canvas = canvasRef.value
+  const rect = canvas.getBoundingClientRect()
+  const scale = canvasScale.value
+  
   dragOffset = {
-    x: e.clientX - item.x,
-    y: e.clientY - item.y
+    x: (e.clientX - rect.left) / scale - item.x,
+    y: (e.clientY - rect.top) / scale - item.y
   }
   
   document.addEventListener('mousemove', onDrag)
@@ -980,10 +1014,15 @@ const startDrag = (e, item) => {
 
 const onDrag = (e) => {
   const item = canvasItems.value.find(i => i.id === draggingItem)
-  if (!item) return
+  if (!item || !canvasRef.value) return
   
-  item.x = Math.max(0, Math.min(e.clientX - dragOffset.x, canvasWidth.value - item.width))
-  item.y = Math.max(0, Math.min(e.clientY - dragOffset.y, canvasHeight.value - item.height))
+  const rect = canvasRef.value.getBoundingClientRect()
+  const scale = canvasScale.value
+  const canvasX = (e.clientX - rect.left) / scale - dragOffset.x
+  const canvasY = (e.clientY - rect.top) / scale - dragOffset.y
+  
+  item.x = Math.max(0, Math.min(canvasX, canvasWidth.value - item.width))
+  item.y = Math.max(0, Math.min(canvasY, canvasHeight.value - item.height))
 }
 
 const stopDrag = () => {
@@ -1006,8 +1045,9 @@ const onResize = (e) => {
   if (!item || !canvasRef.value) return
   
   const rect = canvasRef.value.getBoundingClientRect()
-  const newWidth = Math.max(60, e.clientX - rect.left - item.x)
-  const newHeight = Math.max(60, e.clientY - rect.top - item.y)
+  const scale = canvasScale.value
+  const newWidth = Math.max(60, (e.clientX - rect.left) / scale - item.x)
+  const newHeight = Math.max(60, (e.clientY - rect.top) / scale - item.y)
   
   item.width = Math.min(newWidth, canvasWidth.value - item.x)
   item.height = Math.min(newHeight, canvasHeight.value - item.y)
@@ -1120,9 +1160,13 @@ const startDragText = (e, text) => {
     ...textElements.value.map(t => t.zIndex)
   ) + 1
   
+  const canvas = canvasRef.value
+  const rect = canvas.getBoundingClientRect()
+  const scale = canvasScale.value
+  
   dragOffset = {
-    x: e.clientX - text.x,
-    y: e.clientY - text.y
+    x: (e.clientX - rect.left) / scale - text.x,
+    y: (e.clientY - rect.top) / scale - text.y
   }
   
   document.addEventListener('mousemove', onDragText)
@@ -1131,10 +1175,15 @@ const startDragText = (e, text) => {
 
 const onDragText = (e) => {
   const text = textElements.value.find(t => t.id === draggingTextItem)
-  if (!text) return
+  if (!text || !canvasRef.value) return
   
-  text.x = Math.max(0, Math.min(e.clientX - dragOffset.x, canvasWidth.value - 100))
-  text.y = Math.max(0, Math.min(e.clientY - dragOffset.y, canvasHeight.value - 30))
+  const rect = canvasRef.value.getBoundingClientRect()
+  const scale = canvasScale.value
+  const canvasX = (e.clientX - rect.left) / scale - dragOffset.x
+  const canvasY = (e.clientY - rect.top) / scale - dragOffset.y
+  
+  text.x = Math.max(0, Math.min(canvasX, canvasWidth.value - 100))
+  text.y = Math.max(0, Math.min(canvasY, canvasHeight.value - 30))
 }
 
 const stopDragText = () => {
@@ -1363,10 +1412,11 @@ const startDragDecoration = (e, deco) => {
   const startY = e.clientY
   const origX = deco.x
   const origY = deco.y
+  const scale = canvasScale.value
   
   const onMove = (ev) => {
-    deco.x = origX + (ev.clientX - startX)
-    deco.y = origY + (ev.clientY - startY)
+    deco.x = origX + (ev.clientX - startX) / scale
+    deco.y = origY + (ev.clientY - startY) / scale
   }
   
   const onUp = () => {
@@ -1387,10 +1437,11 @@ const startResizeDecoration = (e, deco) => {
   const origWidth = deco.width
   const origHeight = deco.height
   const aspectRatio = origWidth / origHeight
+  const scale = canvasScale.value
   
   const onMove = (ev) => {
-    const deltaX = ev.clientX - startX
-    const deltaY = ev.clientY - startY
+    const deltaX = (ev.clientX - startX) / scale
+    const deltaY = (ev.clientY - startY) / scale
     const delta = Math.max(deltaX, deltaY)
     deco.width = Math.max(20, origWidth + delta)
     deco.height = Math.max(20, origHeight + delta / aspectRatio)
@@ -1440,10 +1491,11 @@ const startDragSticker = (e, swatch) => {
     const startY = e.clientY
     const origX = swatch.x
     const origY = swatch.y
+    const scale = canvasScale.value
     
     const onMove = (ev) => {
-      swatch.x = origX + (ev.clientX - startX)
-      swatch.y = origY + (ev.clientY - startY)
+      swatch.x = origX + (ev.clientX - startX) / scale
+      swatch.y = origY + (ev.clientY - startY) / scale
     }
     
     const onUp = () => {
@@ -1708,6 +1760,10 @@ onMounted(() => {
   searchQuery.value = 'fashion'
   searchProducts()
   
+  // Initial canvas scale
+  nextTick(() => updateCanvasScale())
+  window.addEventListener('resize', updateCanvasScale)
+  
   // Check if loading from a share link
   if (route.query.share) {
     loadSharedStoryboard()
@@ -1776,6 +1832,7 @@ onUnmounted(() => {
   document.removeEventListener('mouseup', stopDrag)
   document.removeEventListener('mousemove', onResize)
   document.removeEventListener('mouseup', stopResize)
+  window.removeEventListener('resize', updateCanvasScale)
 })
 </script>
 
@@ -2408,14 +2465,22 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  max-height: calc(100vh - 80px);
-  overflow: auto;
-  padding: 0.5rem;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0.75rem;
+}
+
+.canvas-scale-wrapper {
+  position: relative;
+  flex-shrink: 0;
 }
 
 .storyboard-canvas {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   overflow: hidden;
