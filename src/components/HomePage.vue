@@ -930,33 +930,25 @@ const handleSearch = async () => {
       const extractedQuery = chatData.search_query || userMessage
       const maxPrice = chatData.max_price || null
       
-      // Step 2: Search Amazon directly with the extracted query (same as Classic mode)
-      const amazonResponse = await fetch(
-        `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(extractedQuery)}&page=1&country=US`,
-        {
-          headers: {
-            'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
-            'x-rapidapi-key': 'ad5affb386msh86b1de74187a3cep186fbejsn29e5c0f03e34'
-          }
-        }
+      // Step 2: Search products via backend API
+      const searchResponse = await fetch(
+        `${apiUrl}/api/search/?q=${encodeURIComponent(extractedQuery)}&limit=20`
       )
-      const amazonData = await amazonResponse.json()
-      const products = (amazonData?.data?.products || []).map((p, idx) => ({
-        id: p.asin || idx,
-        title: p.product_title,
-        price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
-        original_price: p.product_original_price ? p.product_original_price.replace(/[^0-9.]/g, '') : null,
-        image_url: p.product_photo,
-        source: 'Amazon',
-        merchant_name: 'Amazon',
-        url: p.product_url,
-        rating: p.product_star_rating,
-        reviews: p.product_num_ratings,
-        is_prime: p.is_prime,
-        badge: p.product_badge || (p.is_best_seller ? 'Best Seller' : (p.is_amazon_choice ? 'Amazon Choice' : null)),
-        discount_percent: p.product_original_price && p.product_price
-          ? Math.round(((parseFloat(p.product_original_price.replace(/[^0-9.]/g, '')) - parseFloat(p.product_price.replace(/[^0-9.]/g, ''))) / parseFloat(p.product_original_price.replace(/[^0-9.]/g, ''))) * 100)
-          : null
+      const searchData = await searchResponse.json()
+      const products = (searchData?.deals || []).map((p, idx) => ({
+        id: p.id || idx,
+        title: p.title,
+        price: p.price,
+        original_price: p.original_price || null,
+        image_url: p.image_url,
+        source: p.source || 'Fynda',
+        merchant_name: p.merchant_name || p.source || 'Fynda',
+        url: p.url,
+        rating: p.rating || null,
+        reviews: p.reviews_count || null,
+        badge: p.badge || null,
+        discount_percent: p.discount_percent || null,
+        brand: p.brand || null,
       }))
       
       // Apply price filter if GPT extracted a max_price
@@ -1013,34 +1005,27 @@ const handleSearch = async () => {
   activeSize.value = 'All'
   
   try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
     const response = await fetch(
-      `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(searchQuery.value)}&page=1&country=US`,
-      {
-        headers: {
-          'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
-          'x-rapidapi-key': 'ad5affb386msh86b1de74187a3cep186fbejsn29e5c0f03e34'
-        }
-      }
+      `${apiUrl}/api/search/?q=${encodeURIComponent(searchQuery.value)}&limit=20`
     )
     const data = await response.json()
-    const products = data?.data?.products || []
+    const products = data?.deals || []
     
     deals.value = products.map((p, idx) => ({
-      id: p.asin || idx,
-      title: p.product_title,
-      price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
-      original_price: p.product_original_price ? p.product_original_price.replace(/[^0-9.]/g, '') : null,
-      image_url: p.product_photo,
-      source: 'Amazon',
-      merchant_name: 'Amazon',
-      url: p.product_url,
-      rating: p.product_star_rating,
-      reviews: p.product_num_ratings,
-      is_prime: p.is_prime,
-      badge: p.product_badge || (p.is_best_seller ? 'Best Seller' : (p.is_amazon_choice ? 'Amazon Choice' : null)),
-      discount_percent: p.product_original_price && p.product_price
-        ? Math.round(((parseFloat(p.product_original_price.replace(/[^0-9.]/g, '')) - parseFloat(p.product_price.replace(/[^0-9.]/g, ''))) / parseFloat(p.product_original_price.replace(/[^0-9.]/g, ''))) * 100)
-        : null
+      id: p.id || idx,
+      title: p.title,
+      price: p.price,
+      original_price: p.original_price || null,
+      image_url: p.image_url,
+      source: p.source || 'Fynda',
+      merchant_name: p.merchant_name || p.source || 'Fynda',
+      url: p.url,
+      rating: p.rating || null,
+      reviews: p.reviews_count || null,
+      badge: p.badge || null,
+      discount_percent: p.discount_percent || null,
+      brand: p.brand || null,
     }))
     
     // Reset gender filter since Amazon doesn't return this
