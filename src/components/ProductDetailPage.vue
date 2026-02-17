@@ -23,8 +23,8 @@
             </p>
 
 
-            <!-- Price Comparison - Vertical Meter -->
-            <div class="price-meter">
+            <!-- Price Comparison - Vertical Meter (only shown with real data) -->
+            <div v-if="similarProducts.length > 0" class="price-meter">
               <div class="meter-header">
                 <span class="meter-title">Price Range</span>
               </div>
@@ -44,7 +44,7 @@
                     <span class="price-amount">${{ formatPrice(product.price) }}</span>
                     <span class="price-level">{{ priceLevel }}</span>
                   </div>
-                  <p class="meter-description">We compared to {{ similarProducts.length || 19 }} other products</p>
+                  <p class="meter-description">We compared to {{ similarProducts.length }} other products</p>
                 </div>
               </div>
             </div>
@@ -181,9 +181,10 @@ const isInCompare = ref(false)
 // Computed
 const priceRange = computed(() => {
   if (similarProducts.value.length === 0) {
-    return { low: product.value.price * 0.5, high: product.value.price * 1.2 }
+    return { low: 0, high: 0 }
   }
-  const prices = similarProducts.value.map(p => parseFloat(p.price) || 0)
+  const prices = similarProducts.value.map(p => parseFloat(p.price) || 0).filter(p => p > 0)
+  if (prices.length === 0) return { low: 0, high: 0 }
   return {
     low: Math.min(...prices),
     high: Math.max(...prices)
@@ -450,8 +451,8 @@ const fetchProduct = async (id) => {
         const data = await response.json()
         const products = data?.data?.products || []
         similarProducts.value = products
-          .filter(p => p.asin !== parsed.id)
-          .slice(0, 8)
+          .filter(p => p.asin !== parsed.id && p.product_photo && p.product_price)
+          .slice(0, 20)
           .map((p, idx) => ({
             id: p.asin || idx,
             title: p.product_title,
@@ -482,22 +483,17 @@ const fetchProduct = async (id) => {
     }
   } catch (error) {
     console.error('Failed to fetch product:', error)
-    // Use mock data
+    // No mock data — show error state
     product.value = {
       id: id,
-      title: 'Z Supply - Do It All Blazer',
-      price: 105.00,
-      brand: 'Z Supply',
-      merchant_name: 'Snagged & Bagged',
-      image_url: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&q=80',
+      title: 'Product not found',
+      price: 0,
+      brand: '',
+      merchant_name: '',
+      image_url: '',
       url: '#'
     }
-    similarProducts.value = [
-      { id: 1, title: 'Z Supply - Do It All Blazer', brand: 'Z SUPPLY', price: 105.00, image_url: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=80' },
-      { id: 2, title: 'No Boundaries Juniors Button Front Blazer B...', brand: 'NO BOUNDARIES', price: 21.53, image_url: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&q=80' },
-      { id: 3, title: 'No Boundaries Juniors Button Front Blazer B...', brand: 'NO BOUNDARIES', price: 17.22, image_url: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&q=80' },
-      { id: 4, title: 'New Z Supply Do It All Relaxed Blazer In Black', brand: 'Z SUPPLY', price: 85.00, image_url: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=80' },
-    ]
+    similarProducts.value = []
   } finally {
     loading.value = false
   }
