@@ -927,54 +927,63 @@ const handleSearch = async () => {
       })
       const chatData = await chatResponse.json()
       const aiText = chatData.response || 'Let me find that for you.'
-      const extractedQuery = chatData.search_query || userMessage
+      const extractedQuery = chatData.search_query  // null if GPT is asking a follow-up
       const maxPrice = chatData.max_price || null
       
-      // Step 2: Search products via backend API
-      const searchResponse = await fetch(
-        `${apiUrl}/api/search/?q=${encodeURIComponent(extractedQuery)}&limit=20`
-      )
-      const searchData = await searchResponse.json()
-      const products = (searchData?.deals || []).map((p, idx) => ({
-        id: p.id || idx,
-        title: p.title,
-        price: p.price,
-        original_price: p.original_price || null,
-        image_url: p.image_url,
-        source: p.source || 'Fynda',
-        merchant_name: p.merchant_name || p.source || 'Fynda',
-        url: p.url,
-        rating: p.rating || null,
-        reviews: p.reviews_count || null,
-        badge: p.badge || null,
-        discount_percent: p.discount_percent || null,
-        brand: p.brand || null,
-      }))
-      
-      // Apply price filter if GPT extracted a max_price
-      const filteredProducts = maxPrice
-        ? products.filter(p => {
-            const price = parseFloat(p.price)
-            return !isNaN(price) && price <= maxPrice
-          })
-        : products
-      
-      // Add AI response + products to chat
-      chatMessages.value.push({
-        role: 'assistant',
-        text: aiText,
-        products: filteredProducts.slice(0, 6),  // Show top 6 in chat cards
-      })
-      
-      // Populate the main results grid below
-      if (filteredProducts.length > 0) {
-        deals.value = filteredProducts
-        hasSearched.value = true
-        lastSearchQuery.value = extractedQuery
-        activeGender.value = 'all'
-        activeSize.value = 'All'
-        sortBy.value = 'relevance'
-        visibleCount.value = 12
+      // If GPT is just asking a follow-up question (no search_query), show text only
+      if (!extractedQuery) {
+        chatMessages.value.push({
+          role: 'assistant',
+          text: aiText,
+          products: [],
+        })
+      } else {
+        // GPT has enough info — search for products
+        const searchResponse = await fetch(
+          `${apiUrl}/api/search/?q=${encodeURIComponent(extractedQuery)}&limit=20`
+        )
+        const searchData = await searchResponse.json()
+        const products = (searchData?.deals || []).map((p, idx) => ({
+          id: p.id || idx,
+          title: p.title,
+          price: p.price,
+          original_price: p.original_price || null,
+          image_url: p.image_url,
+          source: p.source || 'Fynda',
+          merchant_name: p.merchant_name || p.source || 'Fynda',
+          url: p.url,
+          rating: p.rating || null,
+          reviews: p.reviews_count || null,
+          badge: p.badge || null,
+          discount_percent: p.discount_percent || null,
+          brand: p.brand || null,
+        }))
+        
+        // Apply price filter if GPT extracted a max_price
+        const filteredProducts = maxPrice
+          ? products.filter(p => {
+              const price = parseFloat(p.price)
+              return !isNaN(price) && price <= maxPrice
+            })
+          : products
+        
+        // Add AI response + products to chat
+        chatMessages.value.push({
+          role: 'assistant',
+          text: aiText,
+          products: filteredProducts.slice(0, 6),
+        })
+        
+        // Populate the main results grid below
+        if (filteredProducts.length > 0) {
+          deals.value = filteredProducts
+          hasSearched.value = true
+          lastSearchQuery.value = extractedQuery
+          activeGender.value = 'all'
+          activeSize.value = 'All'
+          sortBy.value = 'relevance'
+          visibleCount.value = 12
+        }
       }
     } catch (error) {
       console.error('Chat failed:', error)
