@@ -216,7 +216,8 @@ export default {
         if (append) {
           this.posts.push(...newPosts)
         } else {
-          this.posts = newPosts
+          // Show dummy data if API returns empty
+          this.posts = newPosts.length > 0 ? newPosts : this.getDummyPosts()
         }
 
         if (data.next) {
@@ -229,9 +230,36 @@ export default {
         }
       } catch (err) {
         console.error('Failed to fetch feed:', err)
+        // Fallback to dummy data on error
+        if (!append) this.posts = this.getDummyPosts()
       } finally {
         this.loading = false
       }
+    },
+
+    getDummyPosts() {
+      return [
+        { id: 'd1', image_url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80', caption: "Summer streetwear vibes", author: { name: 'StyleByMia' }, tags: ['streetwear', 'summer'], likes_count: 234, comments_count: 12, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd2', image_url: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400&q=80', caption: "Elegant evening look", author: { name: 'FashionHouse' }, tags: ['formal', 'evening'], likes_count: 189, comments_count: 8, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd3', image_url: 'https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=400&q=80', caption: "Oversized blazer outfit", author: { name: 'UrbanChic' }, tags: ['minimal', 'blazer'], likes_count: 312, comments_count: 21, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd4', image_url: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=400&q=80', caption: "Golden hour dress", author: { name: 'DressUp' }, tags: ['casual', 'summer'], likes_count: 456, comments_count: 34, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd5', image_url: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400&q=80', caption: "Y2K inspired fit", author: { name: 'RetroQueen' }, tags: ['y2k', 'vintage'], likes_count: 278, comments_count: 15, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd6', image_url: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&q=80', caption: "Runway ready", author: { name: 'VogueDaily' }, tags: ['formal', 'runway'], likes_count: 521, comments_count: 45, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd7', image_url: 'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=400&q=80', caption: "Casual denim look", author: { name: 'DenimLover' }, tags: ['casual', 'denim'], likes_count: 167, comments_count: 9, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd8', image_url: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400&q=80', caption: "Monochrome moments", author: { name: 'MinimalStyle' }, tags: ['minimal', 'monochrome'], likes_count: 198, comments_count: 11, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd9', image_url: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&q=80', caption: "Vintage thrift find", author: { name: 'ThriftQueen' }, tags: ['vintage', 'thrift'], likes_count: 345, comments_count: 28, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd10', image_url: 'https://images.unsplash.com/photo-1495385794356-15371f348c31?w=400&q=80', caption: "Cozy knit season", author: { name: 'KnitWear' }, tags: ['winter', 'cozy'], likes_count: 223, comments_count: 14, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd11', image_url: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400&q=80', caption: "Festival outfit inspo", author: { name: 'BohoVibes' }, tags: ['festival', 'boho'], likes_count: 412, comments_count: 32, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd12', image_url: 'https://images.unsplash.com/photo-1475180098004-ca77a66827be?w=400&q=80', caption: "Layered for fall", author: { name: 'AutumnStyle' }, tags: ['fall', 'layers'], likes_count: 156, comments_count: 7, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd13', image_url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&q=80', caption: "Shopping day OOTD", author: { name: 'ShopTillDrop' }, tags: ['casual', 'ootd'], likes_count: 289, comments_count: 19, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd14', image_url: 'https://images.unsplash.com/photo-1581044777550-4cfa60707998?w=400&q=80', caption: "Sneaker culture", author: { name: 'SneakerHead' }, tags: ['streetwear', 'sneakers'], likes_count: 534, comments_count: 41, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd15', image_url: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&q=80', caption: "Pastel dream outfit", author: { name: 'PastelPrincess' }, tags: ['pastel', 'feminine'], likes_count: 367, comments_count: 24, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd16', image_url: 'https://images.unsplash.com/photo-1434389677669-e08b4cda3a20?w=400&q=80', caption: "Beach vacation style", author: { name: 'BeachBabe' }, tags: ['summer', 'vacation'], likes_count: 445, comments_count: 36, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd17', image_url: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=400&q=80', caption: "Men's casual Friday", author: { name: 'MensFashion' }, tags: ['casual', 'menswear'], likes_count: 198, comments_count: 13, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd18', image_url: 'https://images.unsplash.com/photo-1544957992-20514f595d6f?w=400&q=80', caption: "Power suit energy", author: { name: 'BossLady' }, tags: ['formal', 'suit'], likes_count: 276, comments_count: 18, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd19', image_url: 'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=400&q=80', caption: "Athleisure goals", author: { name: 'FitFashion' }, tags: ['athleisure', 'sporty'], likes_count: 312, comments_count: 22, is_liked: false, created_at: new Date().toISOString() },
+        { id: 'd20', image_url: 'https://images.unsplash.com/photo-1518577915332-c2a19f149a75?w=400&q=80', caption: "Accessories make the outfit", author: { name: 'Accessorize' }, tags: ['accessories', 'style'], likes_count: 189, comments_count: 10, is_liked: false, created_at: new Date().toISOString() },
+      ]
     },
 
     setupInfiniteScroll() {
