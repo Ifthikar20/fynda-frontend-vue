@@ -7,17 +7,6 @@
         <img src="../assets/outfi-logo.png" alt="outfi." class="topbar-logo-img" />
       </router-link>
 
-      <div class="topbar-search">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#767676" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search for fashion inspiration"
-          class="search-input"
-          @keyup.enter="searchPosts"
-        />
-      </div>
-
       <nav class="topbar-nav">
         <router-link to="/explore" class="topbar-link active">Explore</router-link>
         <router-link to="/deals" class="topbar-link">Find Deals</router-link>
@@ -34,6 +23,26 @@
         </template>
       </div>
     </header>
+
+    <!-- Centered search bar (same style as HomePage) -->
+    <div class="feed-search-wrap">
+      <div class="ai-search-box">
+        <div class="ai-search-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+        </div>
+        <input
+          type="text"
+          class="ai-search-input"
+          v-model="searchQuery"
+          placeholder="Search for fashion inspiration"
+          @keyup.enter="searchPosts"
+        />
+        <button class="search-btn" @click="searchPosts">Search</button>
+      </div>
+    </div>
 
     <!-- Masonry grid -->
     <div class="masonry">
@@ -56,7 +65,7 @@
               class="pin-source pin-source-link"
               @click.stop
             >{{ post.author.name }}</router-link>
-            <span v-else class="pin-source">{{ post.author.name }}</span>
+            <span v-else class="pin-source pin-source-link" @click.stop="goToProfile(post.author)">{{ post.author.name }}</span>
           </div>
           <button class="pin-menu" @click.stop>⋯</button>
         </div>
@@ -440,6 +449,16 @@ export default {
       // Client-side filtering is already handled by filteredPosts computed
       // This is a placeholder for future server-side search
     },
+
+    goToProfile(author) {
+      // If author has an ID, go to user profile
+      if (author && author.id) {
+        this.$router.push(`/user/${author.id}`)
+      } else if (author && author.name) {
+        // No ID means it's dummy data / brand — go to brand page
+        this.$router.push(`/brand/${encodeURIComponent(author.name)}`)
+      }
+    },
   },
 }
 </script>
@@ -468,47 +487,17 @@ export default {
   padding: 8px 16px;
   background: #fff;
   border-bottom: 1px solid #efefef;
-  height: 64px;
+  height: 56px;
   box-sizing: border-box;
 }
 .topbar-logo { display: flex; align-items: center; flex-shrink: 0; }
 .topbar-logo-img { height: 28px; }
 
-.topbar-search {
-  flex: 1;
-  max-width: 600px;
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.search-icon {
-  position: absolute;
-  left: 14px;
-  pointer-events: none;
-}
-.search-input {
-  width: 100%;
-  background: #efefef;
-  border: 2px solid transparent;
-  border-radius: 24px;
-  padding: 10px 14px 10px 40px;
-  font-size: 0.88rem;
-  font-family: 'Inter', sans-serif;
-  color: #111;
-  transition: all 0.2s;
-}
-.search-input:focus {
-  outline: none;
-  background: #fff;
-  border-color: #0969da;
-  box-shadow: 0 0 0 4px rgba(9,105,218,0.12);
-}
-.search-input::placeholder { color: #767676; }
-
 .topbar-nav {
   display: flex;
   gap: 4px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 .topbar-link {
   padding: 8px 14px;
@@ -522,7 +511,7 @@ export default {
 .topbar-link:hover { background: #f0f0f0; }
 .topbar-link.active { background: #111; color: #fff; }
 
-.topbar-actions { display: flex; align-items: center; flex-shrink: 0; }
+.topbar-actions { display: flex; align-items: center; flex-shrink: 0; margin-left: 8px; }
 .topbar-avatar {
   width: 32px;
   height: 32px;
@@ -540,15 +529,69 @@ export default {
 }
 .topbar-avatar:hover { transform: scale(1.1); }
 .topbar-signin {
-  background: #e60023;
+  background: #111;
   color: #fff;
   padding: 8px 18px;
   border-radius: 24px;
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
+  transition: background 0.15s;
 }
-.topbar-signin:hover { background: #ad081b; }
+.topbar-signin:hover { background: #333; }
+
+/* ── Centered search (matches HomePage) ─────────────────────── */
+.feed-search-wrap {
+  max-width: 640px;
+  margin: 0 auto 24px;
+  padding: 0 16px;
+}
+.ai-search-box {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 32px;
+  padding: 0.5rem 0.5rem 0.5rem 1.2rem;
+  min-height: 54px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.ai-search-box:focus-within {
+  border-color: #000;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.ai-search-icon {
+  color: #888;
+  margin-right: 0.6rem;
+  flex-shrink: 0;
+}
+.ai-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  color: #1a1a1a;
+  outline: none;
+  min-width: 0;
+  height: 40px;
+}
+.ai-search-input::placeholder { color: #999; }
+.search-btn {
+  padding: 0.6rem 1.3rem;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.search-btn:hover { background: #333; }
 
 /* ── Pinterest Masonry ──────────────────────────────────────── */
 .masonry {
@@ -596,7 +639,7 @@ export default {
 .pin:hover .pin-overlay { opacity: 1; }
 
 .save-btn {
-  background: #e60023;
+  background: #111;
   color: #fff;
   border: none;
   padding: 8px 16px;
@@ -606,7 +649,7 @@ export default {
   cursor: pointer;
   transition: background 0.15s;
 }
-.save-btn:hover { background: #ad081b; }
+.save-btn:hover { background: #333; }
 
 /* Pin info row */
 .pin-info {
@@ -665,7 +708,7 @@ export default {
 .spinner {
   width: 28px; height: 28px;
   border: 3px solid #eee;
-  border-top-color: #e60023;
+  border-top-color: #111;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
@@ -679,7 +722,7 @@ export default {
 .empty-state h3 { margin: 16px 0 8px; color: #333; font-weight: 600; font-size: 1.1rem; }
 .empty-state p { margin-bottom: 20px; font-size: 0.9rem; }
 .create-btn-empty {
-  background: #e60023;
+  background: #111;
   color: #fff;
   border: none;
   padding: 12px 28px;
@@ -788,7 +831,7 @@ export default {
 
 .submit-btn {
   width: 100%;
-  background: #e60023;
+  background: #000;
   color: #fff;
   border: none;
   padding: 12px;
@@ -798,7 +841,7 @@ export default {
   cursor: pointer;
   transition: background 0.2s;
 }
-.submit-btn:hover:not(:disabled) { background: #ad081b; }
+.submit-btn:hover:not(:disabled) { background: #333; }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Detail Modal ───────────────────────────────────────────── */
@@ -855,7 +898,7 @@ export default {
   transition: all 0.15s;
 }
 .action-btn-pill:hover { background: #eee; }
-.action-btn-pill.liked { background: #ffeaed; color: #e60023; }
+.action-btn-pill.liked { background: #f0f0f0; color: #111; }
 
 .detail-header {
   display: flex;

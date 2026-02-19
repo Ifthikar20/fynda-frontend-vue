@@ -209,7 +209,7 @@ export default {
   font-size: 0.88rem;
   font-weight: 500;
 }
-.back-link:hover { color: #e60023; }
+.back-link:hover { color: #333; }
 
 /* ── Hero ───────────────────────────────────────────────────── */
 .profile-hero {
@@ -265,7 +265,7 @@ export default {
   gap: 8px;
 }
 .follow-btn {
-  background: #e60023;
+  background: #111;
   color: #fff;
   border: none;
   padding: 10px 24px;
@@ -274,7 +274,7 @@ export default {
   font-size: 0.88rem;
   cursor: pointer;
 }
-.follow-btn:hover { background: #ad081b; }
+.follow-btn:hover { background: #333; }
 .message-btn {
   background: #efefef;
   color: #111;
@@ -355,7 +355,7 @@ export default {
 }
 .pin:hover .pin-overlay { opacity: 1; }
 .save-btn {
-  background: #e60023;
+  background: #111;
   color: #fff;
   border: none;
   padding: 8px 16px;
@@ -364,7 +364,7 @@ export default {
   font-weight: 700;
   cursor: pointer;
 }
-.save-btn:hover { background: #ad081b; }
+.save-btn:hover { background: #333; }
 
 .empty-posts {
   text-align: center;
@@ -383,7 +383,7 @@ export default {
   width: 28px;
   height: 28px;
   border: 3px solid #eee;
-  border-top-color: #e60023;
+  border-top-color: #111;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
