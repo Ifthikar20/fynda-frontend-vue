@@ -140,6 +140,7 @@ onUnmounted(() => {
 }
 
 .nav-container {
+  position: relative;
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 24px;
@@ -160,6 +161,9 @@ onUnmounted(() => {
 }
 
 .nav-links {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 32px;
