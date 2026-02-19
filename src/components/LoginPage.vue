@@ -4,10 +4,10 @@
     <div class="login-left">
       <div class="login-content">
         <a href="/" class="login-logo">
-          <img src="../assets/fynda-png-1.png" alt="Fynda" />
+          <img src="../assets/outfi-logo.png" alt="outfi." />
         </a>
         
-        <h1 class="login-title">Sign in to Fynda</h1>
+        <h1 class="login-title">Sign in to outfi.</h1>
         <p class="login-subtitle">Find the best deals in one click.</p>
         
         <!-- Error Message -->

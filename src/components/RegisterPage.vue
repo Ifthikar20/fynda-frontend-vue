@@ -4,7 +4,7 @@
     <div class="register-left">
       <div class="register-content">
         <a href="/" class="register-logo">
-          <img src="../assets/fynda-png-1.png" alt="Fynda" />
+          <img src="../assets/outfi-logo.png" alt="outfi." />
         </a>
         
         <h1 class="register-title">Create your account</h1>

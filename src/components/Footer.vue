@@ -4,7 +4,7 @@
       <div class="footer-main">
         <div class="footer-brand">
           <router-link to="/" class="footer-logo">
-            <span class="logo-text">Fynda</span>
+            <span class="logo-text">outfi.</span>
           </router-link>
           <p class="footer-tagline">AI-powered deal discovery across all major marketplaces and social media.</p>
         </div>
@@ -43,7 +43,7 @@
       </div>
       
       <div class="footer-bottom">
-        <p class="copyright">© {{ currentYear }} Fynda. All rights reserved.</p>
+        <p class="copyright">© {{ currentYear }} outfi. All rights reserved.</p>
         <div class="footer-legal">
           <router-link to="/privacy" class="legal-link">Privacy</router-link>
           <router-link to="/terms" class="legal-link">Terms</router-link>

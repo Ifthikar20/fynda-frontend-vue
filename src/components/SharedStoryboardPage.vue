@@ -3,7 +3,7 @@
     <!-- Header -->
     <header class="shared-header">
       <router-link to="/" class="logo-link">
-        <img src="../assets/fynda-png-1.png" alt="Fynda" class="logo" />
+        <img src="../assets/outfi-logo.png" alt="outfi." class="logo" />
       </router-link>
       <router-link to="/login" class="cta-btn">Sign In to Create Your Own</router-link>
     </header>
@@ -100,7 +100,7 @@
 
       <!-- Footer + CTA -->
       <footer class="shared-footer">
-        <span class="footer-text">Created with <strong>Fynda</strong> Fashion Board</span>
+        <span class="footer-text">Created with <strong>outfi.</strong> Fashion Board</span>
         <router-link to="/register" class="create-btn">Create Your Own — Free</router-link>
       </footer>
     </main>

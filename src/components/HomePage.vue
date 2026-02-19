@@ -288,7 +288,7 @@
       <div class="footer-container">
         <div class="footer-main">
           <div class="footer-brand">
-            <img src="../assets/fynda-png-1.png" alt="Fynda" class="footer-logo" />
+            <img src="../assets/outfi-logo.png" alt="outfi." class="footer-logo" />
             <p class="footer-tagline">Discover the best deals from everywhere, all in one place.</p>
           </div>
           
@@ -326,7 +326,7 @@
         </div>
         
         <div class="footer-bottom">
-          <p>© 2026 Fynda. All rights reserved.</p>
+          <p>© 2026 outfi. All rights reserved.</p>
           <div class="footer-legal">
             <router-link to="/privacy">Privacy</router-link>
             <router-link to="/terms">Terms</router-link>

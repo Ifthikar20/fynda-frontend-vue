@@ -4,7 +4,7 @@
     <header class="blog-header">
       <div class="header-content">
         <router-link to="/" class="logo">
-          <img src="@/assets/fynda-png-1.png" alt="Fynda" class="logo-img" />
+          <img src="@/assets/outfi-logo.png" alt="outfi." class="logo-img" />
         </router-link>
         <nav class="nav-links">
           <router-link to="/">Shop</router-link>

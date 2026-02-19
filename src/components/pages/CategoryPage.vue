@@ -7,7 +7,7 @@
         <!-- Hero Section with Logo -->
         <div class="hero-section">
           <router-link to="/" class="hero-logo">
-            <img src="../../assets/fynda-png-1.png" alt="Fynda" class="logo-img" />
+            <img src="../../assets/outfi-logo.png" alt="outfi." class="logo-img" />
           </router-link>
           <h1 class="page-title">{{ categoryData.title }}</h1>
           <p class="page-subtitle">{{ categoryData.description }}</p>
