@@ -1,55 +1,29 @@
 <template>
   <div class="feed-page">
-    <!-- Header -->
-    <div class="feed-header">
-      <h1 class="feed-title">Explore</h1>
-      <p class="feed-subtitle">Discover fashion inspiration from the community</p>
-      <button v-if="isLoggedIn" class="create-btn" @click="showCreateModal = true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Post
-      </button>
-    </div>
-
-    <!-- Tag filters -->
-    <div class="tag-bar">
-      <button
-        v-for="tag in trendingTags"
-        :key="tag"
-        :class="['tag-chip', { active: activeTag === tag }]"
-        @click="filterByTag(tag)"
-      >{{ tag }}</button>
-    </div>
 
     <!-- Masonry grid -->
-    <div class="masonry" ref="masonryRef">
-      <div v-for="post in posts" :key="post.id" class="masonry-item" @click="openPost(post)">
-        <div class="card">
-          <img :src="post.image_url" :alt="post.caption" class="card-img" loading="lazy" />
-          <div class="card-body">
-            <p class="card-caption" v-if="post.caption">{{ post.caption }}</p>
-            <div class="card-footer">
-              <span class="card-author">{{ post.author.name }}</span>
-              <div class="card-actions">
-                <button class="action-btn" @click.stop="toggleLike(post)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" :fill="post.is_liked ? '#e74c3c' : 'none'" :stroke="post.is_liked ? '#e74c3c' : 'currentColor'" stroke-width="2">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                  </svg>
-                  <span>{{ post.likes_count }}</span>
-                </button>
-                <button class="action-btn" @click.stop="openPost(post)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  <span>{{ post.comments_count }}</span>
-                </button>
-              </div>
-            </div>
+    <div class="masonry">
+      <div v-for="post in posts" :key="post.id" class="pin" @click="openPost(post)">
+        <div class="pin-img-wrap">
+          <img :src="post.image_url" :alt="post.caption" class="pin-img" loading="lazy" />
+          <!-- Overlay on hover -->
+          <div class="pin-overlay">
+            <button v-if="isLoggedIn" class="save-btn" @click.stop="toggleLike(post)">
+              {{ post.is_liked ? 'Saved' : 'Save' }}
+            </button>
           </div>
+        </div>
+        <div class="pin-info">
+          <div class="pin-text">
+            <p class="pin-title" v-if="post.caption">{{ post.caption }}</p>
+            <span class="pin-source">{{ post.author.name }}</span>
+          </div>
+          <button class="pin-menu" @click.stop>⋯</button>
         </div>
       </div>
     </div>
 
-    <!-- Loading state -->
+    <!-- Loading -->
     <div v-if="loading" class="feed-loading">
       <div class="spinner"></div>
     </div>
@@ -61,11 +35,16 @@
       </svg>
       <h3>No posts yet</h3>
       <p>Be the first to share your outfit!</p>
-      <button v-if="isLoggedIn" class="create-btn" @click="showCreateModal = true">Create Post</button>
+      <button v-if="isLoggedIn" class="create-btn-empty" @click="showCreateModal = true">Create Post</button>
     </div>
 
-    <!-- Scroll sentinel -->
+    <!-- Infinite scroll sentinel -->
     <div ref="sentinel" class="sentinel"></div>
+
+    <!-- Floating create button -->
+    <button v-if="isLoggedIn" class="fab" @click="showCreateModal = true" title="Create Post">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
 
     <!-- Create Post Modal -->
     <div v-if="showCreateModal" class="modal-overlay" @click.self="showCreateModal = false">
@@ -78,25 +57,25 @@
         <div class="upload-area" @click="triggerFileInput" @dragover.prevent @drop.prevent="handleDrop">
           <img v-if="previewUrl" :src="previewUrl" class="preview-img" />
           <div v-else class="upload-placeholder">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
-            <p>Click or drag to upload an image</p>
+            <p>Click or drag to upload</p>
           </div>
           <input ref="fileInput" type="file" accept="image/*" @change="handleFileSelect" hidden />
         </div>
 
         <textarea
           v-model="newPost.caption"
-          placeholder="Write a caption…"
+          placeholder="Add a title"
           class="caption-input"
           maxlength="2000"
-          rows="3"
+          rows="2"
         ></textarea>
 
         <input
           v-model="newPost.tagsInput"
-          placeholder="Tags (comma separated): streetwear, casual, summer"
+          placeholder="Tags: streetwear, casual, summer"
           class="tags-input"
         />
 
@@ -105,8 +84,7 @@
           :disabled="!selectedFile || uploading"
           @click="submitPost"
         >
-          <span v-if="uploading" class="spinner-sm"></span>
-          {{ uploading ? 'Posting...' : 'Share' }}
+          {{ uploading ? 'Publishing...' : 'Publish' }}
         </button>
       </div>
     </div>
@@ -120,28 +98,35 @@
             <img :src="selectedPost.image_url" :alt="selectedPost.caption" />
           </div>
           <div class="detail-sidebar">
-            <div class="detail-header">
-              <span class="detail-author">{{ selectedPost.author.name }}</span>
-              <span class="detail-time">{{ timeAgo(selectedPost.created_at) }}</span>
-            </div>
-            <p class="detail-caption" v-if="selectedPost.caption">{{ selectedPost.caption }}</p>
-            <div class="detail-tags" v-if="selectedPost.tags && selectedPost.tags.length">
-              <span v-for="tag in selectedPost.tags" :key="tag" class="detail-tag">#{{ tag }}</span>
-            </div>
-            <div class="detail-actions">
-              <button class="action-btn" @click="toggleLike(selectedPost)">
-                <svg width="20" height="20" viewBox="0 0 24 24" :fill="selectedPost.is_liked ? '#e74c3c' : 'none'" :stroke="selectedPost.is_liked ? '#e74c3c' : 'currentColor'" stroke-width="2">
+            <div class="detail-actions-row">
+              <button class="action-btn-pill" :class="{ liked: selectedPost.is_liked }" @click="toggleLike(selectedPost)">
+                <svg width="16" height="16" viewBox="0 0 24 24" :fill="selectedPost.is_liked ? '#e74c3c' : 'none'" :stroke="selectedPost.is_liked ? '#e74c3c' : 'currentColor'" stroke-width="2">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
-                <span>{{ selectedPost.likes_count }}</span>
+                {{ selectedPost.likes_count }}
               </button>
+            </div>
+            <div class="detail-header">
+              <div class="detail-author-row">
+                <div class="author-avatar">{{ selectedPost.author.name.charAt(0) }}</div>
+                <span class="detail-author">{{ selectedPost.author.name }}</span>
+              </div>
+              <span class="detail-time">{{ timeAgo(selectedPost.created_at) }}</span>
+            </div>
+            <h3 class="detail-caption" v-if="selectedPost.caption">{{ selectedPost.caption }}</h3>
+            <div class="detail-tags" v-if="selectedPost.tags && selectedPost.tags.length">
+              <span v-for="tag in selectedPost.tags" :key="tag" class="detail-tag">#{{ tag }}</span>
             </div>
 
             <!-- Comments -->
             <div class="comments-section">
+              <h4 class="comments-title">Comments <span class="comments-count">{{ selectedPost.comments_count }}</span></h4>
               <div v-for="comment in comments" :key="comment.id" class="comment">
-                <strong>{{ comment.author.name }}</strong>
-                <span>{{ comment.text }}</span>
+                <div class="comment-avatar">{{ comment.author.name.charAt(0) }}</div>
+                <div class="comment-body">
+                  <strong>{{ comment.author.name }}</strong>
+                  <span>{{ comment.text }}</span>
+                </div>
               </div>
               <div v-if="comments.length === 0" class="no-comments">No comments yet</div>
             </div>
@@ -177,8 +162,6 @@ export default {
       loading: false,
       nextCursor: null,
       hasMore: true,
-      activeTag: null,
-      trendingTags: ['streetwear', 'casual', 'formal', 'summer', 'vintage', 'minimal', 'y2k'],
 
       // Create post
       showCreateModal: false,
@@ -192,7 +175,6 @@ export default {
       comments: [],
       newComment: '',
 
-      // Scroll observer
       observer: null,
     }
   },
@@ -220,16 +202,12 @@ export default {
   },
 
   methods: {
-    // ── Fetching ──────────────────────────────────────────────────
     async fetchPosts(append = false) {
       if (this.loading) return
       this.loading = true
       try {
         let url = `${API_BASE}/api/v1/feed/`
-        const params = []
-        if (this.activeTag) params.push(`tag=${this.activeTag}`)
-        if (append && this.nextCursor) params.push(`cursor=${this.nextCursor}`)
-        if (params.length) url += '?' + params.join('&')
+        if (append && this.nextCursor) url += `?cursor=${this.nextCursor}`
 
         const res = await fetch(url, { headers: this.authHeaders })
         const data = await res.json()
@@ -241,7 +219,6 @@ export default {
           this.posts = newPosts
         }
 
-        // Extract cursor from next URL
         if (data.next) {
           const u = new URL(data.next)
           this.nextCursor = u.searchParams.get('cursor')
@@ -271,27 +248,16 @@ export default {
       })
     },
 
-    filterByTag(tag) {
-      this.activeTag = this.activeTag === tag ? null : tag
-      this.nextCursor = null
-      this.fetchPosts()
-    },
-
-    // ── Create post ──────────────────────────────────────────────
-    triggerFileInput() {
-      this.$refs.fileInput.click()
-    },
-
+    // ── Create ───────────────────────────────────────────────────
+    triggerFileInput() { this.$refs.fileInput.click() },
     handleFileSelect(e) {
       const file = e.target.files[0]
       if (file) this.setFile(file)
     },
-
     handleDrop(e) {
       const file = e.dataTransfer.files[0]
       if (file && file.type.startsWith('image/')) this.setFile(file)
     },
-
     setFile(file) {
       this.selectedFile = file
       this.previewUrl = URL.createObjectURL(file)
@@ -300,14 +266,10 @@ export default {
     async submitPost() {
       if (!this.selectedFile || this.uploading) return
       this.uploading = true
-
       const formData = new FormData()
       formData.append('image', this.selectedFile)
       formData.append('caption', this.newPost.caption)
-      const tags = this.newPost.tagsInput
-        .split(',')
-        .map(t => t.trim().toLowerCase())
-        .filter(Boolean)
+      const tags = this.newPost.tagsInput.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
       formData.append('tags', JSON.stringify(tags))
 
       try {
@@ -316,7 +278,6 @@ export default {
           headers: this.authHeaders,
           body: formData,
         })
-
         if (res.ok) {
           this.showCreateModal = false
           this.selectedFile = null
@@ -348,15 +309,13 @@ export default {
       }
     },
 
-    // ── Post detail ──────────────────────────────────────────────
+    // ── Detail ───────────────────────────────────────────────────
     async openPost(post) {
       this.selectedPost = post
       this.comments = []
       this.newComment = ''
       try {
-        const res = await fetch(`${API_BASE}/api/v1/feed/${post.id}/comments/`, {
-          headers: this.authHeaders,
-        })
+        const res = await fetch(`${API_BASE}/api/v1/feed/${post.id}/comments/`, { headers: this.authHeaders })
         const data = await res.json()
         this.comments = data.results || data || []
       } catch (err) {
@@ -383,7 +342,6 @@ export default {
       }
     },
 
-    // ── Helpers ───────────────────────────────────────────────────
     timeAgo(dateStr) {
       const diff = Date.now() - new Date(dateStr).getTime()
       const mins = Math.floor(diff / 60000)
@@ -402,189 +360,169 @@ export default {
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 .feed-page {
-  font-family: 'Inter', sans-serif;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px 20px 60px;
+  font-family: 'Inter', -apple-system, sans-serif;
+  max-width: 100%;
+  padding: 12px 8px 60px;
   min-height: 100vh;
-  background: #fafafa;
-}
-
-/* ── Header ─────────────────────────────────────────────────── */
-.feed-header {
-  text-align: center;
-  margin-bottom: 24px;
-  position: relative;
-}
-.feed-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #111;
-  margin: 0;
-}
-.feed-subtitle {
-  color: #666;
-  font-size: 0.95rem;
-  margin: 6px 0 16px;
-}
-.create-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #111;
-  color: #fff;
-  border: none;
-  padding: 10px 22px;
-  border-radius: 24px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.create-btn:hover {
-  background: #333;
-  transform: translateY(-1px);
-}
-
-/* ── Tag bar ────────────────────────────────────────────────── */
-.tag-bar {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 28px;
-}
-.tag-chip {
-  padding: 6px 16px;
-  border-radius: 20px;
-  border: 1.5px solid #ddd;
   background: #fff;
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: #555;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.tag-chip:hover {
-  border-color: #111;
-  color: #111;
-}
-.tag-chip.active {
-  background: #111;
-  color: #fff;
-  border-color: #111;
 }
 
-/* ── Masonry grid ───────────────────────────────────────────── */
+/* ── Pinterest Masonry ──────────────────────────────────────── */
 .masonry {
-  columns: 4;
-  column-gap: 16px;
+  columns: 6;
+  column-gap: 12px;
+  max-width: 1800px;
+  margin: 0 auto;
 }
-@media (max-width: 1100px) { .masonry { columns: 3; } }
-@media (max-width: 768px)  { .masonry { columns: 2; } }
-@media (max-width: 480px)  { .masonry { columns: 1; } }
+@media (max-width: 1600px) { .masonry { columns: 5; } }
+@media (max-width: 1200px) { .masonry { columns: 4; } }
+@media (max-width: 900px)  { .masonry { columns: 3; } }
+@media (max-width: 600px)  { .masonry { columns: 2; column-gap: 8px; } }
 
-.masonry-item {
+/* ── Pin Card ───────────────────────────────────────────────── */
+.pin {
   break-inside: avoid;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   cursor: pointer;
 }
 
-.card {
-  background: #fff;
+.pin-img-wrap {
+  position: relative;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  transition: transform 0.2s, box-shadow 0.2s;
 }
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-}
-.card-img {
+.pin-img {
   width: 100%;
   display: block;
+  border-radius: 16px;
 }
-.card-body {
-  padding: 12px 14px 14px;
+
+/* Hover overlay */
+.pin-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  opacity: 0;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 12px;
+  border-radius: 16px;
 }
-.card-caption {
+.pin:hover .pin-overlay { opacity: 1; }
+
+.save-btn {
+  background: #e60023;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 24px;
   font-size: 0.85rem;
-  color: #333;
-  margin: 0 0 10px;
-  line-height: 1.4;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.save-btn:hover { background: #ad081b; }
+
+/* Pin info row */
+.pin-info {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 8px 4px 4px;
+  gap: 4px;
+}
+.pin-text {
+  flex: 1;
+  min-width: 0;
+}
+.pin-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #111;
+  margin: 0 0 2px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  line-height: 1.3;
 }
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.pin-source {
+  font-size: 0.75rem;
+  color: #767676;
 }
-.card-author {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #111;
-}
-.card-actions {
-  display: flex;
-  gap: 10px;
-}
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.pin-menu {
   background: none;
   border: none;
+  font-size: 1.2rem;
+  color: #767676;
   cursor: pointer;
-  color: #666;
-  font-size: 0.78rem;
-  padding: 0;
-  transition: color 0.15s;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
 }
-.action-btn:hover { color: #111; }
+.pin-menu:hover { background: #f0f0f0; }
 
 /* ── Loading / Empty ────────────────────────────────────────── */
-.feed-loading {
-  display: flex;
-  justify-content: center;
-  padding: 40px;
-}
+.feed-loading { display: flex; justify-content: center; padding: 40px; }
 .spinner {
-  width: 32px;
-  height: 32px;
+  width: 28px; height: 28px;
   border: 3px solid #eee;
-  border-top-color: #111;
+  border-top-color: #e60023;
   border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-.spinner-sm {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  animation: spin 0.6s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .empty-state {
   text-align: center;
-  padding: 80px 20px;
+  padding: 100px 20px;
   color: #999;
 }
-.empty-state h3 {
-  margin: 16px 0 6px;
-  color: #555;
-  font-weight: 600;
+.empty-state h3 { margin: 16px 0 8px; color: #333; font-weight: 600; font-size: 1.1rem; }
+.empty-state p { margin-bottom: 20px; font-size: 0.9rem; }
+.create-btn-empty {
+  background: #e60023;
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 24px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
 }
-.empty-state p { margin-bottom: 20px; }
 .sentinel { height: 1px; }
 
-/* ── Create Modal ───────────────────────────────────────────── */
+/* ── FAB ────────────────────────────────────────────────────── */
+.fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #111;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  transition: transform 0.2s, background 0.2s;
+  z-index: 100;
+}
+.fab:hover { transform: scale(1.08); background: #333; }
+
+/* ── Modals (shared) ────────────────────────────────────────── */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -594,26 +532,6 @@ export default {
   justify-content: center;
   z-index: 1000;
   backdrop-filter: blur(4px);
-}
-.modal-content {
-  background: #fff;
-  border-radius: 20px;
-  padding: 28px;
-  width: 90%;
-  max-width: 520px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-.modal-header h2 {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin: 0;
 }
 .close-btn {
   background: none;
@@ -627,73 +545,77 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s;
 }
 .close-btn:hover { background: #f0f0f0; }
+
+/* ── Create Modal ───────────────────────────────────────────── */
+.modal-content {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px;
+  width: 90%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.modal-header h2 { font-size: 1.2rem; font-weight: 700; margin: 0; }
 
 .upload-area {
   border: 2px dashed #ddd;
   border-radius: 16px;
-  padding: 32px;
+  padding: 40px 20px;
   text-align: center;
   cursor: pointer;
   transition: border-color 0.2s;
-  margin-bottom: 16px;
-  min-height: 200px;
+  margin-bottom: 14px;
+  min-height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .upload-area:hover { border-color: #999; }
-.upload-placeholder { color: #999; }
-.upload-placeholder p { margin-top: 12px; font-size: 0.9rem; }
-.preview-img {
-  max-width: 100%;
-  max-height: 300px;
-  border-radius: 12px;
-  object-fit: contain;
-}
+.upload-placeholder { color: #bbb; }
+.upload-placeholder p { margin-top: 10px; font-size: 0.85rem; }
+.preview-img { max-width: 100%; max-height: 280px; border-radius: 12px; object-fit: contain; }
 
 .caption-input, .tags-input {
   width: 100%;
-  border: 1.5px solid #e5e5e5;
+  border: 1.5px solid #efefef;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 11px 14px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   resize: none;
-  margin-bottom: 12px;
-  transition: border-color 0.15s;
+  margin-bottom: 10px;
   box-sizing: border-box;
 }
-.caption-input:focus, .tags-input:focus {
-  outline: none;
-  border-color: #111;
-}
+.caption-input:focus, .tags-input:focus { outline: none; border-color: #111; }
 
 .submit-btn {
   width: 100%;
-  background: #111;
+  background: #e60023;
   color: #fff;
   border: none;
   padding: 12px;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  border-radius: 24px;
+  font-size: 0.92rem;
+  font-weight: 700;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
   transition: background 0.2s;
 }
-.submit-btn:hover:not(:disabled) { background: #333; }
+.submit-btn:hover:not(:disabled) { background: #ad081b; }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Detail Modal ───────────────────────────────────────────── */
 .detail-modal {
   background: #fff;
-  border-radius: 20px;
+  border-radius: 24px;
   width: 90%;
   max-width: 900px;
   max-height: 90vh;
@@ -710,101 +632,123 @@ export default {
 .detail-layout {
   display: flex;
   height: 80vh;
-  max-height: 80vh;
 }
 .detail-image {
   flex: 1;
-  background: #000;
+  background: #f5f5f5;
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 0;
+  border-radius: 24px 0 0 24px;
 }
-.detail-image img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
+.detail-image img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .detail-sidebar {
   width: 340px;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid #eee;
   overflow-y: auto;
 }
+
+.detail-actions-row { margin-bottom: 16px; }
+.action-btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f5f5f5;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.action-btn-pill:hover { background: #eee; }
+.action-btn-pill.liked { background: #ffeaed; color: #e60023; }
+
 .detail-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
-.detail-author { font-weight: 700; font-size: 0.95rem; }
-.detail-time { font-size: 0.78rem; color: #999; }
-.detail-caption {
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: #333;
-  margin-bottom: 12px;
+.detail-author-row { display: flex; align-items: center; gap: 10px; }
+.author-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: #111;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
 }
+.detail-author { font-weight: 600; font-size: 0.9rem; }
+.detail-time { font-size: 0.75rem; color: #999; }
+.detail-caption { font-size: 1.1rem; font-weight: 600; line-height: 1.4; margin: 0 0 12px; color: #111; }
 .detail-tags { margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 6px; }
 .detail-tag {
   font-size: 0.78rem;
-  color: #666;
-  background: #f5f5f5;
+  color: #0969da;
+  background: #f0f7ff;
   padding: 3px 10px;
   border-radius: 12px;
+  cursor: pointer;
 }
-.detail-actions { margin-bottom: 16px; }
 
 /* Comments */
-.comments-section {
-  flex: 1;
-  overflow-y: auto;
-  margin-bottom: 12px;
+.comments-section { flex: 1; overflow-y: auto; margin-bottom: 12px; }
+.comments-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #111;
+  margin: 0 0 12px;
 }
+.comments-count { color: #999; font-weight: 400; }
 .comment {
+  display: flex;
+  gap: 10px;
   padding: 8px 0;
   font-size: 0.85rem;
-  line-height: 1.4;
   border-bottom: 1px solid #f5f5f5;
 }
-.comment strong {
-  margin-right: 6px;
-  font-weight: 600;
-}
-.no-comments {
-  text-align: center;
-  color: #bbb;
-  font-size: 0.85rem;
-  padding: 24px 0;
-}
-.comment-input-row {
+.comment-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: #eee;
+  color: #333;
   display: flex;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  flex-shrink: 0;
 }
+.comment-body { line-height: 1.4; }
+.comment-body strong { margin-right: 6px; }
+.no-comments { text-align: center; color: #ccc; font-size: 0.82rem; padding: 20px 0; }
+
+.comment-input-row { display: flex; gap: 8px; }
 .comment-input {
   flex: 1;
-  border: 1.5px solid #e5e5e5;
-  border-radius: 20px;
-  padding: 8px 14px;
+  border: 1.5px solid #efefef;
+  border-radius: 24px;
+  padding: 9px 16px;
   font-size: 0.85rem;
   font-family: 'Inter', sans-serif;
 }
 .comment-input:focus { outline: none; border-color: #111; }
-.send-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #111;
-  padding: 4px;
-}
+.send-btn { background: none; border: none; cursor: pointer; color: #111; padding: 4px; }
 .send-btn:disabled { color: #ccc; cursor: not-allowed; }
 
-/* ── Responsive detail ──────────────────────────────────────── */
+/* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .detail-layout { flex-direction: column; height: auto; max-height: 90vh; }
-  .detail-image { max-height: 50vh; }
-  .detail-sidebar { width: 100%; border-left: none; border-top: 1px solid #eee; }
+  .detail-image { max-height: 50vh; border-radius: 24px 24px 0 0; }
+  .detail-sidebar { width: 100%; }
+  .feed-page { padding: 8px 4px 60px; }
 }
 </style>
