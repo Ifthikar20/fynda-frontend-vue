@@ -10,6 +10,7 @@ import BrandPage from '../components/BrandPage.vue'
 import ComparePage from '../components/ComparePage.vue'
 import ClosetPage from '../components/ClosetPage.vue'
 import ExplorePage from '../components/ExplorePage.vue'
+import FeedPage from '../components/FeedPage.vue'
 import CategoryLandingPage from '../components/CategoryLandingPage.vue'
 
 // Blog pages
@@ -47,6 +48,11 @@ const routes = [
     {
         path: '/explore',
         name: 'Explore',
+        component: FeedPage,
+    },
+    {
+        path: '/deals',
+        name: 'FindDeals',
         component: ExplorePage,
     },
     {
