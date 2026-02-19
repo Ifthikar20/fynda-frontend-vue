@@ -11,6 +11,7 @@ import ComparePage from '../components/ComparePage.vue'
 import ClosetPage from '../components/ClosetPage.vue'
 import ExplorePage from '../components/ExplorePage.vue'
 import FeedPage from '../components/FeedPage.vue'
+import UserProfilePage from '../components/UserProfilePage.vue'
 import CategoryLandingPage from '../components/CategoryLandingPage.vue'
 
 // Blog pages
@@ -59,6 +60,11 @@ const routes = [
         path: '/explore/:category',
         name: 'CategoryLanding',
         component: CategoryLandingPage,
+    },
+    {
+        path: '/user/:userId',
+        name: 'UserProfile',
+        component: UserProfilePage,
     },
     {
         path: '/register',

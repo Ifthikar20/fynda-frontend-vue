@@ -1,9 +1,43 @@
 <template>
   <div class="feed-page">
 
+    <!-- Sticky header -->
+    <header class="feed-topbar">
+      <router-link to="/" class="topbar-logo">
+        <img src="../assets/outfi-logo.png" alt="outfi." class="topbar-logo-img" />
+      </router-link>
+
+      <div class="topbar-search">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#767676" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search for fashion inspiration"
+          class="search-input"
+          @keyup.enter="searchPosts"
+        />
+      </div>
+
+      <nav class="topbar-nav">
+        <router-link to="/explore" class="topbar-link active">Explore</router-link>
+        <router-link to="/deals" class="topbar-link">Find Deals</router-link>
+      </nav>
+
+      <div class="topbar-actions">
+        <template v-if="isLoggedIn">
+          <router-link to="/profile" class="topbar-avatar" :title="'My Profile'">
+            <span>{{ userInitial }}</span>
+          </router-link>
+        </template>
+        <template v-else>
+          <router-link to="/login" class="topbar-signin">Sign In</router-link>
+        </template>
+      </div>
+    </header>
+
     <!-- Masonry grid -->
     <div class="masonry">
-      <div v-for="post in posts" :key="post.id" class="pin" @click="openPost(post)">
+      <div v-for="post in filteredPosts" :key="post.id" class="pin" @click="openPost(post)">
         <div class="pin-img-wrap">
           <img :src="post.image_url" :alt="post.caption" class="pin-img" loading="lazy" />
           <!-- Overlay on hover -->
@@ -16,7 +50,13 @@
         <div class="pin-info">
           <div class="pin-text">
             <p class="pin-title" v-if="post.caption">{{ post.caption }}</p>
-            <span class="pin-source">{{ post.author.name }}</span>
+            <router-link
+              v-if="post.author && post.author.id"
+              :to="'/user/' + post.author.id"
+              class="pin-source pin-source-link"
+              @click.stop
+            >{{ post.author.name }}</router-link>
+            <span v-else class="pin-source">{{ post.author.name }}</span>
           </div>
           <button class="pin-menu" @click.stop>⋯</button>
         </div>
@@ -162,6 +202,7 @@ export default {
       loading: false,
       nextCursor: null,
       hasMore: true,
+      searchQuery: '',
 
       // Create post
       showCreateModal: false,
@@ -182,6 +223,20 @@ export default {
   computed: {
     isLoggedIn() {
       return tokenStorage.hasSession()
+    },
+    userInitial() {
+      const tokens = tokenStorage.getSession()
+      // Fallback initial
+      return 'U'
+    },
+    filteredPosts() {
+      if (!this.searchQuery.trim()) return this.posts
+      const q = this.searchQuery.toLowerCase()
+      return this.posts.filter(p =>
+        (p.caption && p.caption.toLowerCase().includes(q)) ||
+        (p.author && p.author.name.toLowerCase().includes(q)) ||
+        (p.tags && p.tags.some(t => t.toLowerCase().includes(q)))
+      )
     },
     authHeaders() {
       const tokens = tokenStorage.getSession()
@@ -380,6 +435,11 @@ export default {
       const days = Math.floor(hrs / 24)
       return `${days}d ago`
     },
+
+    searchPosts() {
+      // Client-side filtering is already handled by filteredPosts computed
+      // This is a placeholder for future server-side search
+    },
   },
 }
 </script>
@@ -390,10 +450,105 @@ export default {
 .feed-page {
   font-family: 'Inter', -apple-system, sans-serif;
   max-width: 100%;
-  padding: 12px 8px 60px;
+  padding: 80px 8px 60px;
   min-height: 100vh;
   background: #fff;
 }
+
+/* ── Sticky Header ──────────────────────────────────────────── */
+.feed-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: #fff;
+  border-bottom: 1px solid #efefef;
+  height: 64px;
+  box-sizing: border-box;
+}
+.topbar-logo { display: flex; align-items: center; flex-shrink: 0; }
+.topbar-logo-img { height: 28px; }
+
+.topbar-search {
+  flex: 1;
+  max-width: 600px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-icon {
+  position: absolute;
+  left: 14px;
+  pointer-events: none;
+}
+.search-input {
+  width: 100%;
+  background: #efefef;
+  border: 2px solid transparent;
+  border-radius: 24px;
+  padding: 10px 14px 10px 40px;
+  font-size: 0.88rem;
+  font-family: 'Inter', sans-serif;
+  color: #111;
+  transition: all 0.2s;
+}
+.search-input:focus {
+  outline: none;
+  background: #fff;
+  border-color: #0969da;
+  box-shadow: 0 0 0 4px rgba(9,105,218,0.12);
+}
+.search-input::placeholder { color: #767676; }
+
+.topbar-nav {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.topbar-link {
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #111;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.topbar-link:hover { background: #f0f0f0; }
+.topbar-link.active { background: #111; color: #fff; }
+
+.topbar-actions { display: flex; align-items: center; flex-shrink: 0; }
+.topbar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #111;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.topbar-avatar:hover { transform: scale(1.1); }
+.topbar-signin {
+  background: #e60023;
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 24px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.topbar-signin:hover { background: #ad081b; }
 
 /* ── Pinterest Masonry ──────────────────────────────────────── */
 .masonry {
@@ -480,6 +635,12 @@ export default {
   font-size: 0.75rem;
   color: #767676;
 }
+.pin-source-link {
+  text-decoration: none;
+  color: #767676;
+  transition: color 0.15s;
+}
+.pin-source-link:hover { color: #111; }
 .pin-menu {
   background: none;
   border: none;
