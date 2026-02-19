@@ -2,7 +2,7 @@
   <nav class="navbar">
     <div class="nav-container">
       <router-link to="/" class="nav-logo">
-        <img src="../assets/fynda-png-1.png" alt="Fynda" class="logo-img" />
+        <img src="../assets/outfi-logo.png" alt="outfi." class="logo-img" />
       </router-link>
       
       <div class="nav-links">

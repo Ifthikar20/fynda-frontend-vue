@@ -65,14 +65,14 @@
               <span class="item-price">${{ formatPrice(item.price) }}</span>
             </div>
             <div class="item-actions">
-              <button class="btn-shadcn btn-outline" @click.stop="moveToFashionBoard(item)">
-                Fashion Board
+              <button class="action-icon-btn" @click.stop="moveToFashionBoard(item)" title="Add to Fashion Board">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
               </button>
-              <button class="btn-shadcn btn-outline" @click.stop="openDatePicker(item)">
-                Plan
+              <button class="action-icon-btn" @click.stop="openDatePicker(item)" title="Plan Outfit">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               </button>
-              <button class="btn-shadcn btn-ghost-danger" @click.stop="removeFromCloset(item.id)" title="Remove">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <button class="action-icon-btn action-close-btn" @click.stop="removeFromCloset(item.id)" title="Remove">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
           </div>
@@ -582,8 +582,19 @@ watch(wishlistIds, (ids) => {
 .item-title { font-size: 0.82rem; font-weight: 500; color: #333; margin: 0 0 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
 .item-price { font-size: 0.88rem; font-weight: 700; color: #111; }
 
-/* Shadcn-style Action Buttons */
-.item-actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px 10px; margin-top: auto; border-top: 1px solid #f0f0f0; }
+/* Icon Action Buttons */
+.item-actions { display: flex; justify-content: flex-end; gap: 6px; padding: 8px 10px 10px; margin-top: auto; border-top: 1px solid #f0f0f0; }
+.action-icon-btn {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; border: 1px solid #e5e5e5;
+  background: #fff; color: #666;
+  cursor: pointer; transition: all 0.2s ease;
+}
+.action-icon-btn:hover { background: #f3f4f6; border-color: #bbb; color: #111; }
+.action-close-btn:hover { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
+
+/* Shadcn-style Buttons (modals) */
 .btn-shadcn {
   display: inline-flex; align-items: center; justify-content: center;
   height: 30px; padding: 0 12px;
