@@ -202,7 +202,7 @@ onMounted(async () => {
 <style scoped>
 .shared-storyboard-page {
   min-height: 100vh;
-  background: #f8f8f8;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
 }

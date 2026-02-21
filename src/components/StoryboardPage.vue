@@ -96,159 +96,177 @@
 
     <main class="main-content">
       <!-- Left: Creative Tools Panel -->
-      <aside class="backgrounds-panel">
+      <aside class="backgrounds-panel" ref="leftPanelRef">
         <!-- Image Upload Section -->
-        <h3 class="panel-title">Upload Image</h3>
-        <label class="upload-zone">
-          <input type="file" accept="image/*" @change="handleImageUpload" hidden />
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          <span>Click to upload image</span>
-        </label>
+        <div class="tool-card">
+          <h3 class="panel-title">Upload Image</h3>
+          <label class="upload-zone">
+            <input type="file" accept="image/*" @change="handleImageUpload" hidden />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <span>Click to upload image</span>
+          </label>
+        </div>
         
         <!-- Add Text Section -->
-        <h3 class="panel-title mt">Add Text</h3>
-        <div class="text-tools">
-          <select v-model="selectedFont" class="font-select">
-            <option v-for="font in classicalFonts" :key="font.value" :value="font.value">
-              {{ font.name }}
-            </option>
-          </select>
-          <div class="text-size-row">
-            <input type="number" v-model="selectedFontSize" min="12" max="120" class="size-input" />
-            <span>px</span>
+        <div class="tool-card">
+          <h3 class="panel-title">Add Text</h3>
+          <div class="text-tools">
+            <select v-model="selectedFont" class="font-select">
+              <option v-for="font in classicalFonts" :key="font.value" :value="font.value">
+                {{ font.name }}
+              </option>
+            </select>
+            <div class="text-size-row">
+              <input type="number" v-model="selectedFontSize" min="12" max="120" class="size-input" />
+              <span>px</span>
+            </div>
+            <div class="text-colors">
+              <div 
+                v-for="tc in textColors" 
+                :key="tc"
+                class="text-color-btn"
+                :class="{ active: selectedTextColor === tc }"
+                :style="{ background: tc }"
+                @click="selectedTextColor = tc"
+              ></div>
+            </div>
+            <button class="add-text-btn" @click="addTextElement">+ Add Text</button>
           </div>
-          <div class="text-colors">
-            <div 
-              v-for="tc in textColors" 
-              :key="tc"
-              class="text-color-btn"
-              :class="{ active: selectedTextColor === tc }"
-              :style="{ background: tc }"
-              @click="selectedTextColor = tc"
-            ></div>
-          </div>
-          <button class="add-text-btn" @click="addTextElement">+ Add Text</button>
         </div>
         
         <!-- Templates Section -->
-        <h3 class="panel-title mt">Templates</h3>
-        <div class="templates-grid">
-          <div 
-            v-for="template in layoutTemplates" 
-            :key="template.id"
-            class="template-card"
-            @click="applyTemplate(template)"
-          >
-            <div class="template-preview" v-html="template.preview"></div>
-            <span class="template-name">{{ template.name }}</span>
+        <div class="tool-card">
+          <h3 class="panel-title">Templates</h3>
+          <div class="templates-grid">
+            <div 
+              v-for="template in layoutTemplates" 
+              :key="template.id"
+              class="template-card"
+              @click="applyTemplate(template)"
+            >
+              <div class="template-preview" v-html="template.preview"></div>
+              <span class="template-name">{{ template.name }}</span>
+            </div>
           </div>
         </div>
         
         <!-- Backgrounds Section -->
-        <h3 class="panel-title mt">Backgrounds</h3>
-        <div class="backgrounds-grid">
-          <div 
-            v-for="bg in backgrounds" 
-            :key="bg.id"
-            class="bg-card"
-            :class="{ active: selectedBackground === bg.id }"
-            @click="selectBackground(bg)"
-          >
-            <div class="bg-preview" :style="bg.style"></div>
-            <span class="bg-name">{{ bg.name }}</span>
+        <div class="tool-card">
+          <h3 class="panel-title">Backgrounds</h3>
+          <div class="backgrounds-grid">
+            <div 
+              v-for="bg in backgrounds" 
+              :key="bg.id"
+              class="bg-card"
+              :class="{ active: selectedBackground === bg.id }"
+              @click="selectBackground(bg)"
+            >
+              <div class="bg-preview" :style="bg.style"></div>
+              <span class="bg-name">{{ bg.name }}</span>
+            </div>
           </div>
         </div>
         
-        <h3 class="panel-title mt">Textures</h3>
-        <div class="textures-grid">
-          <div 
-            v-for="texture in textures" 
-            :key="texture.id"
-            class="texture-card"
-            :class="{ active: selectedTexture === texture.id }"
-            :style="texture.style"
-            @click="selectTexture(texture)"
-          >
-            <span class="texture-name">{{ texture.name }}</span>
+        <div class="tool-card">
+          <h3 class="panel-title">Textures</h3>
+          <div class="textures-grid">
+            <div 
+              v-for="texture in textures" 
+              :key="texture.id"
+              class="texture-card"
+              :class="{ active: selectedTexture === texture.id }"
+              :style="texture.style"
+              @click="selectTexture(texture)"
+            >
+              <span class="texture-name">{{ texture.name }}</span>
+            </div>
           </div>
         </div>
         
         <!-- Frames Section -->
-        <h3 class="panel-title mt">Frames</h3>
-        <div class="frames-grid">
-          <div 
-            v-for="frame in imageFrames" 
-            :key="frame.id"
-            class="frame-card"
-            :class="{ active: selectedFrame === frame.id }"
-            @click="selectFrame(frame.id)"
-          >
-            <div class="frame-preview" :class="'frame-' + frame.id"></div>
-            <span class="frame-name">{{ frame.name }}</span>
+        <div class="tool-card">
+          <h3 class="panel-title">Frames</h3>
+          <div class="frames-grid">
+            <div 
+              v-for="frame in imageFrames" 
+              :key="frame.id"
+              class="frame-card"
+              :class="{ active: selectedFrame === frame.id }"
+              @click="selectFrame(frame.id)"
+            >
+              <div class="frame-preview" :class="'frame-' + frame.id"></div>
+              <span class="frame-name">{{ frame.name }}</span>
+            </div>
           </div>
         </div>
         
         <!-- Fabric Swatches Section -->
-        <h3 class="panel-title mt">Fabric Swatches</h3>
-        <div class="swatches-grid">
-          <div 
-            v-for="swatch in stickers.filter(s => s.type === 'fabric')" 
-            :key="swatch.id"
-            class="swatch-card"
-            :style="{ backgroundImage: 'url(' + swatch.image + ')', backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: swatch.color }"
-            :title="swatch.name"
-            @click="addSwatch(swatch)"
-          >
-            <span class="swatch-label">{{ swatch.name }}</span>
+        <div class="tool-card">
+          <h3 class="panel-title">Fabric Swatches</h3>
+          <div class="swatches-grid">
+            <div 
+              v-for="swatch in stickers.filter(s => s.type === 'fabric')" 
+              :key="swatch.id"
+              class="swatch-card"
+              :style="{ backgroundImage: 'url(' + swatch.image + ')', backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: swatch.color }"
+              :title="swatch.name"
+              @click="addSwatch(swatch)"
+            >
+              <span class="swatch-label">{{ swatch.name }}</span>
+            </div>
           </div>
         </div>
         
         <!-- Pantone Color Chips -->
-        <h3 class="panel-title mt">{{ boardColors.length > 0 ? 'Board Colors' : 'Color Chips' }}</h3>
-        <div class="pantone-grid">
-          <!-- Dynamic colors extracted from board images -->
-          <div 
-            v-for="chip in boardColors" 
-            :key="chip.id"
-            class="pantone-card board-color"
-            :title="chip.name"
-            @click="addPantone(chip)"
-          >
-            <div class="pantone-color" :style="{ backgroundColor: chip.color }"></div>
-            <div class="pantone-label">
-              <span class="pantone-code">{{ chip.code }}</span>
+        <div class="tool-card">
+          <h3 class="panel-title">{{ boardColors.length > 0 ? 'Board Colors' : 'Color Chips' }}</h3>
+          <div class="pantone-grid">
+            <!-- Dynamic colors extracted from board images -->
+            <div 
+              v-for="chip in boardColors" 
+              :key="chip.id"
+              class="pantone-card board-color"
+              :title="chip.name"
+              @click="addPantone(chip)"
+            >
+              <div class="pantone-color" :style="{ backgroundColor: chip.color }"></div>
+              <div class="pantone-label">
+                <span class="pantone-code">{{ chip.code }}</span>
+              </div>
             </div>
-          </div>
-          <!-- Static pantone chips -->
-          <div 
-            v-for="chip in stickers.filter(s => s.type === 'pantone')" 
-            :key="chip.id"
-            class="pantone-card"
-            :title="chip.name"
-            @click="addPantone(chip)"
-          >
-            <div class="pantone-color" :style="{ backgroundColor: chip.color }"></div>
-            <div class="pantone-label">
-              <span class="pantone-code">{{ chip.code }}</span>
+            <!-- Static pantone chips -->
+            <div 
+              v-for="chip in stickers.filter(s => s.type === 'pantone')" 
+              :key="chip.id"
+              class="pantone-card"
+              :title="chip.name"
+              @click="addPantone(chip)"
+            >
+              <div class="pantone-color" :style="{ backgroundColor: chip.color }"></div>
+              <div class="pantone-label">
+                <span class="pantone-code">{{ chip.code }}</span>
+              </div>
             </div>
           </div>
         </div>
         
         <!-- Decorations Section -->
-        <h3 class="panel-title mt">Decorations</h3>
-        <div class="decorations-grid">
-          <div 
-            v-for="deco in decorations" 
-            :key="deco.id"
-            class="decoration-card"
-            :title="deco.name"
-            @click="addDecoration(deco)"
-          >
-            <div class="decoration-preview" v-html="deco.svg"></div>
+        <div class="tool-card">
+          <h3 class="panel-title">Decorations</h3>
+          <div class="decorations-grid">
+            <div 
+              v-for="deco in decorations" 
+              :key="deco.id"
+              class="decoration-card"
+              :title="deco.name"
+              @click="addDecoration(deco)"
+            >
+              <div class="decoration-preview" v-html="deco.svg"></div>
+            </div>
           </div>
         </div>
       </aside>
@@ -440,70 +458,72 @@
       </section>
 
       <!-- Right: Products Panel -->
-      <aside class="products-panel">
-        <h3 class="panel-title">Add Products</h3>
-        
-        <!-- Closet / Search Tabs -->
-        <div class="pp-tabs">
-          <button class="pp-tab" :class="{ active: productsTab === 'closet' }" @click="productsTab = 'closet'; loadClosetItems()">Closet</button>
-          <button class="pp-tab" :class="{ active: productsTab === 'search' }" @click="productsTab = 'search'">Search</button>
+      <aside class="products-panel" ref="rightPanelRef">
+        <div class="tool-card">
+          <h3 class="panel-title">Add Products</h3>
+          
+          <!-- Closet / Search Tabs -->
+          <div class="pp-tabs">
+            <button class="pp-tab" :class="{ active: productsTab === 'closet' }" @click="productsTab = 'closet'; loadClosetItems()">Closet</button>
+            <button class="pp-tab" :class="{ active: productsTab === 'search' }" @click="productsTab = 'search'">Search</button>
+          </div>
+
+          <!-- CLOSET TAB -->
+          <template v-if="productsTab === 'closet'">
+            <div v-if="closetItems.length === 0" class="pp-empty">
+              <p>Your closet is empty</p>
+              <router-link to="/closet" class="pp-link">Go to Closet</router-link>
+            </div>
+            <div v-else class="products-grid">
+              <div 
+                v-for="item in closetItems" 
+                :key="'closet-' + item.id"
+                class="product-card"
+                draggable="true"
+                @dragstart="handleDragStart($event, item)"
+                @click="addToCanvas(item)"
+                :title="item.title"
+              >
+                <img :src="item.image_url" :alt="item.title" />
+                <span v-if="item.price" class="product-price">${{ formatPrice(item.price) }}</span>
+              </div>
+            </div>
+          </template>
+
+          <!-- SEARCH TAB -->
+          <template v-if="productsTab === 'search'">
+            <div class="search-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input 
+                type="text" 
+                v-model="searchQuery"
+                @keyup.enter="searchProducts"
+                placeholder="Search products..."
+              />
+            </div>
+
+            <div v-if="loading" class="loading-state">
+              <div class="spinner"></div>
+            </div>
+
+            <div v-else class="products-grid">
+              <div 
+                v-for="product in products" 
+                :key="product.id"
+                class="product-card"
+                draggable="true"
+                @dragstart="handleDragStart($event, product)"
+                @click="addToCanvas(product)"
+              >
+                <img :src="product.image_url" :alt="product.title" />
+                <span class="product-price">${{ formatPrice(product.price) }}</span>
+              </div>
+            </div>
+          </template>
         </div>
-
-        <!-- CLOSET TAB -->
-        <template v-if="productsTab === 'closet'">
-          <div v-if="closetItems.length === 0" class="pp-empty">
-            <p>Your closet is empty</p>
-            <router-link to="/closet" class="pp-link">Go to Closet</router-link>
-          </div>
-          <div v-else class="products-grid">
-            <div 
-              v-for="item in closetItems" 
-              :key="'closet-' + item.id"
-              class="product-card"
-              draggable="true"
-              @dragstart="handleDragStart($event, item)"
-              @click="addToCanvas(item)"
-              :title="item.title"
-            >
-              <img :src="item.image_url" :alt="item.title" />
-              <span v-if="item.price" class="product-price">${{ formatPrice(item.price) }}</span>
-            </div>
-          </div>
-        </template>
-
-        <!-- SEARCH TAB -->
-        <template v-if="productsTab === 'search'">
-          <div class="search-box">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input 
-              type="text" 
-              v-model="searchQuery"
-              @keyup.enter="searchProducts"
-              placeholder="Search products..."
-            />
-          </div>
-
-          <div v-if="loading" class="loading-state">
-            <div class="spinner"></div>
-          </div>
-
-          <div v-else class="products-grid">
-            <div 
-              v-for="product in products" 
-              :key="product.id"
-              class="product-card"
-              draggable="true"
-              @dragstart="handleDragStart($event, product)"
-              @click="addToCanvas(product)"
-            >
-              <img :src="product.image_url" :alt="product.title" />
-              <span class="product-price">${{ formatPrice(product.price) }}</span>
-            </div>
-          </div>
-        </template>
       </aside>
     </main>
     
@@ -517,6 +537,39 @@
         {{ notification.message }}
       </div>
     </transition>
+
+    <!-- Onboarding Tooltip Overlay -->
+    <Teleport to="body">
+      <transition name="onboarding-fade">
+        <div v-if="showOnboarding" class="onboarding-overlay" @click.self="dismissOnboarding">
+          <!-- Step 1: Left Panel -->
+          <div v-if="onboardingStep === 1" class="onboarding-tooltip tooltip-left" :style="onboardingTooltipStyle">
+            <div class="tooltip-arrow tooltip-arrow-left"></div>
+            <div class="tooltip-step-badge">Step 1 of 2</div>
+            <div class="tooltip-icon">🎨</div>
+            <h4 class="tooltip-title">Creative Tools</h4>
+            <p class="tooltip-desc">Upload images, add text, backgrounds, stickers & decorations to bring your board to life.</p>
+            <div class="tooltip-actions">
+              <button class="tooltip-skip" @click="dismissOnboarding">Skip</button>
+              <button class="tooltip-next" @click="onboardingStep = 2">Next →</button>
+            </div>
+          </div>
+
+          <!-- Step 2: Right Panel -->
+          <div v-if="onboardingStep === 2" class="onboarding-tooltip tooltip-right" :style="onboardingTooltipStyleRight">
+            <div class="tooltip-arrow tooltip-arrow-right"></div>
+            <div class="tooltip-step-badge">Step 2 of 2</div>
+            <div class="tooltip-icon">🔍</div>
+            <h4 class="tooltip-title">Add Products</h4>
+            <p class="tooltip-desc">Search for products or drag items from your closet directly onto the canvas.</p>
+            <div class="tooltip-actions">
+              <button class="tooltip-back" @click="onboardingStep = 1">← Back</button>
+              <button class="tooltip-next" @click="dismissOnboarding">Got it! ✨</button>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </Teleport>
   </div>
 </template>
 
@@ -533,6 +586,33 @@ const route = useRoute()
 const { isAuthenticated } = useAuth()
 
 const canvasRef = ref(null)
+const leftPanelRef = ref(null)
+const rightPanelRef = ref(null)
+
+// Onboarding state
+const showOnboarding = ref(false)
+const onboardingStep = ref(1)
+
+const onboardingTooltipStyle = computed(() => {
+  if (!leftPanelRef.value) return {}
+  return {
+    top: '180px',
+    left: '260px',
+  }
+})
+
+const onboardingTooltipStyleRight = computed(() => {
+  if (!rightPanelRef.value) return {}
+  return {
+    top: '180px',
+    right: '280px',
+  }
+})
+
+const dismissOnboarding = () => {
+  showOnboarding.value = false
+  localStorage.setItem('outfi_board_onboarded', 'true')
+}
 
 // Background options - Fashion-worthy sophisticated backgrounds
 const backgrounds = ref([
@@ -1827,6 +1907,15 @@ onMounted(() => {
   }
 })
 
+// Show onboarding on first visit
+nextTick(() => {
+  if (!localStorage.getItem('outfi_board_onboarded')) {
+    setTimeout(() => {
+      showOnboarding.value = true
+    }, 800)
+  }
+})
+
 onUnmounted(() => {
   document.removeEventListener('mousemove', onDrag)
   document.removeEventListener('mouseup', stopDrag)
@@ -1841,7 +1930,7 @@ onUnmounted(() => {
 
 .storyboard-page {
   min-height: 100vh;
-  background: #f8f8f8;
+  background: #0d1117;
 }
 
 /* Storyboard Toolbar */
@@ -1849,9 +1938,9 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1.5rem;
-  background: #fff;
-  border-bottom: 1px solid #e5e5e5;
+  padding: 0.5rem 1rem;
+  background: #161b22;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
 .back-btn {
@@ -1859,22 +1948,24 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: transparent;
-  border: 1px solid #e5e5e5;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 8px;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   cursor: pointer;
-  color: #1a1a1a;
+  color: #c9d1d9;
   font-weight: 500;
+  transition: all 0.15s;
 }
 
-.back-btn:hover { border-color: #000; color: #000; }
+.back-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
 
 .page-title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #f0f6fc;
+  letter-spacing: 0.02em;
 }
 
 .toolbar-actions {
@@ -1886,27 +1977,29 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.5rem 1rem;
+  padding: 0.45rem 0.9rem;
   border-radius: 8px;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
+  transition: all 0.15s;
 }
 
 .save-btn {
-  background: #000;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
   color: #fff;
   border: none;
+  box-shadow: 0 2px 8px rgba(124,58,237,0.3);
 }
 
 .share-btn {
-  background: #fff;
-  color: #1a1a1a;
-  border: 1px solid #e5e5e5;
+  background: rgba(255,255,255,0.08);
+  color: #c9d1d9;
+  border: 1px solid rgba(255,255,255,0.12);
 }
 
-.save-btn:hover { background: #222; }
-.share-btn:hover { border-color: #000; }
+.save-btn:hover { background: linear-gradient(135deg, #8b5cf6, #7c3aed); box-shadow: 0 4px 12px rgba(124,58,237,0.4); }
+.share-btn:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.2); }
 
 /* Share Modal Popup */
 .share-modal-overlay {
@@ -2127,38 +2220,220 @@ onUnmounted(() => {
 /* Main Layout */
 .main-content {
   display: grid;
-  grid-template-columns: 230px 1fr 280px;
-  gap: 0.75rem;
-  padding: 0.75rem;
+  grid-template-columns: 240px 1fr 260px;
+  gap: 0.5rem;
+  padding: 0.5rem;
   height: calc(100vh - 60px);
   overflow: hidden;
 }
 
 /* Panels */
 .backgrounds-panel, .products-panel {
-  background: #fff;
-  border-radius: 12px;
-  padding: 0.75rem;
+  background: #161b22;
+  border-radius: 16px;
+  padding: 0.5rem;
   overflow-y: auto;
-  max-height: calc(100vh - 80px);
+  max-height: calc(100vh - 72px);
+  border: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Tool Card — Canva-like rounded glass cards */
+.tool-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 0.75rem;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.tool-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .panel-title {
-  font-size: 0.85rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  margin-bottom: 0.75rem;
-  color: #1a1a1a;
+  margin-bottom: 0.6rem;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .panel-title.mt {
-  margin-top: 1.5rem;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* ─── Onboarding Tooltips ─────────────────────── */
+.onboarding-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+.onboarding-tooltip {
+  position: absolute;
+  width: 280px;
+  background: linear-gradient(145deg, #1e2330, #161b26);
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    0 0 40px rgba(124, 58, 237, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  animation: tooltipSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 2001;
+}
+
+@keyframes tooltipSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.tooltip-arrow {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #1e2330;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  transform: rotate(45deg);
+}
+
+.tooltip-arrow-left {
+  left: -8px;
+  top: 28px;
+  border-right: none;
+  border-top: none;
+}
+
+.tooltip-arrow-right {
+  right: -8px;
+  top: 28px;
+  border-left: none;
+  border-bottom: none;
+}
+
+.tooltip-step-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: rgba(124, 58, 237, 0.2);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #a78bfa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+.tooltip-icon {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.tooltip-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f0f6fc;
+  margin: 0 0 0.5rem;
+}
+
+.tooltip-desc {
+  font-size: 0.82rem;
+  color: #8b949e;
+  line-height: 1.5;
+  margin: 0 0 1.25rem;
+}
+
+.tooltip-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.tooltip-skip,
+.tooltip-back {
+  padding: 0.45rem 0.9rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #8b949e;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tooltip-skip:hover,
+.tooltip-back:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #c9d1d9;
+}
+
+.tooltip-next {
+  padding: 0.45rem 1rem;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.3);
+}
+
+.tooltip-next:hover {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.45);
+  transform: translateY(-1px);
+}
+
+/* Onboarding transitions */
+.onboarding-fade-enter-active,
+.onboarding-fade-leave-active {
+  transition: all 0.35s ease;
+}
+
+.onboarding-fade-enter-from,
+.onboarding-fade-leave-to {
+  opacity: 0;
+}
+
+.onboarding-fade-enter-from .onboarding-tooltip,
+.onboarding-fade-leave-to .onboarding-tooltip {
+  transform: scale(0.9);
 }
 
 /* Backgrounds Grid */
 .backgrounds-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .bg-card {
@@ -2167,27 +2442,31 @@ onUnmounted(() => {
   overflow: hidden;
   border: 2px solid transparent;
   transition: all 0.2s;
+  background: #21262d;
 }
 
 .bg-card.active {
-  border-color: #000;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 1px rgba(124,58,237,0.3);
 }
 
 .bg-card:hover {
-  transform: scale(1.02);
+  transform: scale(1.03);
+  border-color: rgba(255,255,255,0.2);
 }
 
 .bg-preview {
-  height: 50px;
+  height: 44px;
   width: 100%;
 }
 
 .bg-name {
   display: block;
   text-align: center;
-  font-size: 0.7rem;
-  padding: 0.25rem;
-  background: #f5f5f5;
+  font-size: 0.65rem;
+  padding: 0.2rem;
+  background: #21262d;
+  color: #8b949e;
 }
 
 /* Colors Grid */
@@ -2216,12 +2495,12 @@ onUnmounted(() => {
 .textures-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .texture-card {
   position: relative;
-  height: 50px;
+  height: 44px;
   border-radius: 8px;
   cursor: pointer;
   border: 2px solid transparent;
@@ -2230,11 +2509,12 @@ onUnmounted(() => {
 }
 
 .texture-card.active {
-  border-color: #000;
+  border-color: #7c3aed;
 }
 
 .texture-card:hover {
-  transform: scale(1.02);
+  transform: scale(1.03);
+  border-color: rgba(255,255,255,0.2);
 }
 
 .texture-name {
@@ -2243,45 +2523,47 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   text-align: center;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 500;
-  padding: 0.2rem;
-  background: rgba(255,255,255,0.85);
-  color: #333;
+  padding: 0.15rem;
+  background: rgba(0,0,0,0.6);
+  color: rgba(255,255,255,0.85);
+  backdrop-filter: blur(4px);
 }
 
 /* Frames Grid */
 .frames-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
 .frame-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.4rem;
-  border-radius: 6px;
+  gap: 0.2rem;
+  padding: 0.35rem;
+  border-radius: 8px;
   cursor: pointer;
   border: 2px solid transparent;
-  background: #f8f8f8;
+  background: #21262d;
   transition: all 0.2s;
 }
 
 .frame-card:hover {
-  background: #f0f0f0;
+  background: #30363d;
+  border-color: rgba(255,255,255,0.1);
 }
 
 .frame-card.active {
-  border-color: #1a1a1a;
+  border-color: #7c3aed;
 }
 
 .frame-preview {
-  width: 32px;
-  height: 32px;
-  background: #fff;
+  width: 30px;
+  height: 30px;
+  background: #30363d;
   border-radius: 4px;
 }
 
@@ -2342,42 +2624,44 @@ onUnmounted(() => {
 }
 
 .frame-name {
-  font-size: 0.6rem;
-  color: #666;
+  font-size: 0.58rem;
+  color: #8b949e;
 }
 
 /* Fabric Swatches Grid */
 .swatches-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
 .swatch-card {
   position: relative;
-  height: 55px;
-  border-radius: 4px;
+  height: 48px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
   overflow: hidden;
   display: flex;
   align-items: flex-end;
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 .swatch-card:hover {
-  transform: scale(1.08);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+  transform: scale(1.06);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+  border-color: rgba(255,255,255,0.15);
 }
 
 .swatch-label {
   display: block;
   width: 100%;
   padding: 2px 4px;
-  font-size: 8px;
+  font-size: 7px;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(transparent, rgba(0,0,0,0.6));
+  background: linear-gradient(transparent, rgba(0,0,0,0.65));
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
@@ -2387,27 +2671,29 @@ onUnmounted(() => {
 .pantone-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
 .pantone-card {
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border-radius: 2px;
+  background: #21262d;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
   overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.04);
 }
 
 .pantone-card:hover {
   transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+  border-color: rgba(255,255,255,0.12);
 }
 
 .pantone-color {
-  height: 28px;
+  height: 26px;
 }
 
 .pantone-label {
@@ -2416,9 +2702,9 @@ onUnmounted(() => {
 }
 
 .pantone-code {
-  font-size: 0.5rem;
+  font-size: 0.48rem;
   font-family: 'Courier New', monospace;
-  color: #333;
+  color: #8b949e;
   text-transform: uppercase;
 }
 
@@ -2426,30 +2712,31 @@ onUnmounted(() => {
 .decorations-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 0.35rem;
+  gap: 0.3rem;
 }
 
 .decoration-card {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 45px;
-  background: #fafafa;
-  border-radius: 4px;
+  height: 40px;
+  background: #21262d;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
-  border: 1px solid #eee;
+  border: 1px solid rgba(255,255,255,0.04);
 }
 
 .decoration-card:hover {
-  background: #f5f5f5;
+  background: #30363d;
   transform: scale(1.08);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  border-color: rgba(255,255,255,0.12);
 }
 
 .decoration-preview {
-  width: 30px;
-  height: 38px;
+  width: 28px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2469,7 +2756,9 @@ onUnmounted(() => {
   gap: 0.5rem;
   min-height: 0;
   overflow: hidden;
-  padding: 0.75rem;
+  padding: 0.5rem;
+  background: #0d1117;
+  border-radius: 12px;
 }
 
 .canvas-scale-wrapper {
@@ -2481,8 +2770,8 @@ onUnmounted(() => {
   position: absolute;
   top: 0;
   left: 0;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.05);
   overflow: hidden;
 }
 
@@ -3005,33 +3294,40 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: rgba(0,0,0,0.3);
+  color: rgba(255,255,255,0.2);
 }
 
-.canvas-empty svg { margin-bottom: 1rem; }
+.canvas-empty svg { margin-bottom: 1rem; color: rgba(255,255,255,0.15); }
 .canvas-empty p { font-size: 1rem; margin-bottom: 0.25rem; }
 .canvas-empty span { font-size: 0.85rem; opacity: 0.7; }
 
 /* Aspect Ratio Options */
 .aspect-options {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 
 .aspect-options button {
-  padding: 0.4rem 0.8rem;
-  background: #fff;
-  border: 1px solid #e5e5e5;
+  padding: 0.35rem 0.65rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 6px;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
+  color: #8b949e;
   cursor: pointer;
   transition: all 0.2s;
 }
 
+.aspect-options button:hover {
+  background: rgba(255,255,255,0.1);
+  color: #c9d1d9;
+}
+
 .aspect-options button.active {
-  background: #000;
+  background: #7c3aed;
   color: #fff;
-  border-color: #000;
+  border-color: #7c3aed;
+  box-shadow: 0 2px 8px rgba(124,58,237,0.25);
 }
 
 /* Products Panel */
@@ -3039,36 +3335,55 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: #f5f5f5;
+  padding: 0.45rem 0.7rem;
+  background: #21262d;
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 8px;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  transition: border-color 0.15s;
+}
+
+.search-box:focus-within {
+  border-color: rgba(124,58,237,0.5);
+}
+
+.search-box svg {
+  color: #484f58;
 }
 
 .search-box input {
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   outline: none;
+  color: #c9d1d9;
+}
+
+.search-box input::placeholder {
+  color: #484f58;
 }
 
 .products-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .product-card {
   position: relative;
-  border-radius: 8px;
+  border-radius: 14px;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.25s ease;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: #21262d;
 }
 
 .product-card:hover {
-  transform: scale(1.02);
+  transform: scale(1.04);
+  border-color: rgba(124,58,237,0.3);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35), 0 0 0 1px rgba(124,58,237,0.15);
 }
 
 .product-card img {
@@ -3079,14 +3394,16 @@ onUnmounted(() => {
 
 .product-price {
   position: absolute;
-  bottom: 4px;
-  left: 4px;
+  bottom: 6px;
+  left: 6px;
   background: rgba(0,0,0,0.8);
   color: #fff;
-  padding: 0.2rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.65rem;
   font-weight: 600;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .loading-state {
@@ -3096,10 +3413,10 @@ onUnmounted(() => {
 }
 
 .spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid #e5e5e5;
-  border-top-color: #000;
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(255,255,255,0.1);
+  border-top-color: #7c3aed;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -3114,44 +3431,50 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 1.25rem;
-  border: 2px dashed #d0d0d0;
+  gap: 0.4rem;
+  padding: 1rem;
+  border: 2px dashed rgba(255,255,255,0.12);
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s;
-  background: #fafafa;
+  background: rgba(255,255,255,0.03);
 }
 
 .upload-zone:hover {
-  border-color: #000;
-  background: #f0f0f0;
+  border-color: #7c3aed;
+  background: rgba(124,58,237,0.06);
 }
 
 .upload-zone svg {
-  color: #888;
+  color: #484f58;
 }
 
 .upload-zone span {
-  font-size: 0.75rem;
-  color: #666;
+  font-size: 0.72rem;
+  color: #8b949e;
 }
 
 /* Text Tools */
 .text-tools {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
 
 .font-select {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #e0e0e0;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 6px;
-  font-size: 0.8rem;
-  background: #fff;
+  font-size: 0.78rem;
+  background: #21262d;
+  color: #c9d1d9;
   cursor: pointer;
+}
+
+.font-select option {
+  background: #21262d;
+  color: #c9d1d9;
 }
 
 .text-size-row {
@@ -3161,61 +3484,66 @@ onUnmounted(() => {
 }
 
 .size-input {
-  width: 60px;
-  padding: 0.4rem;
-  border: 1px solid #e0e0e0;
+  width: 55px;
+  padding: 0.35rem;
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 6px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   text-align: center;
+  background: #21262d;
+  color: #c9d1d9;
 }
 
 .text-size-row span {
-  font-size: 0.75rem;
-  color: #666;
+  font-size: 0.72rem;
+  color: #8b949e;
 }
 
 .text-colors {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.35rem;
   flex-wrap: wrap;
 }
 
 .text-color-btn {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
   transition: all 0.2s;
 }
 
 .text-color-btn.active {
-  border-color: #000;
+  border-color: #7c3aed;
   transform: scale(1.15);
+  box-shadow: 0 0 0 2px rgba(124,58,237,0.3);
 }
 
 .add-text-btn {
-  padding: 0.6rem;
-  background: #000;
-  color: #fff;
-  border: none;
+  padding: 0.5rem;
+  background: rgba(124,58,237,0.15);
+  color: #a78bfa;
+  border: 1px solid rgba(124,58,237,0.25);
   border-radius: 8px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .add-text-btn:hover {
-  background: #333;
+  background: rgba(124,58,237,0.25);
+  border-color: rgba(124,58,237,0.4);
+  color: #c4b5fd;
 }
 
 /* Templates Grid */
 .templates-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .template-card {
@@ -3224,27 +3552,27 @@ onUnmounted(() => {
   overflow: hidden;
   border: 2px solid transparent;
   transition: all 0.2s;
-  background: #f5f5f5;
+  background: #21262d;
 }
 
 .template-card:hover {
-  border-color: #000;
-  transform: scale(1.02);
+  border-color: rgba(255,255,255,0.15);
+  transform: scale(1.03);
 }
 
 .template-preview {
-  height: 50px;
+  height: 46px;
   padding: 4px;
 }
 
 .template-name {
   display: block;
   text-align: center;
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 500;
-  padding: 0.25rem;
-  background: #fff;
-  color: #333;
+  padding: 0.2rem;
+  background: #30363d;
+  color: #8b949e;
 }
 
 /* Canvas Text Elements */
@@ -3278,45 +3606,45 @@ onUnmounted(() => {
 
 /* Products Panel Width Adjustment */
 .products-panel {
-  max-height: calc(100vh - 80px);
+  max-height: calc(100vh - 72px);
   overflow-y: auto;
 }
 
 /* Products Panel Tabs */
 .pp-tabs {
   display: flex;
-  gap: 4px;
-  margin-bottom: 0.75rem;
-  background: #f5f5f5;
+  gap: 3px;
+  margin-bottom: 0.6rem;
+  background: #21262d;
   border-radius: 8px;
   padding: 3px;
 }
 
 .pp-tab {
   flex: 1;
-  padding: 6px 0;
+  padding: 5px 0;
   border: none;
   background: transparent;
   border-radius: 6px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 500;
-  color: #888;
+  color: #484f58;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .pp-tab.active {
-  background: #fff;
-  color: #1a1a1a;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  background: #30363d;
+  color: #f0f6fc;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 .pp-empty {
   text-align: center;
   padding: 2rem 0.5rem;
-  color: #999;
-  font-size: 0.8rem;
+  color: #484f58;
+  font-size: 0.78rem;
 }
 
 .pp-empty p {
@@ -3324,8 +3652,8 @@ onUnmounted(() => {
 }
 
 .pp-link {
-  font-size: 0.75rem;
-  color: #1a1a1a;
+  font-size: 0.72rem;
+  color: #a78bfa;
   font-weight: 500;
   text-decoration: underline;
 }
@@ -3336,15 +3664,20 @@ onUnmounted(() => {
   width: 4px;
 }
 
+.backgrounds-panel::-webkit-scrollbar-track,
+.products-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .backgrounds-panel::-webkit-scrollbar-thumb,
 .products-panel::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: rgba(255,255,255,0.08);
   border-radius: 4px;
 }
 
 .backgrounds-panel::-webkit-scrollbar-thumb:hover,
 .products-panel::-webkit-scrollbar-thumb:hover {
-  background: #999;
+  background: rgba(255,255,255,0.15);
 }
 
 /* Notification Toast */
