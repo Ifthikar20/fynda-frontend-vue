@@ -121,7 +121,7 @@
               </option>
             </select>
             <div class="text-size-row">
-              <input type="number" v-model="selectedFontSize" min="12" max="120" class="size-input" />
+              <input type="number" v-model="selectedFontSize" min="12" max="200" class="size-input" />
               <span>px</span>
             </div>
             <div class="text-colors">
@@ -159,7 +159,7 @@
           <h3 class="panel-title">Backgrounds</h3>
           <div class="backgrounds-grid">
             <div 
-              v-for="bg in backgrounds" 
+              v-for="bg in backgrounds.slice(0, 4)" 
               :key="bg.id"
               class="bg-card"
               :class="{ active: selectedBackground === bg.id }"
@@ -169,13 +169,17 @@
               <span class="bg-name">{{ bg.name }}</span>
             </div>
           </div>
+          <button class="explore-btn" @click="showBgModal = true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            Explore All ({{ backgrounds.length }})
+          </button>
         </div>
         
         <div class="tool-card">
           <h3 class="panel-title">Textures</h3>
           <div class="textures-grid">
             <div 
-              v-for="texture in textures" 
+              v-for="texture in textures.slice(0, 4)" 
               :key="texture.id"
               class="texture-card"
               :class="{ active: selectedTexture === texture.id }"
@@ -185,6 +189,10 @@
               <span class="texture-name">{{ texture.name }}</span>
             </div>
           </div>
+          <button class="explore-btn" @click="showTextureModal = true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            Explore All ({{ textures.length }})
+          </button>
         </div>
         
         <!-- Frames Section -->
@@ -372,7 +380,7 @@
               <select :value="text.fontFamily" @change="text.fontFamily = $event.target.value" class="toolbar-font-select">
                 <option v-for="font in classicalFonts" :key="font.value" :value="font.value">{{ font.name }}</option>
               </select>
-              <input type="number" :value="text.fontSize" @input="text.fontSize = Number($event.target.value)" min="12" max="120" class="toolbar-size-input" />
+              <input type="number" :value="text.fontSize" @input="text.fontSize = Number($event.target.value)" min="12" max="200" class="toolbar-size-input" />
               <div class="toolbar-colors">
                 <div 
                   v-for="tc in textColors" :key="tc"
@@ -570,6 +578,58 @@
             <div class="tooltip-actions">
               <button class="tooltip-back" @click="onboardingStep = 1">← Back</button>
               <button class="tooltip-next" @click="dismissOnboarding">Got it! ✨</button>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </Teleport>
+
+    <!-- Explore Backgrounds Modal -->
+    <Teleport to="body">
+      <transition name="modal-fade">
+        <div v-if="showBgModal" class="explore-modal-overlay" @click.self="showBgModal = false">
+          <div class="explore-modal">
+            <div class="explore-modal-header">
+              <h2>All Backgrounds</h2>
+              <button class="explore-modal-close" @click="showBgModal = false">&times;</button>
+            </div>
+            <div class="explore-modal-grid">
+              <div 
+                v-for="bg in backgrounds" 
+                :key="bg.id"
+                class="explore-modal-card"
+                :class="{ active: selectedBackground === bg.id }"
+                @click="selectBackground(bg); showBgModal = false"
+              >
+                <div class="explore-card-preview" :style="bg.style"></div>
+                <span class="explore-card-name">{{ bg.name }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </Teleport>
+
+    <!-- Explore Textures Modal -->
+    <Teleport to="body">
+      <transition name="modal-fade">
+        <div v-if="showTextureModal" class="explore-modal-overlay" @click.self="showTextureModal = false">
+          <div class="explore-modal">
+            <div class="explore-modal-header">
+              <h2>All Textures</h2>
+              <button class="explore-modal-close" @click="showTextureModal = false">&times;</button>
+            </div>
+            <div class="explore-modal-grid">
+              <div 
+                v-for="texture in textures" 
+                :key="texture.id"
+                class="explore-modal-card"
+                :class="{ active: selectedTexture === texture.id }"
+                @click="selectTexture(texture); showTextureModal = false"
+              >
+                <div class="explore-card-preview" :style="texture.style"></div>
+                <span class="explore-card-name">{{ texture.name }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1807,6 +1867,10 @@ const currentShareUrl = ref('')
 const linkCopied = ref(false)
 const shareWithLinks = ref(true)
 const shareWithPrices = ref(true)
+
+// Explore modals
+const showBgModal = ref(false)
+const showTextureModal = ref(false)
 
 const showNotification = (message) => {
   notification.value = { show: true, message }
@@ -3647,11 +3711,12 @@ onUnmounted(() => {
   border-radius: 4px;
   transition: border-color 0.2s;
   white-space: nowrap;
+  background: transparent;
 }
 
 .canvas-text.selected {
-  border-color: #000;
-  background: rgba(255,255,255,0.5);
+  border-color: rgba(124,58,237,0.4);
+  background: rgba(255,255,255,0.3);
 }
 
 .canvas-text:hover .item-remove {
@@ -3863,5 +3928,155 @@ onUnmounted(() => {
 .chip-fade-leave-to {
   opacity: 0;
   transform: translateY(-8px);
+}
+
+/* Explore Button */
+.explore-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 0;
+  background: transparent;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.explore-btn:hover {
+  border-color: #7c3aed;
+  color: #7c3aed;
+  background: rgba(124,58,237,0.04);
+}
+
+/* Explore Modal */
+.explore-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+
+.explore-modal {
+  background: #fff;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: modalSlideUp 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.explore-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.explore-modal-header h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.explore-modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.explore-modal-close:hover {
+  background: #eee;
+  color: #333;
+}
+
+.explore-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.explore-modal-card {
+  cursor: pointer;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  background: #fafafa;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.explore-modal-card:hover {
+  transform: scale(1.04);
+  border-color: #ddd;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.explore-modal-card.active {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124,58,237,0.2);
+}
+
+.explore-card-preview {
+  height: 80px;
+  width: 100%;
+}
+
+.explore-card-name {
+  display: block;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 6px 4px;
+  color: #555;
+}
+
+/* Modal Fade Transition */
+.modal-fade-enter-active {
+  transition: all 0.3s ease;
+}
+.modal-fade-leave-active {
+  transition: all 0.2s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-from .explore-modal,
+.modal-fade-leave-to .explore-modal {
+  transform: translateY(20px);
 }
 </style>
