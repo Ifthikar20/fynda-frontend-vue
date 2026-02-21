@@ -4,110 +4,221 @@
 
     <main class="explore-content">
 
-      <!-- Editor's Picks -->
-      <section class="editors-section">
-        <h2 class="section-heading">Editor's picks</h2>
-        <div class="editors-grid">
-          <div 
-            v-for="pick in editorsPicks" 
-            :key="pick.id" 
-            class="editors-card"
-            :style="{ backgroundImage: `url(${pick.image})` }"
-            @click="goSearch(pick.query)"
-          >
-            <div class="editors-overlay">
-              <h3>{{ pick.title }}</h3>
-              <span class="explore-link">Start exploring →</span>
+      <!-- Large Search Bar (same as HomePage) -->
+      <section class="search-section">
+        <div class="search-container">
+          <div class="search-box">
+            <div class="search-icon-wrap">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              class="search-input"
+              v-model="searchQuery"
+              @keyup.enter="handleSearch"
+              @focus="isSearchFocused = true"
+              @blur="isSearchFocused = false"
+              :placeholder="'Search brands, styles, trends...'"
+            />
+            <button class="search-btn" @click="handleSearch">Search</button>
+          </div>
+
+          <!-- Quick Suggestions -->
+          <div v-if="!hasSearched" class="quick-suggestions">
+            <span class="suggestion-label">Try:</span>
+            <div class="suggestion-pills">
+              <button
+                v-for="suggestion in quickSuggestions"
+                :key="suggestion"
+                @click="searchSuggestion(suggestion)"
+              >
+                {{ suggestion }}
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Shop By Category -->
-      <section class="category-section">
-        <div class="category-grid">
+      <!-- Search Results -->
+      <section v-if="hasSearched" class="results-section">
+        <div class="results-header">
+          <h2 class="section-heading">Results for "{{ lastSearchQuery }}"</h2>
+          <span class="results-count">{{ searchResults.length }} items found</span>
+        </div>
+
+        <div v-if="searchLoading" class="inline-loading">
+          <div class="loading-spinner"></div>
+          <p>Finding the best deals...</p>
+        </div>
+
+        <div v-else-if="searchResults.length > 0" class="results-grid">
           <div 
-            v-for="cat in categories" 
-            :key="cat.id" 
-            class="category-card"
-            :style="{ backgroundImage: `url(${cat.image})` }"
-            @click="goCategory(cat.query)"
+            v-for="deal in searchResults" 
+            :key="deal.id" 
+            class="result-card"
+            @click="openDeal(deal)"
           >
-            <div class="category-overlay">
-              <h3>{{ cat.title }}</h3>
-              <span class="explore-link">Start exploring →</span>
+            <div class="result-image">
+              <img :src="deal.image_url || deal.image" :alt="deal.title" loading="lazy" />
+              <span v-if="deal.discount_percent" class="discount-badge">{{ deal.discount_percent }}% off</span>
+            </div>
+            <div class="result-info">
+              <span class="result-brand">{{ (deal.merchant_name || deal.source || 'Brand').toUpperCase() }}</span>
+              <h3 class="result-title">{{ deal.title }}</h3>
+              <span class="result-price">${{ formatPrice(deal.price) }}</span>
             </div>
           </div>
         </div>
+
+        <div v-else class="empty-state">
+          <h3>No results found</h3>
+          <p>Try a different search term</p>
+        </div>
+
+        <button v-if="hasSearched" class="back-to-explore" @click="clearSearch">← Back to Explore</button>
       </section>
 
-      <!-- Promo Banner -->
-      <section class="promo-section">
-        <div class="promo-banner">
-          <div class="promo-image">
-            <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80" alt="Fashion" />
-          </div>
-          <div class="promo-content">
-            <span class="promo-tag">FOR YOU</span>
-            <h2>Discover & save on trending fashion</h2>
-            <p>Browse curated collections across trending brands, exclusive deals, and styles that match your vibe.</p>
-            <router-link to="/" class="promo-link">Learn more →</router-link>
-          </div>
-        </div>
-      </section>
+      <!-- Curated Content (hidden when showing search results) -->
+      <template v-if="!hasSearched">
 
-      <!-- Trending Now -->
-      <section class="trending-section">
-        <div class="trending-header">
-          <div>
-            <h2 class="section-heading">What's trending</h2>
-            <p class="section-sub">See what shoppers are loving right now</p>
-          </div>
-        </div>
-        <div class="trending-grid">
-          <div 
-            v-for="item in trendingItems" 
-            :key="item.id" 
-            class="trending-card"
-            @click="goSearch(item.query)"
-          >
-            <div class="trending-image">
-              <img :src="item.image" :alt="item.title" />
-            </div>
-            <div class="trending-info">
-              <span class="trending-tag">Trending</span>
-              <h3>{{ item.title }}</h3>
-              <span class="explore-link-sm">Shop now →</span>
+        <!-- Editor's Picks -->
+        <section class="editors-section">
+          <h2 class="section-heading">Editor's picks</h2>
+          <div class="editors-grid">
+            <div 
+              v-for="pick in editorsPicks" 
+              :key="pick.id" 
+              class="editors-card"
+              :style="{ backgroundImage: `url(${pick.image})` }"
+              @click="searchSuggestion(pick.query)"
+            >
+              <div class="editors-overlay">
+                <h3>{{ pick.title }}</h3>
+                <span class="explore-link">Start exploring →</span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Explore Brands -->
-      <section class="brands-section">
-        <div class="brands-header">
-          <div>
-            <h2 class="section-heading">Explore brands</h2>
-            <p class="section-sub">Explore top-tier products from brands you know and discover new brands you'll love.</p>
-          </div>
-        </div>
-        <div class="brands-label">
-          <span class="label-tag">TRENDING BRANDS</span>
-        </div>
-        <div class="brands-grid">
-          <div 
-            v-for="brand in brands" 
-            :key="brand.name" 
-            class="brand-card"
-            :style="{ backgroundImage: `url(${brand.image})` }"
-            @click="goBrand(brand.name)"
-          >
-            <div class="brand-overlay">
-              <span class="brand-name">{{ brand.name }}</span>
+        <!-- Shop By Category -->
+        <section class="category-section">
+          <div class="category-grid">
+            <div 
+              v-for="cat in categories" 
+              :key="cat.id" 
+              class="category-card"
+              :style="{ backgroundImage: `url(${cat.image})` }"
+              @click="goCategory(cat.query)"
+            >
+              <div class="category-overlay">
+                <h3>{{ cat.title }}</h3>
+                <span class="explore-link">Start exploring →</span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        <!-- Promo Banner -->
+        <section class="promo-section">
+          <div class="promo-banner">
+            <div class="promo-image">
+              <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80" alt="Fashion" />
+            </div>
+            <div class="promo-content">
+              <span class="promo-tag">FOR YOU</span>
+              <h2>Discover & save on trending fashion</h2>
+              <p>Browse curated collections across trending brands, exclusive deals, and styles that match your vibe.</p>
+              <router-link to="/" class="promo-link">Learn more →</router-link>
+            </div>
+          </div>
+        </section>
+
+        <!-- Trending Now -->
+        <section class="trending-section">
+          <div class="trending-header">
+            <div>
+              <h2 class="section-heading">What's trending</h2>
+              <p class="section-sub">See what shoppers are loving right now</p>
+            </div>
+          </div>
+          <div class="trending-grid">
+            <div 
+              v-for="item in trendingItems" 
+              :key="item.id" 
+              class="trending-card"
+              @click="searchSuggestion(item.query)"
+            >
+              <div class="trending-image">
+                <img :src="item.image" :alt="item.title" />
+              </div>
+              <div class="trending-info">
+                <span class="trending-tag">Trending</span>
+                <h3>{{ item.title }}</h3>
+                <span class="explore-link-sm">Shop now →</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Explore Brands -->
+        <section class="brands-section">
+          <div class="brands-header">
+            <div>
+              <h2 class="section-heading">Explore brands</h2>
+              <p class="section-sub">Explore top-tier products from brands you know and discover new brands you'll love.</p>
+            </div>
+          </div>
+
+          <!-- Sort pills -->
+          <div class="sort-bar">
+            <button
+              v-for="opt in sortOptions"
+              :key="opt.value"
+              class="sort-pill"
+              :class="{ active: sortBy === opt.value }"
+              @click="sortBy = opt.value; fetchBrands()"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+
+          <!-- Brand grid -->
+          <div v-if="brandsLoading" class="brands-loading">
+            <span>Loading brands…</span>
+          </div>
+          <div v-else class="brands-grid">
+            <div 
+              v-for="brand in brands" 
+              :key="brand.slug" 
+              class="brand-card"
+              :style="brandCardStyle(brand)"
+            >
+              <div class="brand-overlay" @click="goBrand(brand.name)">
+                <span class="brand-name">{{ brand.name }}</span>
+                <span class="brand-category">{{ brand.category }}</span>
+              </div>
+              <button
+                class="like-btn"
+                :class="{ liked: brand.is_liked }"
+                @click.stop="toggleLike(brand)"
+                :title="brand.is_liked ? 'Unlike' : 'Like'"
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5
+                    2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09
+                    C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5
+                    c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+                <span class="like-count">{{ brand.likes_count }}</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </template>
 
     </main>
 
@@ -116,12 +227,151 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import NavBar from './NavBar.vue'
 import Footer from './Footer.vue'
 
 const router = useRouter()
 
+// ── API ────────────────────────────────────────
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+const API_BASE = import.meta.env.VITE_API_BASE || '/api/v1'
+
+// ── Search state ───────────────────────────────
+const searchQuery = ref('')
+const lastSearchQuery = ref('')
+const searchResults = ref([])
+const searchLoading = ref(false)
+const hasSearched = ref(false)
+const isSearchFocused = ref(false)
+
+const quickSuggestions = [
+  'Quiet luxury outfit',
+  'Gold jewelry under $50',
+  'Summer linen dress',
+  'Designer bag in Maroon'
+]
+
+async function handleSearch() {
+  const q = searchQuery.value.trim()
+  if (!q) return
+  
+  searchLoading.value = true
+  hasSearched.value = true
+  lastSearchQuery.value = q
+  searchResults.value = []
+  
+  try {
+    const response = await fetch(`${API_URL}/api/search/?q=${encodeURIComponent(q)}`)
+    const data = await response.json()
+    searchResults.value = data.results || data.deals || []
+  } catch (e) {
+    console.error('Search failed:', e)
+  } finally {
+    searchLoading.value = false
+  }
+}
+
+function searchSuggestion(suggestion) {
+  searchQuery.value = suggestion
+  handleSearch()
+}
+
+function clearSearch() {
+  hasSearched.value = false
+  searchQuery.value = ''
+  lastSearchQuery.value = ''
+  searchResults.value = []
+}
+
+function openDeal(deal) {
+  if (deal.deal_url || deal.url) {
+    window.open(deal.deal_url || deal.url, '_blank')
+  }
+}
+
+function formatPrice(price) {
+  if (!price) return '0.00'
+  return parseFloat(price).toFixed(2)
+}
+
+// ── Brands state ───────────────────────────────
+const brands = ref([])
+const brandsLoading = ref(true)
+const sortBy = ref('trending')
+
+const sortOptions = [
+  { label: '🔥 Trending', value: 'trending' },
+  { label: '❤️ Most Liked', value: 'most_liked' },
+  { label: '✨ Newest', value: 'newest' },
+]
+
+const brandCovers = {
+  'fashion-nova': 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&q=80',
+  'princess-polly': 'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=400&q=80',
+  'oh-polly': 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=400&q=80',
+  'meshki': 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80',
+  'gymshark': 'https://images.unsplash.com/photo-1556906781-9a412961c28c?w=400&q=80',
+  'true-classic': 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=80',
+  'steve-madden': 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80',
+  'allbirds': 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80',
+  'mejuri': 'https://images.unsplash.com/photo-1515562141589-67f0d0e6e9e1?w=400&q=80',
+  'colourpop': 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400&q=80',
+  'kylie-cosmetics': 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&q=80',
+  'rebecca-minkoff': 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&q=80',
+  'ana-luisa': 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&q=80',
+  'mvmt': 'https://images.unsplash.com/photo-1518002171953-a080ee817e1f?w=400&q=80',
+  'taylor-stitch': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+  'bylt-basics': 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=400&q=80',
+  'cuts-clothing': 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&q=80',
+  'chubbies': 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=80',
+  'beginning-boutique': 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400&q=80',
+}
+
+async function fetchBrands() {
+  brandsLoading.value = true
+  try {
+    const res = await fetch(`${API_BASE}/brands/?sort=${sortBy.value}`)
+    const data = await res.json()
+    brands.value = data.brands || []
+  } catch (e) {
+    console.error('Failed to load brands:', e)
+  } finally {
+    brandsLoading.value = false
+  }
+}
+
+async function toggleLike(brand) {
+  const method = brand.is_liked ? 'DELETE' : 'POST'
+  try {
+    const res = await fetch(`${API_BASE}/brands/${brand.slug}/like/`, {
+      method,
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (res.ok) {
+      const data = await res.json()
+      brand.is_liked = data.liked
+      brand.likes_count = data.likes_count
+    } else if (res.status === 401 || res.status === 403) {
+      router.push('/login')
+    }
+  } catch (e) {
+    console.error('Like failed:', e)
+  }
+}
+
+function brandCardStyle(brand) {
+  const img = brand.cover_image_url || brandCovers[brand.slug] || ''
+  if (img) return { backgroundImage: `url(${img})` }
+  const hue = Math.abs(brand.name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 360)
+  return { background: `hsl(${hue}, 25%, 18%)` }
+}
+
+onMounted(fetchBrands)
+
+// ── Static content ─────────────────────────────
 const editorsPicks = [
   {
     id: 1,
@@ -203,22 +453,6 @@ const trendingItems = [
   }
 ]
 
-const brands = [
-  { name: 'Zara', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&q=80' },
-  { name: 'Nike', image: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?w=400&q=80' },
-  { name: 'Madewell', image: 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=400&q=80' },
-  { name: 'H&M', image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=80' },
-  { name: 'Adidas', image: 'https://images.unsplash.com/photo-1518002171953-a080ee817e1f?w=400&q=80' },
-  { name: 'Reformation', image: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=400&q=80' },
-  { name: 'Levi\'s', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&q=80' },
-  { name: 'COS', image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400&q=80' },
-  { name: 'Gucci', image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&q=80' }
-]
-
-const goSearch = (query) => {
-  router.push(`/?q=${encodeURIComponent(query)}`)
-}
-
 const goCategory = (slug) => {
   router.push(`/explore/${slug}`)
 }
@@ -241,6 +475,272 @@ const goBrand = (brand) => {
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
   width: 100%;
+}
+
+/* ── Large Search Bar ── */
+.search-section {
+  margin-bottom: 2.5rem;
+  padding-top: 1rem;
+}
+
+.search-container {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 32px;
+  padding: 0.6rem 0.6rem 0.6rem 1.5rem;
+  min-height: 62px;
+  transition: all 0.2s ease;
+}
+
+.search-box:focus-within {
+  border-color: #000;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.search-icon-wrap {
+  color: #888;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: 'Inter', sans-serif;
+  font-size: 1.05rem;
+  color: #1a1a1a;
+  outline: none;
+  min-width: 0;
+  height: 44px;
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+.search-btn {
+  padding: 0.75rem 1.5rem;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.search-btn:hover {
+  background: #333;
+}
+
+/* Quick suggestions */
+.quick-suggestions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.suggestion-label {
+  font-size: 0.78rem;
+  color: #999;
+  font-weight: 500;
+}
+
+.suggestion-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.suggestion-pills button {
+  padding: 6px 14px;
+  border: 1px solid #ddd;
+  border-radius: 100px;
+  background: #fff;
+  color: #555;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.suggestion-pills button:hover {
+  border-color: #000;
+  color: #000;
+}
+
+/* ── Search Results ── */
+.results-section {
+  margin-bottom: 2rem;
+}
+
+.results-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.results-count {
+  font-size: 0.82rem;
+  color: #999;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.result-card {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.result-card:hover {
+  border-color: #ddd;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+  transform: translateY(-3px);
+}
+
+.result-image {
+  position: relative;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  background: #f8f8f8;
+}
+
+.result-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.result-card:hover .result-image img {
+  transform: scale(1.05);
+}
+
+.discount-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 8px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 6px;
+}
+
+.result-info {
+  padding: 0.85rem 1rem;
+}
+
+.result-brand {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #999;
+}
+
+.result-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin: 0.25rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.result-price {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.back-to-explore {
+  display: block;
+  margin: 2rem auto 0;
+  padding: 10px 24px;
+  background: transparent;
+  border: 1px solid #ddd;
+  border-radius: 100px;
+  font-size: 0.82rem;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-to-explore:hover {
+  border-color: #000;
+  color: #000;
+}
+
+/* Loading */
+.inline-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: #999;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #eee;
+  border-top-color: #1a1a1a;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.inline-loading p {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #999;
+}
+
+.empty-state h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  font-size: 0.85rem;
 }
 
 /* ── Section Headings ── */
@@ -516,16 +1016,43 @@ const goBrand = (brand) => {
   margin-bottom: 1rem;
 }
 
-.brands-label {
-  margin-bottom: 1rem;
+.sort-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
 }
 
-.label-tag {
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 2px;
-  color: #bbb;
-  text-transform: uppercase;
+.sort-pill {
+  padding: 6px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid #ddd;
+  border-radius: 100px;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sort-pill:hover {
+  border-color: #bbb;
+  color: #333;
+}
+
+.sort-pill.active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.brands-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #aaa;
+  font-size: 0.9rem;
 }
 
 .brands-grid {
@@ -555,6 +1082,7 @@ const goBrand = (brand) => {
   inset: 0;
   background: rgba(0, 0, 0, 0.35);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   transition: background 0.3s ease;
@@ -573,12 +1101,61 @@ const goBrand = (brand) => {
   text-transform: uppercase;
 }
 
+.brand-category {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.75);
+  margin-top: 4px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.like-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: rgba(0,0,0,0.45);
+  border: none;
+  border-radius: 100px;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.like-btn:hover {
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+}
+
+.like-btn.liked {
+  color: #ef4444;
+}
+
+.like-btn.liked:hover {
+  color: #dc2626;
+}
+
+.like-count {
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .editors-grid,
   .category-grid,
   .trending-grid,
   .brands-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .results-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -611,6 +1188,10 @@ const goBrand = (brand) => {
 
   .trending-grid {
     grid-template-columns: 1fr;
+  }
+
+  .results-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .brands-grid {
