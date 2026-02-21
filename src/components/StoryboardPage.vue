@@ -221,9 +221,10 @@
           </div>
         </div>
         
-        <!-- Pantone Color Chips -->
-        <div class="tool-card">
-          <h3 class="panel-title">{{ boardColors.length > 0 ? 'Board Colors' : 'Color Chips' }}</h3>
+        <!-- Pantone Color Chips — only shows when items on canvas -->
+        <Transition name="chip-fade">
+        <div class="tool-card" v-if="canvasItems.length > 0 && boardColors.length > 0">
+          <h3 class="panel-title">🎨 Extracted Colors</h3>
           <div class="pantone-grid">
             <!-- Dynamic colors extracted from board images -->
             <div 
@@ -238,21 +239,9 @@
                 <span class="pantone-code">{{ chip.code }}</span>
               </div>
             </div>
-            <!-- Static pantone chips -->
-            <div 
-              v-for="chip in stickers.filter(s => s.type === 'pantone')" 
-              :key="chip.id"
-              class="pantone-card"
-              :title="chip.name"
-              @click="addPantone(chip)"
-            >
-              <div class="pantone-color" :style="{ backgroundColor: chip.color }"></div>
-              <div class="pantone-label">
-                <span class="pantone-code">{{ chip.code }}</span>
-              </div>
-            </div>
           </div>
         </div>
+        </Transition>
         
         <!-- Decorations Section -->
         <div class="tool-card">
@@ -340,10 +329,10 @@
               </svg>
               Remove BG
             </button>
-            <!-- BG Removal Loading -->
-            <div v-if="item.removingBg" class="bg-removal-loading">
-              <div class="spinner-small"></div>
-              <span>Removing...</span>
+            <!-- BG Removal Scan Animation -->
+            <div v-if="item.removingBg" class="bg-scan-overlay">
+              <div class="scan-line"></div>
+              <span class="scan-label">Scanning...</span>
             </div>
           </div>
           
@@ -1930,7 +1919,7 @@ onUnmounted(() => {
 
 .storyboard-page {
   min-height: 100vh;
-  background: #0d1117;
+  background: #f5f5f5;
 }
 
 /* Storyboard Toolbar */
@@ -1939,8 +1928,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 1rem;
-  background: #161b22;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
 }
 
 .back-btn {
@@ -1948,23 +1937,23 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
   font-size: 0.8rem;
   cursor: pointer;
-  color: #c9d1d9;
+  color: #333;
   font-weight: 500;
   transition: all 0.15s;
 }
 
-.back-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
+.back-btn:hover { background: #eee; color: #111; border-color: #ccc; }
 
 .page-title {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 1.1rem;
   font-weight: 500;
-  color: #f0f6fc;
+  color: #1a1a1a;
   letter-spacing: 0.02em;
 }
 
@@ -1993,13 +1982,13 @@ onUnmounted(() => {
 }
 
 .share-btn {
-  background: rgba(255,255,255,0.08);
-  color: #c9d1d9;
-  border: 1px solid rgba(255,255,255,0.12);
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #e0e0e0;
 }
 
 .save-btn:hover { background: linear-gradient(135deg, #8b5cf6, #7c3aed); box-shadow: 0 4px 12px rgba(124,58,237,0.4); }
-.share-btn:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.2); }
+.share-btn:hover { background: #eee; color: #111; border-color: #ccc; }
 
 /* Share Modal Popup */
 .share-modal-overlay {
@@ -2229,39 +2218,37 @@ onUnmounted(() => {
 
 /* Panels */
 .backgrounds-panel, .products-panel {
-  background: #161b22;
+  background: #ffffff;
   border-radius: 16px;
   padding: 0.5rem;
   overflow-y: auto;
   max-height: calc(100vh - 72px);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid #e5e5e5;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-/* Tool Card — Canva-like rounded glass cards */
+/* Tool Card — Canva-like rounded cards */
 .tool-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #fafafa;
+  border: 1px solid #ebebeb;
   border-radius: 14px;
   padding: 0.75rem;
   transition: all 0.25s ease;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .tool-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  background: #f5f5f5;
+  border-color: #ddd;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .panel-title {
   font-size: 0.72rem;
   font-weight: 600;
   margin-bottom: 0.6rem;
-  color: #8b949e;
+  color: #666;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -2289,14 +2276,13 @@ onUnmounted(() => {
 .onboarding-tooltip {
   position: absolute;
   width: 280px;
-  background: linear-gradient(145deg, #1e2330, #161b26);
-  border: 1px solid rgba(124, 58, 237, 0.35);
+  background: #ffffff;
+  border: 1px solid rgba(124, 58, 237, 0.25);
   border-radius: 20px;
   padding: 1.5rem;
   box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.4),
-    0 0 40px rgba(124, 58, 237, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 20px 60px rgba(0, 0, 0, 0.12),
+    0 0 40px rgba(124, 58, 237, 0.08);
   animation: tooltipSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   z-index: 2001;
 }
@@ -2316,8 +2302,8 @@ onUnmounted(() => {
   position: absolute;
   width: 14px;
   height: 14px;
-  background: #1e2330;
-  border: 1px solid rgba(124, 58, 237, 0.35);
+  background: #ffffff;
+  border: 1px solid rgba(124, 58, 237, 0.25);
   transform: rotate(45deg);
 }
 
@@ -2343,7 +2329,7 @@ onUnmounted(() => {
   border-radius: 20px;
   font-size: 0.65rem;
   font-weight: 600;
-  color: #a78bfa;
+  color: #7c3aed;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.75rem;
@@ -2358,13 +2344,13 @@ onUnmounted(() => {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #f0f6fc;
+  color: #1a1a1a;
   margin: 0 0 0.5rem;
 }
 
 .tooltip-desc {
   font-size: 0.82rem;
-  color: #8b949e;
+  color: #666;
   line-height: 1.5;
   margin: 0 0 1.25rem;
 }
@@ -2378,10 +2364,10 @@ onUnmounted(() => {
 .tooltip-skip,
 .tooltip-back {
   padding: 0.45rem 0.9rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
   border-radius: 10px;
-  color: #8b949e;
+  color: #666;
   font-size: 0.78rem;
   font-weight: 500;
   cursor: pointer;
@@ -2390,8 +2376,8 @@ onUnmounted(() => {
 
 .tooltip-skip:hover,
 .tooltip-back:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #c9d1d9;
+  background: #eee;
+  color: #333;
 }
 
 .tooltip-next {
@@ -2442,7 +2428,8 @@ onUnmounted(() => {
   overflow: hidden;
   border: 2px solid transparent;
   transition: all 0.2s;
-  background: #21262d;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
 .bg-card.active {
@@ -2452,7 +2439,7 @@ onUnmounted(() => {
 
 .bg-card:hover {
   transform: scale(1.03);
-  border-color: rgba(255,255,255,0.2);
+  border-color: #ccc;
 }
 
 .bg-preview {
@@ -2465,8 +2452,8 @@ onUnmounted(() => {
   text-align: center;
   font-size: 0.65rem;
   padding: 0.2rem;
-  background: #21262d;
-  color: #8b949e;
+  background: #fff;
+  color: #666;
 }
 
 /* Colors Grid */
@@ -2514,7 +2501,7 @@ onUnmounted(() => {
 
 .texture-card:hover {
   transform: scale(1.03);
-  border-color: rgba(255,255,255,0.2);
+  border-color: #ccc;
 }
 
 .texture-name {
@@ -2526,8 +2513,8 @@ onUnmounted(() => {
   font-size: 0.6rem;
   font-weight: 500;
   padding: 0.15rem;
-  background: rgba(0,0,0,0.6);
-  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.85);
+  color: #555;
   backdrop-filter: blur(4px);
 }
 
@@ -2547,13 +2534,13 @@ onUnmounted(() => {
   border-radius: 8px;
   cursor: pointer;
   border: 2px solid transparent;
-  background: #21262d;
+  background: #fff;
   transition: all 0.2s;
 }
 
 .frame-card:hover {
-  background: #30363d;
-  border-color: rgba(255,255,255,0.1);
+  background: #f5f5f5;
+  border-color: #ccc;
 }
 
 .frame-card.active {
@@ -2563,7 +2550,7 @@ onUnmounted(() => {
 .frame-preview {
   width: 30px;
   height: 30px;
-  background: #30363d;
+  background: #eee;
   border-radius: 4px;
 }
 
@@ -2625,7 +2612,7 @@ onUnmounted(() => {
 
 .frame-name {
   font-size: 0.58rem;
-  color: #8b949e;
+  color: #666;
 }
 
 /* Fabric Swatches Grid */
@@ -2645,13 +2632,13 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   align-items: flex-end;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid #e5e5e5;
 }
 
 .swatch-card:hover {
   transform: scale(1.06);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-  border-color: rgba(255,255,255,0.15);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+  border-color: #ccc;
 }
 
 .swatch-label {
@@ -2677,19 +2664,19 @@ onUnmounted(() => {
 .pantone-card {
   display: flex;
   flex-direction: column;
-  background: #21262d;
+  background: #fff;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid #e5e5e5;
 }
 
 .pantone-card:hover {
   transform: scale(1.05);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
-  border-color: rgba(255,255,255,0.12);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+  border-color: #ccc;
 }
 
 .pantone-color {
@@ -2704,7 +2691,7 @@ onUnmounted(() => {
 .pantone-code {
   font-size: 0.48rem;
   font-family: 'Courier New', monospace;
-  color: #8b949e;
+  color: #666;
   text-transform: uppercase;
 }
 
@@ -2720,18 +2707,18 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   height: 40px;
-  background: #21262d;
+  background: #fff;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid #e5e5e5;
 }
 
 .decoration-card:hover {
-  background: #30363d;
+  background: #f5f5f5;
   transform: scale(1.08);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  border-color: rgba(255,255,255,0.12);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-color: #ccc;
 }
 
 .decoration-preview {
@@ -2757,7 +2744,7 @@ onUnmounted(() => {
   min-height: 0;
   overflow: hidden;
   padding: 0.5rem;
-  background: #0d1117;
+  background: #eaeaea;
   border-radius: 12px;
 }
 
@@ -2771,7 +2758,7 @@ onUnmounted(() => {
   top: 0;
   left: 0;
   border-radius: 8px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.05);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0,0,0,0.06);
   overflow: hidden;
 }
 
@@ -2951,33 +2938,66 @@ onUnmounted(() => {
   color: #333;
 }
 
-/* Frame Toggle Button */
-.frame-toggle {
+/* BG Removal Scan Animation */
+.bg-scan-overlay {
   position: absolute;
-  bottom: 4px;
-  left: 4px;
-  width: 22px;
-  height: 22px;
-  background: rgba(255,255,255,0.9);
-  color: #333;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(180deg,
+    transparent,
+    rgba(124, 58, 237, 0.6),
+    rgba(124, 58, 237, 0.9),
+    rgba(124, 58, 237, 0.6),
+    transparent
+  );
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.5), 0 0 60px rgba(124, 58, 237, 0.2);
+  animation: scanDown 1.5s ease-in-out infinite;
+}
+
+@keyframes scanDown {
+  0% { top: -4px; }
+  100% { top: 100%; }
+}
+
+.scan-label {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  color: #7c3aed;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 10px;
+  border-radius: 10px;
+  letter-spacing: 0.05em;
+  animation: scanPulse 1s ease-in-out infinite;
+}
+
+@keyframes scanPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Frame Toggle Button — hidden */
+.frame-toggle {
+  display: none;
 }
 
 .canvas-item:hover .frame-toggle {
   opacity: 1;
 }
 
-.frame-toggle:hover {
-  background: #fff;
-  border-color: #1a1a1a;
-}
 
 /* Pin Decoration */
 .item-pin {
@@ -3294,10 +3314,10 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: rgba(255,255,255,0.2);
+  color: rgba(0,0,0,0.25);
 }
 
-.canvas-empty svg { margin-bottom: 1rem; color: rgba(255,255,255,0.15); }
+.canvas-empty svg { margin-bottom: 1rem; color: rgba(0,0,0,0.15); }
 .canvas-empty p { font-size: 1rem; margin-bottom: 0.25rem; }
 .canvas-empty span { font-size: 0.85rem; opacity: 0.7; }
 
@@ -3309,18 +3329,18 @@ onUnmounted(() => {
 
 .aspect-options button {
   padding: 0.35rem 0.65rem;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: #fff;
+  border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 0.72rem;
-  color: #8b949e;
+  color: #666;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .aspect-options button:hover {
-  background: rgba(255,255,255,0.1);
-  color: #c9d1d9;
+  background: #f0f0f0;
+  color: #333;
 }
 
 .aspect-options button.active {
@@ -3336,8 +3356,8 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.45rem 0.7rem;
-  background: #21262d;
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
   margin-bottom: 0.75rem;
   transition: border-color 0.15s;
@@ -3348,7 +3368,7 @@ onUnmounted(() => {
 }
 
 .search-box svg {
-  color: #484f58;
+  color: #999;
 }
 
 .search-box input {
@@ -3357,11 +3377,11 @@ onUnmounted(() => {
   background: transparent;
   font-size: 0.8rem;
   outline: none;
-  color: #c9d1d9;
+  color: #333;
 }
 
 .search-box input::placeholder {
-  color: #484f58;
+  color: #999;
 }
 
 .products-grid {
@@ -3376,14 +3396,14 @@ onUnmounted(() => {
   overflow: hidden;
   cursor: pointer;
   transition: all 0.25s ease;
-  border: 1px solid rgba(255,255,255,0.06);
-  background: #21262d;
+  border: 1px solid #e5e5e5;
+  background: #fff;
 }
 
 .product-card:hover {
   transform: scale(1.04);
   border-color: rgba(124,58,237,0.3);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.35), 0 0 0 1px rgba(124,58,237,0.15);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1), 0 0 0 1px rgba(124,58,237,0.15);
 }
 
 .product-card img {
@@ -3433,25 +3453,25 @@ onUnmounted(() => {
   justify-content: center;
   gap: 0.4rem;
   padding: 1rem;
-  border: 2px dashed rgba(255,255,255,0.12);
+  border: 2px dashed #ddd;
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s;
-  background: rgba(255,255,255,0.03);
+  background: #fafafa;
 }
 
 .upload-zone:hover {
   border-color: #7c3aed;
-  background: rgba(124,58,237,0.06);
+  background: rgba(124,58,237,0.04);
 }
 
 .upload-zone svg {
-  color: #484f58;
+  color: #999;
 }
 
 .upload-zone span {
   font-size: 0.72rem;
-  color: #8b949e;
+  color: #888;
 }
 
 /* Text Tools */
@@ -3464,17 +3484,24 @@ onUnmounted(() => {
 .font-select {
   width: 100%;
   padding: 0.4rem 0.5rem;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 6px;
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 0;
   font-size: 0.78rem;
-  background: #21262d;
-  color: #c9d1d9;
+  background: transparent;
+  color: #333;
   cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.font-select:focus {
+  border-bottom-color: #7c3aed;
 }
 
 .font-select option {
-  background: #21262d;
-  color: #c9d1d9;
+  background: #fff;
+  color: #333;
 }
 
 .text-size-row {
@@ -3486,17 +3513,24 @@ onUnmounted(() => {
 .size-input {
   width: 55px;
   padding: 0.35rem;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 6px;
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 0;
   font-size: 0.78rem;
   text-align: center;
-  background: #21262d;
-  color: #c9d1d9;
+  background: transparent;
+  color: #333;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.size-input:focus {
+  border-bottom-color: #7c3aed;
 }
 
 .text-size-row span {
   font-size: 0.72rem;
-  color: #8b949e;
+  color: #888;
 }
 
 .text-colors {
@@ -3511,7 +3545,7 @@ onUnmounted(() => {
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+  box-shadow: none;
   transition: all 0.2s;
 }
 
@@ -3523,9 +3557,9 @@ onUnmounted(() => {
 
 .add-text-btn {
   padding: 0.5rem;
-  background: rgba(124,58,237,0.15);
-  color: #a78bfa;
-  border: 1px solid rgba(124,58,237,0.25);
+  background: rgba(124,58,237,0.08);
+  color: #7c3aed;
+  border: 1px solid rgba(124,58,237,0.2);
   border-radius: 8px;
   font-size: 0.78rem;
   font-weight: 500;
@@ -3534,9 +3568,9 @@ onUnmounted(() => {
 }
 
 .add-text-btn:hover {
-  background: rgba(124,58,237,0.25);
-  border-color: rgba(124,58,237,0.4);
-  color: #c4b5fd;
+  background: rgba(124,58,237,0.15);
+  border-color: rgba(124,58,237,0.35);
+  color: #6d28d9;
 }
 
 /* Templates Grid */
@@ -3552,11 +3586,11 @@ onUnmounted(() => {
   overflow: hidden;
   border: 2px solid transparent;
   transition: all 0.2s;
-  background: #21262d;
+  background: #fff;
 }
 
 .template-card:hover {
-  border-color: rgba(255,255,255,0.15);
+  border-color: #ccc;
   transform: scale(1.03);
 }
 
@@ -3571,8 +3605,8 @@ onUnmounted(() => {
   font-size: 0.62rem;
   font-weight: 500;
   padding: 0.2rem;
-  background: #30363d;
-  color: #8b949e;
+  background: #f5f5f5;
+  color: #666;
 }
 
 /* Canvas Text Elements */
@@ -3615,7 +3649,7 @@ onUnmounted(() => {
   display: flex;
   gap: 3px;
   margin-bottom: 0.6rem;
-  background: #21262d;
+  background: #f0f0f0;
   border-radius: 8px;
   padding: 3px;
 }
@@ -3629,21 +3663,21 @@ onUnmounted(() => {
   font-family: 'Inter', sans-serif;
   font-size: 0.72rem;
   font-weight: 500;
-  color: #484f58;
+  color: #888;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .pp-tab.active {
-  background: #30363d;
-  color: #f0f6fc;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  background: #fff;
+  color: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .pp-empty {
   text-align: center;
   padding: 2rem 0.5rem;
-  color: #484f58;
+  color: #999;
   font-size: 0.78rem;
 }
 
@@ -3653,7 +3687,7 @@ onUnmounted(() => {
 
 .pp-link {
   font-size: 0.72rem;
-  color: #a78bfa;
+  color: #7c3aed;
   font-weight: 500;
   text-decoration: underline;
 }
@@ -3671,13 +3705,13 @@ onUnmounted(() => {
 
 .backgrounds-panel::-webkit-scrollbar-thumb,
 .products-panel::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.08);
   border-radius: 4px;
 }
 
 .backgrounds-panel::-webkit-scrollbar-thumb:hover,
 .products-panel::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.15);
 }
 
 /* Notification Toast */
@@ -3717,5 +3751,18 @@ onUnmounted(() => {
 .toast-leave-to {
   opacity: 0;
   transform: translateX(-50%) translateY(-20px);
+}
+
+/* Chip Fade Transition */
+.chip-fade-enter-active {
+  transition: all 0.4s ease;
+}
+.chip-fade-leave-active {
+  transition: all 0.25s ease;
+}
+.chip-fade-enter-from,
+.chip-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 </style>
