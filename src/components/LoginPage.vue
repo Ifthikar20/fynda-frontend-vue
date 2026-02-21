@@ -81,7 +81,7 @@
     <div class="login-right">
       <div class="hero-image-container">
         <img 
-          src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=800&q=80" 
+          src="../assets/signin-hero.png" 
           alt="Fashion" 
           class="hero-image"
         />
