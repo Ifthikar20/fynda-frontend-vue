@@ -367,6 +367,22 @@
               ref="textInputRef"
             />
             <span class="item-remove" @mousedown.stop @click="removeTextElement(text.id)">×</span>
+            <!-- Floating Text Toolbar -->
+            <div v-if="selectedItem === text.id && !text.editing" class="text-floating-toolbar" @mousedown.stop>
+              <select :value="text.fontFamily" @change="text.fontFamily = $event.target.value" class="toolbar-font-select">
+                <option v-for="font in classicalFonts" :key="font.value" :value="font.value">{{ font.name }}</option>
+              </select>
+              <input type="number" :value="text.fontSize" @input="text.fontSize = Number($event.target.value)" min="12" max="120" class="toolbar-size-input" />
+              <div class="toolbar-colors">
+                <div 
+                  v-for="tc in textColors" :key="tc"
+                  class="toolbar-color-dot"
+                  :class="{ active: text.color === tc }"
+                  :style="{ background: tc }"
+                  @click="text.color = tc"
+                ></div>
+              </div>
+            </div>
           </div>
           
           <!-- Fabric Swatches and Color Chips on Canvas -->
@@ -568,7 +584,6 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../stores/authStore'
 import api from '../utils/api'
 import NavBar from './NavBar.vue'
-import { removeBackground as removeBgLib } from '@imgly/background-removal'
 
 const router = useRouter()
 const route = useRoute()
@@ -714,6 +729,12 @@ const stickers = ref([
   { id: 'f6', type: 'fabric', name: 'Wool Camel', color: '#c9a86c', texture: 'wool', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=200&q=80&fit=crop' },
   { id: 'f7', type: 'fabric', name: 'Leather Brown', color: '#8B4513', texture: 'leather', image: 'https://images.unsplash.com/photo-1531310197839-ccf54634509e?w=200&q=80&fit=crop' },
   { id: 'f8', type: 'fabric', name: 'Cotton White', color: '#f5f5f5', texture: 'cotton', image: 'https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?w=200&q=80&fit=crop' },
+  { id: 'f9', type: 'fabric', name: 'Organza Blush', color: '#f5d5d5', texture: 'organza', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=200&q=80&fit=crop' },
+  { id: 'f10', type: 'fabric', name: 'Chiffon Ivory', color: '#f8f0e3', texture: 'chiffon', image: 'https://images.unsplash.com/photo-1553531384-397c80973a0b?w=200&q=80&fit=crop' },
+  { id: 'f11', type: 'fabric', name: 'Cashmere Oat', color: '#d4c5a9', texture: 'cashmere', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=200&q=80&fit=crop' },
+  { id: 'f12', type: 'fabric', name: 'Suede Tan', color: '#c4a882', texture: 'suede', image: 'https://images.unsplash.com/photo-1531310197839-ccf54634509e?w=200&q=80&fit=crop' },
+  { id: 'f13', type: 'fabric', name: 'Satin Rose', color: '#e8a0b0', texture: 'satin', image: 'https://images.unsplash.com/photo-1553531384-397c80973a0b?w=200&q=80&fit=crop' },
+  { id: 'f14', type: 'fabric', name: 'Jersey Charcoal', color: '#4a4a4a', texture: 'jersey', image: 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=200&q=80&fit=crop' },
   // Pantone Color Chips
   { id: 'p1', type: 'pantone', name: 'Cool Gray', color: '#8b8b8b', code: '423 C' },
   { id: 'p2', type: 'pantone', name: 'Coral', color: '#ff6f61', code: '16-1546' },
@@ -1344,31 +1365,38 @@ const addDecoration = (deco) => {
   })
 }
 
-// Background Removal
+// Background Removal — server-side via API (no UI freeze)
 const removeBackground = async (item) => {
   if (item.removingBg) return
   item.removingBg = true
   
   try {
-    const blob = await removeBgLib(item.image_url, {
-      progress: (key, current, total) => {
-        // Progress callback — could be used for progress bar
-      }
+    // Fetch the image and convert to a File/Blob
+    const response = await fetch(item.image_url)
+    const imageBlob = await response.blob()
+    
+    // Build FormData for the API
+    const formData = new FormData()
+    formData.append('image', imageBlob, 'image.png')
+    
+    // Call the server-side bg removal endpoint
+    const result = await api.post('/api/mobile/tools/remove-bg/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000 // 60s timeout for large images
     })
     
-    // Convert blob to data URL
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      item.image_url = e.target.result
-      item.removingBg = false
+    if (result.data && result.data.image_base64) {
+      item.image_url = `data:image/png;base64,${result.data.image_base64}`
       item.bgRemoved = true
       showNotification('Background removed!')
+    } else {
+      showNotification('Background removal failed.')
     }
-    reader.readAsDataURL(blob)
   } catch (err) {
     console.error('Background removal failed:', err)
+    showNotification('Background removal failed. Try again.')
+  } finally {
     item.removingBg = false
-    showNotification('Background removal failed. Try a different image.')
   }
 }
 
@@ -3628,6 +3656,77 @@ onUnmounted(() => {
 
 .canvas-text:hover .item-remove {
   opacity: 1;
+}
+
+/* Floating Text Toolbar */
+.text-floating-toolbar {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  white-space: nowrap;
+  z-index: 200;
+  animation: toolbarSlideIn 0.2s ease;
+}
+
+@keyframes toolbarSlideIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.toolbar-font-select {
+  padding: 3px 4px;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  background: transparent;
+  font-size: 11px;
+  color: #333;
+  cursor: pointer;
+  outline: none;
+  max-width: 100px;
+}
+
+.toolbar-size-input {
+  width: 38px;
+  padding: 3px;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  background: transparent;
+  font-size: 11px;
+  text-align: center;
+  color: #333;
+  outline: none;
+}
+
+.toolbar-colors {
+  display: flex;
+  gap: 3px;
+}
+
+.toolbar-color-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.toolbar-color-dot:hover {
+  transform: scale(1.2);
+}
+
+.toolbar-color-dot.active {
+  border-color: #7c3aed;
+  transform: scale(1.15);
 }
 
 .text-edit-input {
