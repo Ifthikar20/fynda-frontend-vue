@@ -2,7 +2,7 @@
  * Blog Service - API calls for blog functionality
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://api.fynda.shop';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.outfi.ai';
 
 export const blogService = {
     /**

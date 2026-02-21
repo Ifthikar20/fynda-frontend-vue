@@ -49,12 +49,11 @@ const routes = [
     {
         path: '/explore',
         name: 'Explore',
-        component: FeedPage,
+        component: ExplorePage,
     },
     {
         path: '/deals',
-        name: 'FindDeals',
-        component: ExplorePage,
+        redirect: '/explore'
     },
     {
         path: '/explore/:category',

@@ -7,7 +7,6 @@
       
       <div class="nav-links">
         <router-link to="/explore" class="nav-link">Explore</router-link>
-        <router-link to="/deals" class="nav-link">Find Deals</router-link>
       </div>
       
       <div class="nav-actions">
@@ -65,7 +64,6 @@
     <!-- Mobile Menu -->
     <div :class="['mobile-menu', { open: mobileMenuOpen }]">
       <router-link to="/explore" class="mobile-link" @click="mobileMenuOpen = false">Explore</router-link>
-      <router-link to="/deals" class="mobile-link" @click="mobileMenuOpen = false">Find Deals</router-link>
       <div class="mobile-divider"></div>
       <template v-if="isAuthenticated">
         <router-link to="/profile" class="mobile-link" @click="mobileMenuOpen = false">Profile</router-link>

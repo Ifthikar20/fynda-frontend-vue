@@ -81,7 +81,7 @@
               <li><strong>Edge:</strong> Settings → Privacy, Search, and Services → Cookies</li>
             </ul>
             <p>
-              Note: Disabling essential cookies may affect your ability to use Fynda.
+              Note: Disabling essential cookies may affect your ability to use Outfi.
             </p>
           </section>
           
@@ -98,7 +98,7 @@
             <p>
               Questions about cookies? Contact us at:
               <br />
-              <a href="mailto:privacy@fynda.com">privacy@fynda.com</a>
+              <a href="mailto:privacy@outfi.ai">privacy@outfi.ai</a>
             </p>
           </section>
         </div>

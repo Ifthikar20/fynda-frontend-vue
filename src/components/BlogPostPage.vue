@@ -107,7 +107,7 @@ export default {
     // Dynamic page title
     watch(post, (newPost) => {
       if (newPost) {
-        document.title = newPost.seo_title || `${newPost.title} | Fynda Blog`;
+        document.title = newPost.seo_title || `${newPost.title} | Outfi Blog`;
       }
     });
 

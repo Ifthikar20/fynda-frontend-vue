@@ -11,7 +11,7 @@
           <section class="content-section">
             <h2>Introduction</h2>
             <p>
-              At Fynda ("we", "our", or "us"), we take your privacy seriously. This Privacy Policy 
+              At Outfi ("we", "our", or "us"), we take your privacy seriously. This Privacy Policy 
               explains how we collect, use, disclose, and safeguard your information when you use 
               our website and mobile application.
             </p>
@@ -55,7 +55,7 @@
               We do not sell your personal information. We may share data with:
             </p>
             <ul>
-              <li>Service providers who help us operate Fynda</li>
+              <li>Service providers who help us operate Outfi</li>
               <li>Analytics partners (anonymized data only)</li>
               <li>Law enforcement when required by law</li>
             </ul>
@@ -96,7 +96,7 @@
             <p>
               For privacy-related questions, contact us at:
               <br />
-              <a href="mailto:privacy@fynda.com">privacy@fynda.com</a>
+              <a href="mailto:privacy@outfi.ai">privacy@outfi.ai</a>
             </p>
           </section>
         </div>
