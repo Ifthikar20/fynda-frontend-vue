@@ -12,7 +12,7 @@
         <div class="footer-links">
           <div class="link-group">
             <h4 class="link-title">Shop</h4>
-            <router-link to="/shop/women" class="link">Women</router-link>
+            <router-link to="/explore/for-her" class="link">Women</router-link>
             <router-link to="/home" class="link">Home</router-link>
           </div>
           
