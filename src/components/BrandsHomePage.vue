@@ -32,80 +32,53 @@
         </div>
       </section>
 
-      <!-- Search Results -->
-      <section v-if="hasSearched" class="results-section">
-        <div class="results-header">
-          <h2 class="results-title">Results for "{{ lastSearchQuery }}"</h2>
-          <span class="results-count">{{ searchResults.length }} items found</span>
-        </div>
+      <!-- Results info when searching -->
+      <div v-if="hasSearched" class="results-info">
+        <span class="results-label">Results for "{{ lastSearchQuery }}"</span>
+        <span class="results-count">{{ displayItems.length }} items</span>
+      </div>
 
-        <div v-if="searchLoading" class="inline-loading">
-          <div class="spinner"></div>
-          <p>Finding the best deals...</p>
-        </div>
+      <!-- Loading indicator for API search -->
+      <div v-if="searchLoading" class="inline-loading">
+        <div class="spinner"></div>
+        <p>Finding more deals...</p>
+      </div>
 
-        <div v-else-if="searchResults.length > 0" class="results-grid">
-          <div 
-            v-for="deal in searchResults" 
-            :key="deal.id" 
-            class="result-card"
-            @click="openDeal(deal)"
-          >
-            <div class="result-image">
-              <img :src="deal.image_url || deal.image" :alt="deal.title" loading="lazy" />
-              <span v-if="deal.discount_percent" class="discount-badge">{{ deal.discount_percent }}% off</span>
-            </div>
-            <div class="result-info">
-              <span class="result-brand">{{ (deal.merchant_name || deal.source || 'Brand').toUpperCase() }}</span>
-              <h3 class="result-title">{{ deal.title }}</h3>
-              <span class="result-price">${{ formatPrice(deal.price) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div v-else-if="!searchLoading" class="empty-state">
-          <h3>No results found</h3>
-          <p>Try a different search term</p>
-        </div>
-
-        <button class="back-btn" @click="clearSearch">← Back to Home</button>
-      </section>
-
-      <!-- Masonry Grid (hidden when showing search results) -->
-      <template v-if="!hasSearched">
-        <div class="masonry">
-          <div 
-            v-for="item in visibleItems" 
-            :key="item.id" 
-            class="pin"
-            @click="openItem(item)"
-          >
-            <div class="pin-img-wrap">
-              <img :src="item.image" :alt="item.title" class="pin-img" loading="lazy" />
-              <div class="pin-overlay">
-                <button class="save-btn" @click.stop="toggleSave(item)">
-                  {{ item.saved ? 'Saved' : 'Save' }}
-                </button>
-              </div>
-            </div>
-            <div class="pin-info">
-              <div class="pin-text">
-                <p class="pin-title">{{ item.title }}</p>
-                <span class="pin-source">{{ item.brand }}</span>
-              </div>
-              <button class="pin-menu" @click.stop>⋯</button>
+      <!-- Unified Masonry Grid (filtered items + API results) -->
+      <div class="masonry">
+        <div 
+          v-for="item in displayItems" 
+          :key="item.id" 
+          class="pin"
+          @click="openItem(item)"
+        >
+          <div class="pin-img-wrap">
+            <img :src="item.image || item.image_url" :alt="item.title" class="pin-img" loading="lazy" />
+            <div class="pin-overlay">
+              <button class="save-btn" @click.stop="toggleSave(item)">
+                {{ item.saved ? 'Saved' : 'Save' }}
+              </button>
             </div>
           </div>
+          <div class="pin-info">
+            <div class="pin-text">
+              <p class="pin-title">{{ item.title }}</p>
+              <span class="pin-source">{{ item.brand || item.merchant_name || item.source || '' }}</span>
+              <span v-if="item.price" class="pin-price">${{ formatPrice(item.price) }}</span>
+            </div>
+            <button class="pin-menu" @click.stop>⋯</button>
+          </div>
         </div>
+      </div>
 
-        <!-- Loading -->
-        <div v-if="loading" class="loading-state">
-          <div class="spinner"></div>
-        </div>
+      <!-- Empty state -->
+      <div v-if="hasSearched && !searchLoading && displayItems.length === 0" class="empty-state">
+        <h3>No results found</h3>
+        <p>Try a different search term</p>
+      </div>
 
-        <!-- Load More Sentinel -->
-        <div ref="sentinel" class="sentinel"></div>
-      </template>
+      <!-- Load More Sentinel -->
+      <div ref="sentinel" class="sentinel"></div>
     </main>
   </div>
 </template>
@@ -122,7 +95,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 // Search state
 const searchQuery = ref('')
 const lastSearchQuery = ref('')
-const searchResults = ref([])
+const apiResults = ref([])
 const searchLoading = ref(false)
 const hasSearched = ref(false)
 const isSearchFocused = ref(false)
@@ -132,45 +105,6 @@ const loading = ref(false)
 const sentinel = ref(null)
 const visibleCount = ref(40)
 let observer = null
-
-// Search functions
-const handleSearch = async () => {
-  const q = searchQuery.value.trim()
-  if (!q) return
-
-  searchLoading.value = true
-  hasSearched.value = true
-  lastSearchQuery.value = q
-  searchResults.value = []
-
-  try {
-    const response = await fetch(`${API_URL}/api/search/?q=${encodeURIComponent(q)}`)
-    const data = await response.json()
-    searchResults.value = data.results || data.deals || []
-  } catch (e) {
-    console.error('Search failed:', e)
-  } finally {
-    searchLoading.value = false
-  }
-}
-
-const clearSearch = () => {
-  hasSearched.value = false
-  searchQuery.value = ''
-  lastSearchQuery.value = ''
-  searchResults.value = []
-}
-
-const openDeal = (deal) => {
-  if (deal.deal_url || deal.url) {
-    window.open(deal.deal_url || deal.url, '_blank')
-  }
-}
-
-const formatPrice = (price) => {
-  if (!price) return '0.00'
-  return parseFloat(price).toFixed(2)
-}
 
 // Curated brand items for the masonry grid
 const allItems = ref([
@@ -212,19 +146,107 @@ const allItems = ref([
   { id: 36, title: 'Cargo Joggers — Black', brand: 'Nike', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&q=80', saved: false, url: null },
 ])
 
-const visibleItems = computed(() => allItems.value.slice(0, visibleCount.value))
+// Filtered on-screen items based on search query
+const filteredLocalItems = computed(() => {
+  if (!hasSearched.value || !lastSearchQuery.value) {
+    return allItems.value.slice(0, visibleCount.value)
+  }
+  const q = lastSearchQuery.value.toLowerCase()
+  return allItems.value.filter(item => {
+    const title = (item.title || '').toLowerCase()
+    const brand = (item.brand || '').toLowerCase()
+    return title.includes(q) || brand.includes(q)
+  })
+})
+
+// Combine: filtered local items first, then API results (deduped)
+const displayItems = computed(() => {
+  if (!hasSearched.value) {
+    return allItems.value.slice(0, visibleCount.value)
+  }
+  // Merge local matches + API results, deduped by title
+  const seenTitles = new Set()
+  const merged = []
+  
+  // Local matches first
+  for (const item of filteredLocalItems.value) {
+    const key = item.title.toLowerCase()
+    if (!seenTitles.has(key)) {
+      seenTitles.add(key)
+      merged.push(item)
+    }
+  }
+  
+  // Then API results
+  for (const deal of apiResults.value) {
+    const key = (deal.title || '').toLowerCase()
+    if (!seenTitles.has(key)) {
+      seenTitles.add(key)
+      merged.push({
+        id: 'api-' + deal.id,
+        title: deal.title,
+        brand: deal.merchant_name || deal.source || 'Brand',
+        image: deal.image_url || deal.image,
+        image_url: deal.image_url || deal.image,
+        price: deal.price,
+        saved: false,
+        url: deal.deal_url || deal.url,
+        discount_percent: deal.discount_percent,
+      })
+    }
+  }
+  
+  return merged
+})
+
+// Search functions
+const handleSearch = async () => {
+  const q = searchQuery.value.trim()
+  if (!q) return
+
+  hasSearched.value = true
+  lastSearchQuery.value = q
+  searchLoading.value = true
+
+  try {
+    const response = await fetch(`${API_URL}/api/search/?q=${encodeURIComponent(q)}`)
+    const data = await response.json()
+    apiResults.value = data.results || data.deals || []
+  } catch (e) {
+    console.error('Search failed:', e)
+  } finally {
+    searchLoading.value = false
+  }
+}
+
+const clearSearch = () => {
+  hasSearched.value = false
+  searchQuery.value = ''
+  lastSearchQuery.value = ''
+  apiResults.value = []
+}
 
 const openItem = (item) => {
   if (item.url) {
     window.open(item.url, '_blank')
   } else {
-    // Search for similar items on the homepage
     router.push(`/?q=${encodeURIComponent(item.title)}`)
+  }
+}
+
+const openDeal = (deal) => {
+  if (deal.deal_url || deal.url) {
+    window.open(deal.deal_url || deal.url, '_blank')
   }
 }
 
 const toggleSave = (item) => {
   item.saved = !item.saved
+}
+
+const formatPrice = (price) => {
+  if (!price) return '0.00'
+  return parseFloat(price).toFixed(2)
 }
 
 const setupInfiniteScroll = () => {
@@ -262,7 +284,7 @@ onUnmounted(() => {
 /* Search Bar */
 .search-section {
   max-width: 640px;
-  margin: 0 auto 24px;
+  margin: 0 auto 20px;
   padding: 0 8px;
 }
 
@@ -347,124 +369,43 @@ onUnmounted(() => {
   background: #333;
 }
 
-/* Search Results */
-.results-section {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 16px;
-}
-
-.results-header {
+/* Results info bar */
+.results-info {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 1.25rem;
+  max-width: 1800px;
+  margin: 0 auto 12px;
+  padding: 0 8px;
 }
 
-.results-title {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1.5rem;
-  font-weight: 400;
+.results-label {
+  font-size: 0.88rem;
+  font-weight: 600;
   color: #1a1a1a;
 }
 
 .results-count {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: #999;
 }
 
-.results-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.result-card {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #eee;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.result-card:hover {
-  border-color: #ddd;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.07);
-  transform: translateY(-3px);
-}
-
-.result-image {
-  position: relative;
-  aspect-ratio: 3/4;
-  overflow: hidden;
-  background: #f8f8f8;
-}
-
-.result-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
-
-.result-card:hover .result-image img {
-  transform: scale(1.05);
-}
-
-.discount-badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  padding: 3px 8px;
-  background: #ef4444;
-  color: #fff;
-  font-size: 0.68rem;
-  font-weight: 700;
-  border-radius: 6px;
-}
-
-.result-info {
-  padding: 0.85rem 1rem;
-}
-
-.result-brand {
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: #999;
-}
-
-.result-title {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #1a1a1a;
-  margin: 0.25rem 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.result-price {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #1a1a1a;
-}
-
+/* Loading */
 .inline-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
+  padding: 2rem;
   color: #999;
 }
 
 .inline-loading p {
-  margin-top: 1rem;
-  font-size: 0.9rem;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
 }
 
+/* Empty state */
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
@@ -472,33 +413,14 @@ onUnmounted(() => {
 }
 
 .empty-state h3 {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1.3rem;
-  font-weight: 400;
+  font-size: 1.1rem;
+  font-weight: 500;
   color: #666;
   margin-bottom: 0.5rem;
 }
 
 .empty-state p {
   font-size: 0.85rem;
-}
-
-.back-btn {
-  display: block;
-  margin: 2rem auto 0;
-  padding: 10px 24px;
-  background: transparent;
-  border: 1px solid #ddd;
-  border-radius: 100px;
-  font-size: 0.82rem;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.back-btn:hover {
-  border-color: #000;
-  color: #000;
 }
 
 /* Pinterest Masonry */
@@ -591,6 +513,15 @@ onUnmounted(() => {
 .pin-source {
   font-size: 0.75rem;
   color: #767676;
+  display: block;
+}
+
+.pin-price {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  display: block;
+  margin-top: 2px;
 }
 
 .pin-menu {
@@ -641,16 +572,7 @@ onUnmounted(() => {
 
 /* Responsive columns */
 @media (max-width: 1600px) { .masonry { columns: 5; } }
-@media (max-width: 1200px) {
-  .masonry { columns: 4; }
-  .results-grid { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 900px) {
-  .masonry { columns: 3; }
-  .results-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 600px) {
-  .masonry { columns: 2; column-gap: 8px; }
-  .results-grid { grid-template-columns: 1fr; }
-}
+@media (max-width: 1200px) { .masonry { columns: 4; } }
+@media (max-width: 900px)  { .masonry { columns: 3; } }
+@media (max-width: 600px)  { .masonry { columns: 2; column-gap: 8px; } }
 </style>
