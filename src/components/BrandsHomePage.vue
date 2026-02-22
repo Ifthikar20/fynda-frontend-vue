@@ -3,39 +3,109 @@
     <NavBar />
 
     <main class="brands-content">
-      <!-- Masonry Grid -->
-      <div class="masonry">
-        <div 
-          v-for="item in visibleItems" 
-          :key="item.id" 
-          class="pin"
-          @click="openItem(item)"
-        >
-          <div class="pin-img-wrap">
-            <img :src="item.image" :alt="item.title" class="pin-img" loading="lazy" />
-            <div class="pin-overlay">
-              <button class="save-btn" @click.stop="toggleSave(item)">
-                {{ item.saved ? 'Saved' : 'Save' }}
-              </button>
+      <!-- Search Bar -->
+      <section class="search-section">
+        <div class="search-container">
+          <div class="search-box" :class="{ focused: isSearchFocused }">
+            <div class="search-icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
             </div>
-          </div>
-          <div class="pin-info">
-            <div class="pin-text">
-              <p class="pin-title">{{ item.title }}</p>
-              <span class="pin-source">{{ item.brand }}</span>
-            </div>
-            <button class="pin-menu" @click.stop>⋯</button>
+            <input 
+              type="text" 
+              class="search-input"
+              v-model="searchQuery"
+              @keyup.enter="handleSearch"
+              @focus="isSearchFocused = true"
+              @blur="isSearchFocused = false"
+              placeholder="Search for products, brands, styles..."
+            />
+            <button v-if="searchQuery" class="clear-btn" @click="clearSearch">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+            <button class="search-btn" @click="handleSearch">Search</button>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Loading -->
-      <div v-if="loading" class="loading-state">
-        <div class="spinner"></div>
-      </div>
+      <!-- Search Results -->
+      <section v-if="hasSearched" class="results-section">
+        <div class="results-header">
+          <h2 class="results-title">Results for "{{ lastSearchQuery }}"</h2>
+          <span class="results-count">{{ searchResults.length }} items found</span>
+        </div>
 
-      <!-- Load More Sentinel -->
-      <div ref="sentinel" class="sentinel"></div>
+        <div v-if="searchLoading" class="inline-loading">
+          <div class="spinner"></div>
+          <p>Finding the best deals...</p>
+        </div>
+
+        <div v-else-if="searchResults.length > 0" class="results-grid">
+          <div 
+            v-for="deal in searchResults" 
+            :key="deal.id" 
+            class="result-card"
+            @click="openDeal(deal)"
+          >
+            <div class="result-image">
+              <img :src="deal.image_url || deal.image" :alt="deal.title" loading="lazy" />
+              <span v-if="deal.discount_percent" class="discount-badge">{{ deal.discount_percent }}% off</span>
+            </div>
+            <div class="result-info">
+              <span class="result-brand">{{ (deal.merchant_name || deal.source || 'Brand').toUpperCase() }}</span>
+              <h3 class="result-title">{{ deal.title }}</h3>
+              <span class="result-price">${{ formatPrice(deal.price) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="!searchLoading" class="empty-state">
+          <h3>No results found</h3>
+          <p>Try a different search term</p>
+        </div>
+
+        <button class="back-btn" @click="clearSearch">← Back to Home</button>
+      </section>
+
+      <!-- Masonry Grid (hidden when showing search results) -->
+      <template v-if="!hasSearched">
+        <div class="masonry">
+          <div 
+            v-for="item in visibleItems" 
+            :key="item.id" 
+            class="pin"
+            @click="openItem(item)"
+          >
+            <div class="pin-img-wrap">
+              <img :src="item.image" :alt="item.title" class="pin-img" loading="lazy" />
+              <div class="pin-overlay">
+                <button class="save-btn" @click.stop="toggleSave(item)">
+                  {{ item.saved ? 'Saved' : 'Save' }}
+                </button>
+              </div>
+            </div>
+            <div class="pin-info">
+              <div class="pin-text">
+                <p class="pin-title">{{ item.title }}</p>
+                <span class="pin-source">{{ item.brand }}</span>
+              </div>
+              <button class="pin-menu" @click.stop>⋯</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div v-if="loading" class="loading-state">
+          <div class="spinner"></div>
+        </div>
+
+        <!-- Load More Sentinel -->
+        <div ref="sentinel" class="sentinel"></div>
+      </template>
     </main>
   </div>
 </template>
@@ -47,10 +117,60 @@ import { useRouter } from 'vue-router'
 import NavBar from './NavBar.vue'
 
 const router = useRouter()
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+
+// Search state
+const searchQuery = ref('')
+const lastSearchQuery = ref('')
+const searchResults = ref([])
+const searchLoading = ref(false)
+const hasSearched = ref(false)
+const isSearchFocused = ref(false)
+
+// Masonry state
 const loading = ref(false)
 const sentinel = ref(null)
 const visibleCount = ref(40)
 let observer = null
+
+// Search functions
+const handleSearch = async () => {
+  const q = searchQuery.value.trim()
+  if (!q) return
+
+  searchLoading.value = true
+  hasSearched.value = true
+  lastSearchQuery.value = q
+  searchResults.value = []
+
+  try {
+    const response = await fetch(`${API_URL}/api/search/?q=${encodeURIComponent(q)}`)
+    const data = await response.json()
+    searchResults.value = data.results || data.deals || []
+  } catch (e) {
+    console.error('Search failed:', e)
+  } finally {
+    searchLoading.value = false
+  }
+}
+
+const clearSearch = () => {
+  hasSearched.value = false
+  searchQuery.value = ''
+  lastSearchQuery.value = ''
+  searchResults.value = []
+}
+
+const openDeal = (deal) => {
+  if (deal.deal_url || deal.url) {
+    window.open(deal.deal_url || deal.url, '_blank')
+  }
+}
+
+const formatPrice = (price) => {
+  if (!price) return '0.00'
+  return parseFloat(price).toFixed(2)
+}
 
 // Curated brand items for the masonry grid
 const allItems = ref([
@@ -137,6 +257,248 @@ onUnmounted(() => {
 .brands-content {
   max-width: 100%;
   padding: 16px 8px 60px;
+}
+
+/* Search Bar */
+.search-section {
+  max-width: 640px;
+  margin: 0 auto 24px;
+  padding: 0 8px;
+}
+
+.search-container {
+  width: 100%;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 32px;
+  padding: 0.5rem 0.5rem 0.5rem 1.2rem;
+  min-height: 54px;
+  transition: all 0.2s ease;
+}
+
+.search-box.focused {
+  border-color: #000;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.search-icon-wrap {
+  color: #888;
+  margin-right: 0.6rem;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  color: #1a1a1a;
+  outline: none;
+  min-width: 0;
+  height: 40px;
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+.clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: #e8e8e8;
+  border-radius: 50%;
+  color: #666;
+  cursor: pointer;
+  margin-right: 0.4rem;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.clear-btn:hover {
+  background: #d4d4d4;
+}
+
+.search-btn {
+  padding: 0.6rem 1.3rem;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.search-btn:hover {
+  background: #333;
+}
+
+/* Search Results */
+.results-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.results-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.results-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #1a1a1a;
+}
+
+.results-count {
+  font-size: 0.82rem;
+  color: #999;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.result-card {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.result-card:hover {
+  border-color: #ddd;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+  transform: translateY(-3px);
+}
+
+.result-image {
+  position: relative;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  background: #f8f8f8;
+}
+
+.result-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.result-card:hover .result-image img {
+  transform: scale(1.05);
+}
+
+.discount-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 8px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 6px;
+}
+
+.result-info {
+  padding: 0.85rem 1rem;
+}
+
+.result-brand {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #999;
+}
+
+.result-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin: 0.25rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.result-price {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.inline-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: #999;
+}
+
+.inline-loading p {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #999;
+}
+
+.empty-state h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  font-size: 0.85rem;
+}
+
+.back-btn {
+  display: block;
+  margin: 2rem auto 0;
+  padding: 10px 24px;
+  background: transparent;
+  border: 1px solid #ddd;
+  border-radius: 100px;
+  font-size: 0.82rem;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  border-color: #000;
+  color: #000;
 }
 
 /* Pinterest Masonry */
@@ -279,7 +641,16 @@ onUnmounted(() => {
 
 /* Responsive columns */
 @media (max-width: 1600px) { .masonry { columns: 5; } }
-@media (max-width: 1200px) { .masonry { columns: 4; } }
-@media (max-width: 900px)  { .masonry { columns: 3; } }
-@media (max-width: 600px)  { .masonry { columns: 2; column-gap: 8px; } }
+@media (max-width: 1200px) {
+  .masonry { columns: 4; }
+  .results-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 900px) {
+  .masonry { columns: 3; }
+  .results-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .masonry { columns: 2; column-gap: 8px; }
+  .results-grid { grid-template-columns: 1fr; }
+}
 </style>
