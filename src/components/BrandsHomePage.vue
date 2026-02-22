@@ -80,7 +80,7 @@
 
 <script setup>
 defineOptions({ name: 'BrandsHomePage' })
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import NavBar from './NavBar.vue'
 
@@ -94,6 +94,7 @@ const apiResults = ref([])
 const searchLoading = ref(false)
 const hasSearched = ref(false)
 const isSearchFocused = ref(false)
+let debounceTimer = null
 
 // Masonry state
 const loading = ref(false)
@@ -141,12 +142,12 @@ const allItems = ref([
   { id: 36, title: 'Cargo Joggers — Black', brand: 'Nike', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&q=80', saved: false, url: null },
 ])
 
-// Filtered on-screen items based on search query
+// Filtered on-screen items based on search query (live as you type)
 const filteredLocalItems = computed(() => {
-  if (!hasSearched.value || !lastSearchQuery.value) {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) {
     return allItems.value.slice(0, visibleCount.value)
   }
-  const q = lastSearchQuery.value.toLowerCase()
   return allItems.value.filter(item => {
     const title = (item.title || '').toLowerCase()
     const brand = (item.brand || '').toLowerCase()
@@ -156,7 +157,8 @@ const filteredLocalItems = computed(() => {
 
 // Combine: filtered local items first, then API results (deduped)
 const displayItems = computed(() => {
-  if (!hasSearched.value) {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) {
     return allItems.value.slice(0, visibleCount.value)
   }
   // Merge local matches + API results, deduped by title
@@ -194,11 +196,49 @@ const displayItems = computed(() => {
   return merged
 })
 
-// Search functions
+// Watch searchQuery for live filtering + debounced API call
+watch(searchQuery, (val) => {
+  const q = val.trim()
+  if (!q) {
+    // Cleared — reset everything
+    hasSearched.value = false
+    lastSearchQuery.value = ''
+    apiResults.value = []
+    searchLoading.value = false
+    if (debounceTimer) clearTimeout(debounceTimer)
+    return
+  }
+  
+  hasSearched.value = true
+  lastSearchQuery.value = q
+  
+  // Debounce API call (500ms after user stops typing)
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(async () => {
+    searchLoading.value = true
+    try {
+      const response = await fetch(`${API_URL}/api/search/?q=${encodeURIComponent(q)}`)
+      const data = await response.json()
+      // Only update if query hasn't changed while we were fetching
+      if (searchQuery.value.trim() === q) {
+        apiResults.value = data.results || data.deals || []
+      }
+    } catch (e) {
+      console.error('Search failed:', e)
+    } finally {
+      if (searchQuery.value.trim() === q) {
+        searchLoading.value = false
+      }
+    }
+  }, 500)
+})
+
+// Manual search (Enter key or button click) — fires immediately
 const handleSearch = async () => {
   const q = searchQuery.value.trim()
   if (!q) return
-
+  
+  if (debounceTimer) clearTimeout(debounceTimer)
   hasSearched.value = true
   lastSearchQuery.value = q
   searchLoading.value = true
@@ -215,8 +255,8 @@ const handleSearch = async () => {
 }
 
 const clearSearch = () => {
-  hasSearched.value = false
   searchQuery.value = ''
+  hasSearched.value = false
   lastSearchQuery.value = ''
   apiResults.value = []
 }
