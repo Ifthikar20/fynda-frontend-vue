@@ -53,7 +53,7 @@
           <h2>Still need help?</h2>
           <p>Our support team is here to assist you.</p>
           <div class="support-options">
-            <a href="mailto:support@fynda.com" class="support-card">
+            <a href="mailto:support@outfi.ai" class="support-card">
               <div class="support-icon">📧</div>
               <h3>Email Support</h3>
               <p>Get a response within 24 hours</p>

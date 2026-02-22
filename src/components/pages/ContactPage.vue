@@ -52,27 +52,27 @@
               <div class="info-icon">📧</div>
               <h3>Email</h3>
               <p>General inquiries</p>
-              <a href="mailto:hello@fynda.com">hello@fynda.com</a>
+              <a href="mailto:hello@outfi.ai">hello@outfi.ai</a>
             </div>
             
             <div class="info-card">
               <div class="info-icon">🛟</div>
               <h3>Support</h3>
               <p>Need help?</p>
-              <a href="mailto:support@fynda.com">support@fynda.com</a>
+              <a href="mailto:support@outfi.ai">support@outfi.ai</a>
             </div>
             
             <div class="info-card">
               <div class="info-icon">📰</div>
               <h3>Press</h3>
               <p>Media inquiries</p>
-              <a href="mailto:press@fynda.com">press@fynda.com</a>
+              <a href="mailto:press@outfi.ai">press@outfi.ai</a>
             </div>
             
             <div class="social-section">
               <h3>Follow Us</h3>
               <div class="social-links">
-                <a href="https://instagram.com/fynda" target="_blank" class="social-link">
+                <a href="https://instagram.com/outfi.ai" target="_blank" class="social-link">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="currentColor" stroke-width="2" fill="none"/>
                     <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -80,19 +80,19 @@
                   </svg>
                   Instagram
                 </a>
-                <a href="https://twitter.com/fynda" target="_blank" class="social-link">
+                <a href="https://twitter.com/outfi_ai" target="_blank" class="social-link">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/>
                   </svg>
                   Twitter
                 </a>
-                <a href="https://tiktok.com/@fynda" target="_blank" class="social-link">
+                <a href="https://tiktok.com/@outfi.ai" target="_blank" class="social-link">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
                   </svg>
                   TikTok
                 </a>
-                <a href="https://pinterest.com/fynda" target="_blank" class="social-link">
+                <a href="https://pinterest.com/outfiai" target="_blank" class="social-link">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.632-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z"/>
                   </svg>

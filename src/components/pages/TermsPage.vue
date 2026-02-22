@@ -11,7 +11,7 @@
           <section class="content-section">
             <h2>1. Acceptance of Terms</h2>
             <p>
-              By accessing or using Fynda ("Service"), you agree to be bound by these Terms of Service. 
+              By accessing or using Outfi ("Service"), you agree to be bound by these Terms of Service. 
               If you disagree with any part of these terms, you may not access the Service.
             </p>
           </section>
@@ -19,7 +19,7 @@
           <section class="content-section">
             <h2>2. Description of Service</h2>
             <p>
-              Fynda is a deal aggregation platform that helps users find products across multiple 
+              Outfi is a deal aggregation platform that helps users find products across multiple 
               online marketplaces. We do not sell products directly; we redirect users to third-party 
               retailers where purchases are made.
             </p>
@@ -62,7 +62,7 @@
           <section class="content-section">
             <h2>6. Intellectual Property</h2>
             <p>
-              The Service and its original content, features, and functionality are owned by Fynda 
+              The Service and its original content, features, and functionality are owned by Outfi 
               and are protected by international copyright, trademark, and other intellectual property laws.
             </p>
           </section>
@@ -79,7 +79,7 @@
           <section class="content-section">
             <h2>8. Limitation of Liability</h2>
             <p>
-              Fynda shall not be liable for any indirect, incidental, special, consequential, or 
+              Outfi shall not be liable for any indirect, incidental, special, consequential, or 
               punitive damages arising from your use of the Service.
             </p>
           </section>
@@ -105,7 +105,7 @@
             <p>
               Questions about these Terms? Contact us at:
               <br />
-              <a href="mailto:legal@fynda.com">legal@fynda.com</a>
+              <a href="mailto:legal@outfi.ai">legal@outfi.ai</a>
             </p>
           </section>
         </div>

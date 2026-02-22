@@ -18,7 +18,7 @@
         <div v-if="!aiMode || chatMessages.length === 0" class="hero-rotating">
           <transition name="hero-fade" mode="out-in">
             <h1 class="hero-title" :class="{ 'hero-title-small': aiMode }" :key="heroPhrase">
-              {{ aiMode ? 'Ask Fynda anything' : heroPhrase }}
+              {{ aiMode ? 'Ask Outfi anything' : heroPhrase }}
             </h1>
           </transition>
         </div>
@@ -304,7 +304,7 @@
             <div class="footer-column">
               <h4>Company</h4>
               <router-link to="/about">About Us</router-link>
-              <a href="https://blog.fynda.com" target="_blank" rel="noopener">Blog</a>
+              <a href="https://blog.outfi.ai" target="_blank" rel="noopener">Blog</a>
             </div>
             
             <div class="footer-column">
@@ -317,10 +317,10 @@
             
             <div class="footer-column">
               <h4>Connect</h4>
-              <a href="https://instagram.com/fynda" target="_blank" rel="noopener">Instagram</a>
-              <a href="https://twitter.com/fynda" target="_blank" rel="noopener">Twitter</a>
-              <a href="https://tiktok.com/@fynda" target="_blank" rel="noopener">TikTok</a>
-              <a href="https://pinterest.com/fynda" target="_blank" rel="noopener">Pinterest</a>
+              <a href="https://instagram.com/outfi.ai" target="_blank" rel="noopener">Instagram</a>
+              <a href="https://twitter.com/outfi_ai" target="_blank" rel="noopener">Twitter</a>
+              <a href="https://tiktok.com/@outfi.ai" target="_blank" rel="noopener">TikTok</a>
+              <a href="https://pinterest.com/outfiai" target="_blank" rel="noopener">Pinterest</a>
             </div>
           </div>
         </div>
@@ -949,8 +949,8 @@ const handleSearch = async () => {
           price: p.price,
           original_price: p.original_price || null,
           image_url: p.image_url,
-          source: p.source || 'Fynda',
-          merchant_name: p.merchant_name || p.source || 'Fynda',
+          source: p.source || 'Outfi',
+          merchant_name: p.merchant_name || p.source || 'Outfi',
           url: p.url,
           rating: p.rating || null,
           reviews: p.reviews_count || null,
@@ -1027,8 +1027,8 @@ const handleSearch = async () => {
       price: p.price,
       original_price: p.original_price || null,
       image_url: p.image_url,
-      source: p.source || 'Fynda',
-      merchant_name: p.merchant_name || p.source || 'Fynda',
+      source: p.source || 'Outfi',
+      merchant_name: p.merchant_name || p.source || 'Outfi',
       url: p.url,
       rating: p.rating || null,
       reviews: p.reviews_count || null,

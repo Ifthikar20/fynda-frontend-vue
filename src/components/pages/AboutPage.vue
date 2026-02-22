@@ -10,7 +10,7 @@
           <section class="content-section">
             <h2>Our Mission</h2>
             <p>
-              Fynda is revolutionizing the way people discover deals online. Our AI-powered platform 
+              Outfi is revolutionizing the way people discover deals online. Our AI-powered platform 
               aggregates the best prices from major marketplaces and social media platforms, making 
               it effortless to find exactly what you're looking for at the best price.
             </p>
@@ -20,7 +20,7 @@
             <h2>The Problem We Solve</h2>
             <p>
               Shopping online means checking dozens of sites, missing flash sales, and never knowing 
-              if you're getting the best deal. Fynda changes that by bringing all deals to one place 
+              if you're getting the best deal. Outfi changes that by bringing all deals to one place 
               with real-time price tracking and AI-powered recommendations.
             </p>
           </section>
