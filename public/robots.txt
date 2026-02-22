@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://outfi.ai/sitemap.xml
+
+# Disallow admin and API endpoints
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+
+# Allow search engines to crawl these
+Allow: /blog/
+Allow: /explore/
+Allow: /home
+Allow: /explore/*
+
+# Crawl-delay for polite bots
+Crawl-delay: 1

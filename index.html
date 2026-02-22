@@ -1,24 +1,80 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/src/assets/fynda-png-1.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Outfi - Discover the Best Deals</title>
-    <meta name="description" content="Outfi helps you discover trending fashion and the best deals from everywhere." />
-    <meta name="keywords" content="deals, fashion, shopping, discounts, clothing, accessories" />
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="Outfi - Discover the Best Deals" />
-    <meta property="og:description" content="Discover trending fashion and deals from everywhere" />
-    <meta property="og:type" content="website" />
-    
-    <!-- Preconnect to Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/src/assets/fynda-png-1.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Outfi - Discover the Best Deals</title>
+  <meta name="description" content="Outfi helps you discover trending fashion and the best deals from everywhere." />
+  <meta name="keywords" content="deals, fashion, shopping, discounts, clothing, accessories, outfi" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Outfi - Discover the Best Deals" />
+  <meta property="og:description" content="Discover trending fashion and deals from everywhere" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://outfi.ai" />
+  <meta property="og:site_name" content="Outfi" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@outfi_ai" />
+  <meta name="twitter:title" content="Outfi - Discover the Best Deals" />
+  <meta name="twitter:description" content="Discover trending fashion and deals from everywhere" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://outfi.ai" />
+
+  <!-- Google Analytics (GA4) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+
+  <!-- Structured Data - Organization -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Outfi",
+      "url": "https://outfi.ai",
+      "logo": "https://outfi.ai/assets/outfi-logo-CAvIhvL2.png",
+      "sameAs": [
+        "https://instagram.com/outfi.ai",
+        "https://twitter.com/outfi_ai",
+        "https://tiktok.com/@outfi.ai",
+        "https://pinterest.com/outfiai"
+      ],
+      "description": "Outfi helps you discover trending fashion and the best deals from everywhere."
+    }
+    </script>
+
+  <!-- Structured Data - WebSite (enables Google Sitelinks Search) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Outfi",
+      "url": "https://outfi.ai",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://outfi.ai/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+  <!-- Preconnect to Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+
 </html>
