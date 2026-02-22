@@ -3,11 +3,11 @@
     <NavBar />
 
     <main class="brands-content">
-      <!-- Search Bar -->
-      <section class="search-section">
-        <div class="search-container">
-          <div class="search-box" :class="{ focused: isSearchFocused }">
-            <div class="search-icon-wrap">
+      <!-- Search Bar (same as main page) -->
+      <section class="search-hero">
+        <div class="ai-search-container">
+          <div class="ai-search-box">
+            <div class="ai-search-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"/>
                 <path d="m21 21-4.35-4.35"/>
@@ -15,18 +15,13 @@
             </div>
             <input 
               type="text" 
-              class="search-input"
+              class="ai-search-input"
               v-model="searchQuery"
               @keyup.enter="handleSearch"
               @focus="isSearchFocused = true"
               @blur="isSearchFocused = false"
               placeholder="Search for products, brands, styles..."
             />
-            <button v-if="searchQuery" class="clear-btn" @click="clearSearch">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 6L6 18M6 6l12 12"/>
-              </svg>
-            </button>
             <button class="search-btn" @click="handleSearch">Search</button>
           </div>
         </div>
@@ -281,88 +276,73 @@ onUnmounted(() => {
   padding: 16px 8px 60px;
 }
 
-/* Search Bar */
-.search-section {
+/* Search Bar — matches main page exactly */
+.search-hero {
   max-width: 640px;
   margin: 0 auto 20px;
   padding: 0 8px;
 }
 
-.search-container {
-  width: 100%;
+.ai-search-container {
+  max-width: 640px;
+  margin: 0 auto;
 }
 
-.search-box {
+.ai-search-box {
   display: flex;
   align-items: center;
   background: #fff;
   border: 2px solid #e0e0e0;
   border-radius: 32px;
-  padding: 0.5rem 0.5rem 0.5rem 1.2rem;
-  min-height: 54px;
+  padding: 0.6rem 0.6rem 0.6rem 1.5rem;
+  min-height: 62px;
   transition: all 0.2s ease;
+  position: relative;
 }
 
-.search-box.focused {
+.ai-search-box:focus-within {
   border-color: #000;
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
 
-.search-icon-wrap {
+.ai-search-icon {
   color: #888;
-  margin-right: 0.6rem;
+  margin-right: 0.75rem;
   flex-shrink: 0;
 }
 
-.search-input {
+.ai-search-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.ai-search-input {
   flex: 1;
   border: none;
   background: transparent;
   font-family: 'Inter', sans-serif;
-  font-size: 1rem;
+  font-size: 1.05rem;
   color: #1a1a1a;
   outline: none;
   min-width: 0;
-  height: 40px;
+  height: 44px;
 }
 
-.search-input::placeholder {
+.ai-search-input::placeholder {
   color: #999;
 }
 
-.clear-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  background: #e8e8e8;
-  border-radius: 50%;
-  color: #666;
-  cursor: pointer;
-  margin-right: 0.4rem;
-  flex-shrink: 0;
-  transition: background 0.2s;
-}
-
-.clear-btn:hover {
-  background: #d4d4d4;
-}
-
 .search-btn {
-  padding: 0.6rem 1.3rem;
+  padding: 0.75rem 1.5rem;
   background: #000;
   color: #fff;
   border: none;
   border-radius: 20px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
-  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
 .search-btn:hover {
