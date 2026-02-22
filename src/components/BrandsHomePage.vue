@@ -80,7 +80,14 @@
 defineOptions({ name: 'BrandsHomePage' })
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useSEO } from '../composables/useSEO'
 import NavBar from './NavBar.vue'
+
+useSEO({
+  title: 'Home — Discover Brands & Products',
+  description: 'Browse curated fashion brands, discover trending products, and search for styles you love. Find inspiration from top fashion brands in one place.',
+  keywords: 'fashion brands, discover products, curated fashion, brand discovery, trending brands, outfit inspiration',
+})
 
 const router = useRouter()
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'

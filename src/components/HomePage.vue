@@ -391,7 +391,14 @@ defineOptions({ name: 'HomePage' })
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../stores/authStore'
+import { useSEO } from '../composables/useSEO'
 import NavBar from './NavBar.vue'
+
+useSEO({
+  title: 'Fashion Deals & Trending Styles',
+  description: 'Discover the best fashion deals and trending styles. Search by image or text to find exactly what you\'re looking for at the best prices.',
+  keywords: 'fashion deals, clothing deals, trending styles, best prices, fashion search, outfit ideas, online shopping',
+})
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 

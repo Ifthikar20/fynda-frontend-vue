@@ -102,11 +102,21 @@
 defineOptions({ name: 'CategoryLandingPage' })
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useSEO } from '../composables/useSEO'
 import NavBar from './NavBar.vue'
 import Footer from './Footer.vue'
 
 const route = useRoute()
 const router = useRouter()
+
+// Dynamic SEO based on category
+const categorySlug = route.params.category || ''
+const categoryName = categorySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+useSEO({
+  title: `${categoryName} — Shop the Best Deals`,
+  description: `Shop the best ${categoryName.toLowerCase()} deals and discover trending styles. Find affordable fashion picks curated just for you.`,
+  keywords: `${categoryName.toLowerCase()}, fashion deals, ${categoryName.toLowerCase()} clothing, affordable ${categoryName.toLowerCase()}, shop ${categoryName.toLowerCase()}`,
+})
 const searchQuery = ref('')
 const searchFocused = ref(false)
 const hasSearched = ref(false)

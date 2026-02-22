@@ -148,8 +148,15 @@
 defineOptions({ name: 'ExplorePage' })
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useSEO } from '../composables/useSEO'
 import NavBar from './NavBar.vue'
 import Footer from './Footer.vue'
+
+useSEO({
+  title: 'Explore Fashion Collections & Curated Deals',
+  description: 'Explore curated fashion collections, trending categories, and handpicked deals. Find the perfect outfit for every occasion at the best prices.',
+  keywords: 'explore fashion, curated collections, fashion categories, women fashion, men fashion, accessories, trending deals',
+})
 
 const router = useRouter()
 
