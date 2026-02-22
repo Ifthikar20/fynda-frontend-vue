@@ -17,12 +17,10 @@
               type="text" 
               class="ai-search-input"
               v-model="searchQuery"
-              @keyup.enter="handleSearch"
               @focus="isSearchFocused = true"
               @blur="isSearchFocused = false"
               placeholder="Search for products, brands, styles..."
             />
-            <button class="search-btn" @click="handleSearch">Search</button>
           </div>
         </div>
       </section>
@@ -230,7 +228,7 @@ watch(searchQuery, (val) => {
         searchLoading.value = false
       }
     }
-  }, 500)
+  }, 1000)
 })
 
 // Manual search (Enter key or button click) — fires immediately
