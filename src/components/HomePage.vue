@@ -387,6 +387,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'HomePage' })
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../stores/authStore'

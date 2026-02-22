@@ -4,86 +4,6 @@
 
     <main class="explore-content">
 
-      <!-- Large Search Bar (same as HomePage) -->
-      <section class="search-section">
-        <div class="search-container">
-          <div class="search-box">
-            <div class="search-icon-wrap">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
-              </svg>
-            </div>
-            <input 
-              type="text" 
-              class="search-input"
-              v-model="searchQuery"
-              @keyup.enter="handleSearch"
-              @focus="isSearchFocused = true"
-              @blur="isSearchFocused = false"
-              :placeholder="'Search brands, styles, trends...'"
-            />
-            <button class="search-btn" @click="handleSearch">Search</button>
-          </div>
-
-          <!-- Quick Suggestions -->
-          <div v-if="!hasSearched" class="quick-suggestions">
-            <span class="suggestion-label">Try:</span>
-            <div class="suggestion-pills">
-              <button
-                v-for="suggestion in quickSuggestions"
-                :key="suggestion"
-                @click="searchSuggestion(suggestion)"
-              >
-                {{ suggestion }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Search Results -->
-      <section v-if="hasSearched" class="results-section">
-        <div class="results-header">
-          <h2 class="section-heading">Results for "{{ lastSearchQuery }}"</h2>
-          <span class="results-count">{{ searchResults.length }} items found</span>
-        </div>
-
-        <div v-if="searchLoading" class="inline-loading">
-          <div class="loading-spinner"></div>
-          <p>Finding the best deals...</p>
-        </div>
-
-        <div v-else-if="searchResults.length > 0" class="results-grid">
-          <div 
-            v-for="deal in searchResults" 
-            :key="deal.id" 
-            class="result-card"
-            @click="openDeal(deal)"
-          >
-            <div class="result-image">
-              <img :src="deal.image_url || deal.image" :alt="deal.title" loading="lazy" />
-              <span v-if="deal.discount_percent" class="discount-badge">{{ deal.discount_percent }}% off</span>
-            </div>
-            <div class="result-info">
-              <span class="result-brand">{{ (deal.merchant_name || deal.source || 'Brand').toUpperCase() }}</span>
-              <h3 class="result-title">{{ deal.title }}</h3>
-              <span class="result-price">${{ formatPrice(deal.price) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div v-else class="empty-state">
-          <h3>No results found</h3>
-          <p>Try a different search term</p>
-        </div>
-
-        <button v-if="hasSearched" class="back-to-explore" @click="clearSearch">← Back to Explore</button>
-      </section>
-
-      <!-- Curated Content (hidden when showing search results) -->
-      <template v-if="!hasSearched">
-
         <!-- Editor's Picks -->
         <section class="editors-section">
           <h2 class="section-heading">Editor's picks</h2>
@@ -218,8 +138,6 @@
           </div>
         </section>
 
-      </template>
-
     </main>
 
     <Footer />
@@ -227,6 +145,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'ExplorePage' })
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import NavBar from './NavBar.vue'

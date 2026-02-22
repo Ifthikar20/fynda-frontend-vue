@@ -99,6 +99,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'CategoryLandingPage' })
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import NavBar from './NavBar.vue'

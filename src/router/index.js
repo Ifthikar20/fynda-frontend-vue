@@ -10,6 +10,7 @@ import BrandPage from '../components/BrandPage.vue'
 import ComparePage from '../components/ComparePage.vue'
 import ClosetPage from '../components/ClosetPage.vue'
 import ExplorePage from '../components/ExplorePage.vue'
+import BrandsHomePage from '../components/BrandsHomePage.vue'
 import FeedPage from '../components/FeedPage.vue'
 import UserProfilePage from '../components/UserProfilePage.vue'
 import CategoryLandingPage from '../components/CategoryLandingPage.vue'
@@ -52,8 +53,17 @@ const routes = [
         component: ExplorePage,
     },
     {
+        path: '/home',
+        name: 'BrandsHome',
+        component: BrandsHomePage,
+    },
+    {
         path: '/deals',
         redirect: '/explore'
+    },
+    {
+        path: '/shop/home',
+        redirect: '/home'
     },
     {
         path: '/explore/:category',

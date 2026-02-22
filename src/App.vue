@@ -1,12 +1,25 @@
 <template>
-  <router-view />
+  <router-view v-slot="{ Component, route }">
+    <keep-alive :include="cachedPages">
+      <component :is="Component" :key="route.path" />
+    </keep-alive>
+  </router-view>
   <CookieConsent />
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import CookieConsent from './components/common/CookieConsent.vue'
 import { initAnalytics } from './services/analyticsService'
+
+// Pages whose state should be preserved when navigating back
+const cachedPages = ref([
+  'HomePage',
+  'ExplorePage',
+  'FeedPage',
+  'CategoryLandingPage',
+  'BrandsHomePage'
+])
 
 // Initialize analytics when app mounts
 onMounted(() => {
