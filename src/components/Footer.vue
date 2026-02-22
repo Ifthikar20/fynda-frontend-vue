@@ -12,20 +12,30 @@
         <div class="footer-links">
           <div class="link-group">
             <h4 class="link-title">Shop</h4>
-            <router-link to="/explore/for-her" class="link">Women</router-link>
-            <router-link to="/home" class="link">Home</router-link>
+            <router-link to="/explore" class="link">Explore Deals</router-link>
+            <router-link to="/explore/for-her" class="link">Women's Fashion</router-link>
+            <router-link to="/home" class="link">Brands & Products</router-link>
           </div>
           
           <div class="link-group">
+            <h4 class="link-title">Categories</h4>
+            <router-link to="/explore/dresses" class="link">Dresses</router-link>
+            <router-link to="/explore/jackets" class="link">Jackets & Coats</router-link>
+            <router-link to="/explore/sneakers" class="link">Sneakers</router-link>
+            <router-link to="/explore/bags" class="link">Bags & Accessories</router-link>
+            <router-link to="/explore/activewear" class="link">Activewear</router-link>
+          </div>
+
+          <div class="link-group">
             <h4 class="link-title">Company</h4>
-            <router-link to="/about" class="link">About Us</router-link>
-            <a href="https://blog.outfi.ai" class="link" target="_blank">Blog</a>
+            <router-link to="/about" class="link">About Outfi</router-link>
+            <a href="/blog/" class="link">Fashion Blog</a>
+            <router-link to="/contact" class="link">Contact Us</router-link>
           </div>
           
           <div class="link-group">
             <h4 class="link-title">Support</h4>
             <router-link to="/help" class="link">Help Center</router-link>
-            <router-link to="/contact" class="link">Contact Us</router-link>
             <router-link to="/privacy" class="link">Privacy Policy</router-link>
             <router-link to="/terms" class="link">Terms of Service</router-link>
           </div>
@@ -60,6 +70,11 @@
             </a>
           </div>
         </div>
+      </div>
+
+      <!-- SEO: Keyword-rich description for Google -->
+      <div class="footer-seo" aria-hidden="false">
+        <p>Outfi is an AI-powered fashion discovery platform helping you find the best deals on clothing, shoes, accessories, and more. Browse trending fashion from top brands, compare prices across marketplaces, and discover curated outfit inspiration. Shop dresses, jackets, sneakers, activewear, and designer styles at the lowest prices.</p>
       </div>
       
       <div class="footer-bottom">
@@ -172,6 +187,19 @@ const currentYear = computed(() => new Date().getFullYear())
 .copyright {
   font-size: 10px;
   color: #999;
+}
+
+.footer-seo {
+  padding: 14px 0 2px;
+  border-top: 1px solid #e8e8e8;
+  margin-top: 14px;
+}
+
+.footer-seo p {
+  font-size: 10px;
+  color: #aaa;
+  line-height: 1.6;
+  max-width: 800px;
 }
 
 .footer-legal {

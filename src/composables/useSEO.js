@@ -69,4 +69,37 @@ export function useSEO({
         document.head.appendChild(canonicalEl)
     }
     canonicalEl.setAttribute('href', canonicalUrl)
+
+    // BreadcrumbList JSON-LD
+    const path = window.location.pathname
+    const breadcrumbs = [{ name: 'Home', url: baseUrl }]
+
+    if (path !== '/') {
+        const segments = path.split('/').filter(Boolean)
+        let currentPath = ''
+        for (const segment of segments) {
+            currentPath += `/${segment}`
+            const name = segment.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+            breadcrumbs.push({ name, url: `${baseUrl}${currentPath}` })
+        }
+    }
+
+    // Remove old breadcrumb script if exists
+    const oldBreadcrumb = document.querySelector('script[data-seo="breadcrumb"]')
+    if (oldBreadcrumb) oldBreadcrumb.remove()
+
+    const breadcrumbScript = document.createElement('script')
+    breadcrumbScript.type = 'application/ld+json'
+    breadcrumbScript.setAttribute('data-seo', 'breadcrumb')
+    breadcrumbScript.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        'itemListElement': breadcrumbs.map((crumb, i) => ({
+            '@type': 'ListItem',
+            'position': i + 1,
+            'name': crumb.name,
+            'item': crumb.url,
+        })),
+    })
+    document.head.appendChild(breadcrumbScript)
 }
