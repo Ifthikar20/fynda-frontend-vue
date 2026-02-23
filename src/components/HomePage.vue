@@ -106,6 +106,10 @@
             
             <!-- Search Button -->
             <button class="search-btn" @click="handleSearch">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
               {{ aiMode ? 'Send' : 'Search' }}
             </button>
           </div>
@@ -1558,6 +1562,9 @@ a {
 }
 
 .search-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 0.75rem 1.5rem;
   background: #000;
   color: #fff;
@@ -1568,6 +1575,7 @@ a {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 /* ========== Brand Suggestions Dropdown ========== */
