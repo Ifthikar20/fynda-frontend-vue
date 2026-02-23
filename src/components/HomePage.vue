@@ -112,22 +112,22 @@
               </svg>
               {{ aiMode ? 'Send' : 'Search' }}
             </button>
-          </div>
-          
-          <!-- Brand Suggestions Dropdown -->
-          <div v-if="brandSuggestions.length > 0 && isSearchFocused && searchQuery.length > 0" class="brand-suggestions-dropdown">
-            <button
-              v-for="(brand, idx) in brandSuggestions"
-              :key="brand"
-              class="brand-suggestion-item"
-              @mousedown.prevent="selectBrandSuggestion(brand)"
-            >
-              <svg class="suggestion-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
-              </svg>
-              <span class="suggestion-text" v-html="highlightMatch(brand, searchQuery)"></span>
-            </button>
+
+            <!-- Brand Suggestions Dropdown (overlays content below) -->
+            <div v-if="brandSuggestions.length > 0 && isSearchFocused && searchQuery.length > 0" class="brand-suggestions-dropdown">
+              <button
+                v-for="(brand, idx) in brandSuggestions"
+                :key="brand"
+                class="brand-suggestion-item"
+                @mousedown.prevent="selectBrandSuggestion(brand)"
+              >
+                <svg class="suggestion-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="m21 21-4.35-4.35"/>
+                </svg>
+                <span class="suggestion-text" v-html="highlightMatch(brand, searchQuery)"></span>
+              </button>
+            </div>
           </div>
           
           <!-- Quick Suggestions (hidden in AI mode once chat starts) -->
@@ -1498,6 +1498,7 @@ a {
   min-height: 62px;
   transition: all 0.2s ease;
   position: relative;
+  z-index: 10;
 }
 
 .ai-search-box:focus-within {
@@ -1581,15 +1582,14 @@ a {
 /* ========== Brand Suggestions Dropdown ========== */
 .brand-suggestions-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 6px);
   left: 0;
   right: 0;
-  margin-top: 6px;
   background: #fff;
   border: 1px solid #e5e5e5;
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  z-index: 50;
+  z-index: 100;
   overflow: hidden;
   padding: 6px 0;
 }
