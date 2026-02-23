@@ -456,6 +456,7 @@ let scrollObserver = null
 
 // Brand suggestions list for typeahead
 const fashionBrands = [
+  // Popular brands
   'Nike', 'Adidas', 'Zara', 'H&M', 'Gucci', 'Prada', 'Louis Vuitton', 'Chanel',
   'Versace', 'Balenciaga', 'Burberry', 'Dior', 'Fendi', 'Givenchy', 'Hermès',
   'Saint Laurent', 'Valentino', 'Bottega Veneta', 'Loewe', 'Celine',
@@ -473,6 +474,18 @@ const fashionBrands = [
   'Skims', 'Good American', 'Abercrombie & Fitch', 'Hollister',
   'AllSaints', 'COS', '& Other Stories', 'Massimo Dutti', 'Everlane',
   'Reformation', 'Stüssy', 'Supreme', 'Off-White', 'Fear of God',
+  // Common fashion search phrases
+  'summer dresses', 'winter coats', 'casual sneakers', 'formal blazer',
+  'wedding guest outfit', 'office wear', 'date night outfit',
+  'streetwear hoodie', 'vintage leather jacket', 'white sneakers under $100',
+  'best jeans for women', 'men\'s casual shirts', 'workout leggings',
+  'silk blouse', 'oversized blazer', 'chunky boots', 'crossbody bag',
+  'gold earrings', 'minimalist watch', 'summer sandals',
+  'affordable designer bags', 'sustainable fashion brands',
+  'plus size dresses', 'petite clothing', 'athleisure outfits',
+  'festival outfit ideas', 'back to school outfits',
+  'matching sets', 'co-ord sets', 'linen pants', 'cargo pants',
+  'trending shoes 2026', 'spring fashion trends', 'fall outfit ideas',
 ]
 
 // Computed brand suggestions (prefix match, max 8)

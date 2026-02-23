@@ -17,10 +17,36 @@
               type="text" 
               class="ai-search-input"
               v-model="searchQuery"
+              @keyup.enter="handleSearch"
               @focus="isSearchFocused = true"
-              @blur="isSearchFocused = false"
+              @blur="handleBlur"
               placeholder="Search for products, brands, styles..."
             />
+
+            <!-- Search Button -->
+            <button class="search-btn" @click="handleSearch">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+              Search
+            </button>
+
+            <!-- Brand & Phrase Suggestions Dropdown -->
+            <div v-if="searchSuggestions.length > 0 && isSearchFocused && searchQuery.length > 0" class="brand-suggestions-dropdown">
+              <button
+                v-for="suggestion in searchSuggestions"
+                :key="suggestion"
+                class="brand-suggestion-item"
+                @mousedown.prevent="selectSuggestion(suggestion)"
+              >
+                <svg class="suggestion-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="m21 21-4.35-4.35"/>
+                </svg>
+                <span class="suggestion-text" v-html="highlightMatch(suggestion, searchQuery)"></span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -147,9 +173,65 @@ const allItems = ref([
   { id: 36, title: 'Cargo Joggers — Black', brand: 'Nike', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&q=80', saved: false, url: null },
 ])
 
-// Filtered on-screen items based on search query (live as you type)
-const filteredLocalItems = computed(() => {
+// Suggestion list: brands + common fashion phrases
+const suggestionPool = [
+  // Popular brands
+  'Nike', 'Adidas', 'Zara', 'H&M', 'Gucci', 'Prada', 'Louis Vuitton', 'Chanel',
+  'Versace', 'Balenciaga', 'Burberry', 'Dior', 'Fendi', 'Givenchy', 'Hermès',
+  'Uniqlo', 'Gap', 'Levi\'s', 'Calvin Klein', 'Ralph Lauren', 'Tommy Hilfiger',
+  'ASOS', 'Shein', 'Forever 21', 'Mango', 'Nordstrom', 'Lululemon',
+  'Under Armour', 'Puma', 'Reebok', 'New Balance', 'Converse', 'Vans',
+  'Coach', 'Michael Kors', 'Kate Spade', 'Tory Burch',
+  'Reformation', 'Everlane', 'AllSaints', 'COS', 'Massimo Dutti',
+  'Patagonia', 'The North Face', 'Columbia',
+  'Skims', 'Good American', 'Abercrombie & Fitch',
+  // Common fashion search phrases
+  'summer dresses', 'winter coats', 'casual sneakers', 'formal blazer',
+  'wedding guest outfit', 'office wear', 'date night outfit',
+  'streetwear hoodie', 'vintage leather jacket', 'white sneakers under $100',
+  'best jeans for women', 'men\'s casual shirts', 'workout leggings',
+  'silk blouse', 'oversized blazer', 'chunky boots', 'crossbody bag',
+  'gold earrings', 'minimalist watch', 'summer sandals',
+  'affordable designer bags', 'sustainable fashion brands',
+  'plus size dresses', 'petite clothing', 'athleisure outfits',
+  'festival outfit ideas', 'back to school outfits',
+  'matching sets', 'co-ord sets', 'linen pants', 'cargo pants',
+  'trending shoes 2026', 'spring fashion trends', 'fall outfit ideas',
+]
+
+// Filtered suggestions (prefix-prioritized, max 8)
+const searchSuggestions = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
+  if (!q || q.length < 1) return []
+  return suggestionPool
+    .filter(s => s.toLowerCase().includes(q))
+    .sort((a, b) => {
+      const aStarts = a.toLowerCase().startsWith(q) ? 0 : 1
+      const bStarts = b.toLowerCase().startsWith(q) ? 0 : 1
+      return aStarts - bStarts || a.localeCompare(b)
+    })
+    .slice(0, 8)
+})
+
+const selectSuggestion = (suggestion) => {
+  searchQuery.value = suggestion
+  handleSearch()
+}
+
+const highlightMatch = (text, query) => {
+  if (!query) return text
+  const q = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${q})`, 'gi')
+  return text.replace(regex, '<strong>$1</strong>')
+}
+
+const handleBlur = () => {
+  setTimeout(() => { isSearchFocused.value = false }, 150)
+}
+
+// Filtered on-screen items based on search query (only after explicit search)
+const filteredLocalItems = computed(() => {
+  const q = lastSearchQuery.value.trim().toLowerCase()
   if (!q) {
     return allItems.value.slice(0, visibleCount.value)
   }
@@ -162,7 +244,7 @@ const filteredLocalItems = computed(() => {
 
 // Combine: filtered local items first, then API results (deduped)
 const displayItems = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
+  const q = lastSearchQuery.value.trim().toLowerCase()
   if (!q) {
     return allItems.value.slice(0, visibleCount.value)
   }
@@ -201,41 +283,14 @@ const displayItems = computed(() => {
   return merged
 })
 
-// Watch searchQuery for live filtering + debounced API call
+// Reset state when search is cleared
 watch(searchQuery, (val) => {
-  const q = val.trim()
-  if (!q) {
-    // Cleared — reset everything
+  if (!val.trim()) {
     hasSearched.value = false
     lastSearchQuery.value = ''
     apiResults.value = []
     searchLoading.value = false
-    if (debounceTimer) clearTimeout(debounceTimer)
-    return
   }
-  
-  hasSearched.value = true
-  lastSearchQuery.value = q
-  
-  // Debounce API call (500ms after user stops typing)
-  if (debounceTimer) clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(async () => {
-    searchLoading.value = true
-    try {
-      const response = await fetch(`${API_URL}/api/search/?q=${encodeURIComponent(q)}`)
-      const data = await response.json()
-      // Only update if query hasn't changed while we were fetching
-      if (searchQuery.value.trim() === q) {
-        apiResults.value = data.results || data.deals || []
-      }
-    } catch (e) {
-      console.error('Search failed:', e)
-    } finally {
-      if (searchQuery.value.trim() === q) {
-        searchLoading.value = false
-      }
-    }
-  }, 1000)
 })
 
 // Manual search (Enter key or button click) — fires immediately
@@ -378,6 +433,9 @@ onUnmounted(() => {
 }
 
 .search-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 0.75rem 1.5rem;
   background: #000;
   color: #fff;
@@ -388,10 +446,60 @@ onUnmounted(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .search-btn:hover {
   background: #333;
+}
+
+/* ========== Brand/Phrase Suggestions Dropdown ========== */
+.brand-suggestions-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  overflow: hidden;
+  padding: 6px 0;
+}
+
+.brand-suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.92rem;
+  color: #333;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease;
+}
+
+.brand-suggestion-item:hover {
+  background: #f5f5f5;
+}
+
+.suggestion-search-icon {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.suggestion-text {
+  flex: 1;
+}
+
+.suggestion-text strong {
+  font-weight: 700;
+  color: #111;
 }
 
 /* Results info bar */
