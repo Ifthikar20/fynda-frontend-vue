@@ -953,10 +953,17 @@ onMounted(() => {
   background: #111;
   color: #fff;
   border-color: #111;
+  animation: closetPulse 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .closet-btn.saved:hover {
   background: #333;
+}
+
+@keyframes closetPulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.08); }
+  100% { transform: scale(1); }
 }
 
 /* Compare Button - Full Width */

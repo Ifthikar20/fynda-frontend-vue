@@ -525,7 +525,7 @@ watch(wishlistIds, (ids) => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap');
 * { font-family: 'Inter', sans-serif; }
-.closet-page { min-height: 100vh; background: #fafafa; }
+.closet-page { min-height: 100vh; background: #fff; }
 .closet-content { max-width: 1400px; margin: 0 auto; padding: 2rem 2rem 6rem; }
 
 /* Header */

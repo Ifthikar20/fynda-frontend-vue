@@ -503,7 +503,7 @@ onMounted(() => {
 
 .compare-page {
   min-height: 100vh;
-  background: #fafafa;
+  background: #fff;
 }
 
 .compare-content {

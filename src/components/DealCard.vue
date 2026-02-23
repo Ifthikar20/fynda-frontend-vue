@@ -12,10 +12,13 @@
           <img src="@/assets/upvote-logo.png" alt="Upvote" class="upvote-icon" />
           <span class="upvote-count">{{ upvoteCount }}</span>
         </button>
-        <button class="action-btn" @click.stop="handleFavorite">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="action-btn save-btn" :class="{ saved: isSaved }" @click.stop="handleFavorite">
+          <svg width="18" height="18" viewBox="0 0 24 24" :fill="isSaved ? '#111' : 'none'" stroke="currentColor" stroke-width="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
+          <transition name="save-toast">
+            <span v-if="showSaveToast" class="save-toast-label">Saved ✓</span>
+          </transition>
         </button>
         <button class="action-btn" @click.stop="handleShare">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -85,7 +88,11 @@ const emit = defineEmits(['click', 'upvote'])
 const isUpvoted = ref(false)
 const upvoteCount = ref(0)
 
-// Load upvote state from localStorage
+// Save/closet state
+const isSaved = ref(false)
+const showSaveToast = ref(false)
+
+// Load upvote + saved state from localStorage
 onMounted(() => {
   const dealId = props.deal.id
   const upvotedDeals = JSON.parse(localStorage.getItem('upvotedDeals') || '{}')
@@ -93,6 +100,10 @@ onMounted(() => {
   
   isUpvoted.value = !!upvotedDeals[dealId]
   upvoteCount.value = dealUpvotes[dealId] || props.deal.upvotes || 0
+
+  // Check if already in closet
+  const closet = JSON.parse(localStorage.getItem('fyndaCloset') || '[]')
+  isSaved.value = closet.some(item => item.id === dealId)
 })
 
 const formatReviews = (count) => {
@@ -162,6 +173,35 @@ const handleUpvote = () => {
 }
 
 const handleFavorite = () => {
+  const dealId = props.deal.id
+  const closet = JSON.parse(localStorage.getItem('fyndaCloset') || '[]')
+
+  if (isSaved.value) {
+    // Remove from closet
+    const updated = closet.filter(item => item.id !== dealId)
+    localStorage.setItem('fyndaCloset', JSON.stringify(updated))
+    isSaved.value = false
+  } else {
+    // Add to closet
+    if (!closet.some(item => item.id === dealId)) {
+      closet.push({
+        id: dealId,
+        title: props.deal.title,
+        price: props.deal.price,
+        image_url: props.deal.image_url || props.deal.image,
+        product_url: props.deal.url || '',
+        brand: props.deal.merchant_name || props.deal.source || '',
+        source: 'product',
+        savedAt: new Date().toISOString()
+      })
+      localStorage.setItem('fyndaCloset', JSON.stringify(closet))
+    }
+    isSaved.value = true
+    // Show fly-up toast
+    showSaveToast.value = true
+    setTimeout(() => { showSaveToast.value = false }, 1200)
+  }
+
   eventBus.emit(Events.DEAL_FAVORITE, props.deal)
 }
 
@@ -239,6 +279,53 @@ const handleShare = () => {
 .action-btn:hover {
   transform: scale(1.1);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Save / Heart Button */
+.save-btn {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.save-btn.saved {
+  background: #111;
+  color: #fff;
+}
+
+.save-btn.saved svg {
+  stroke: #fff;
+}
+
+/* "Saved ✓" fly-up toast */
+.save-toast-label {
+  position: absolute;
+  top: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.save-toast-enter-active {
+  animation: saveToastIn 0.35s ease;
+}
+.save-toast-leave-active {
+  animation: saveToastOut 0.4s ease forwards;
+}
+@keyframes saveToastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.8); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+@keyframes saveToastOut {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to   { opacity: 0; transform: translateX(-50%) translateY(-12px); }
 }
 
 /* Upvote Button Styles */

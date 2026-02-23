@@ -87,6 +87,7 @@
               @focus="isSearchFocused = true"
               @blur="handleBlur"
               @paste="handlePaste"
+              @input="onSearchInput"
               :placeholder="aiMode ? 'Ask me anything about fashion...' : (pastedImage ? 'Add description (optional)...' : '')"
             />
             <span v-if="!searchQuery && !isSearchFocused && !pastedImage && !aiMode" class="ai-animated-placeholder">
@@ -106,6 +107,22 @@
             <!-- Search Button -->
             <button class="search-btn" @click="handleSearch">
               {{ aiMode ? 'Send' : 'Search' }}
+            </button>
+          </div>
+          
+          <!-- Brand Suggestions Dropdown -->
+          <div v-if="brandSuggestions.length > 0 && isSearchFocused && searchQuery.length > 0" class="brand-suggestions-dropdown">
+            <button
+              v-for="(brand, idx) in brandSuggestions"
+              :key="brand"
+              class="brand-suggestion-item"
+              @mousedown.prevent="selectBrandSuggestion(brand)"
+            >
+              <svg class="suggestion-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+              <span class="suggestion-text" v-html="highlightMatch(brand, searchQuery)"></span>
             </button>
           </div>
           
@@ -432,6 +449,58 @@ const scrollSentinel = ref(null)
 const quotaWarning = ref('')
 const suggestedQuery = ref(null)
 let scrollObserver = null
+
+// Brand suggestions list for typeahead
+const fashionBrands = [
+  'Nike', 'Adidas', 'Zara', 'H&M', 'Gucci', 'Prada', 'Louis Vuitton', 'Chanel',
+  'Versace', 'Balenciaga', 'Burberry', 'Dior', 'Fendi', 'Givenchy', 'Hermès',
+  'Saint Laurent', 'Valentino', 'Bottega Veneta', 'Loewe', 'Celine',
+  'Uniqlo', 'Gap', 'Levi\'s', 'Calvin Klein', 'Ralph Lauren', 'Tommy Hilfiger',
+  'ASOS', 'Shein', 'Forever 21', 'Mango', 'Topshop', 'Nordstrom',
+  'Urban Outfitters', 'Anthropologie', 'Free People', 'J.Crew', 'Banana Republic',
+  'Old Navy', 'Express', 'Lululemon', 'Athleta', 'Under Armour', 'Puma', 'Reebok',
+  'New Balance', 'Converse', 'Vans', 'Dr. Martens', 'Timberland', 'Birkenstock',
+  'Coach', 'Michael Kors', 'Kate Spade', 'Tory Burch', 'Marc Jacobs',
+  'Revolve', 'Net-a-Porter', 'Farfetch', 'SSENSE', 'MatchesFashion',
+  'Amazon Fashion', 'Walmart Fashion', 'Target Style', 'Saks Fifth Avenue',
+  'Neiman Marcus', 'Bloomingdale\'s', 'Macy\'s', 'Shopbop',
+  'Patagonia', 'The North Face', 'Columbia', 'Arc\'teryx',
+  'Sephora', 'Glossier', 'MAC', 'Fenty Beauty', 'Charlotte Tilbury',
+  'Skims', 'Good American', 'Abercrombie & Fitch', 'Hollister',
+  'AllSaints', 'COS', '& Other Stories', 'Massimo Dutti', 'Everlane',
+  'Reformation', 'Stüssy', 'Supreme', 'Off-White', 'Fear of God',
+]
+
+// Computed brand suggestions (prefix match, max 8)
+const brandSuggestions = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q || q.length < 1) return []
+  return fashionBrands
+    .filter(brand => brand.toLowerCase().includes(q))
+    .sort((a, b) => {
+      // Prioritize prefix matches
+      const aStarts = a.toLowerCase().startsWith(q) ? 0 : 1
+      const bStarts = b.toLowerCase().startsWith(q) ? 0 : 1
+      return aStarts - bStarts || a.localeCompare(b)
+    })
+    .slice(0, 8)
+})
+
+const selectBrandSuggestion = (brand) => {
+  searchQuery.value = brand
+  handleSearch()
+}
+
+const onSearchInput = () => {
+  // Just triggers reactivity — brandSuggestions computed handles the rest
+}
+
+const highlightMatch = (text, query) => {
+  if (!query) return text
+  const q = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${q})`, 'gi')
+  return text.replace(regex, '<strong>$1</strong>')
+}
 
 // AI Chat state
 const aiMode = ref(localStorage.getItem('fynda_ai_mode') === 'true')
@@ -1412,6 +1481,7 @@ a {
 .ai-search-container {
   max-width: 640px;
   margin: 0 auto;
+  position: relative;
 }
 
 .ai-search-box {
@@ -1498,6 +1568,56 @@ a {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+/* ========== Brand Suggestions Dropdown ========== */
+.brand-suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 6px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+  overflow: hidden;
+  padding: 6px 0;
+}
+
+.brand-suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.92rem;
+  color: #333;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease;
+}
+
+.brand-suggestion-item:hover {
+  background: #f5f5f5;
+}
+
+.suggestion-search-icon {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.suggestion-text {
+  flex: 1;
+}
+
+.suggestion-text strong {
+  font-weight: 700;
+  color: #111;
 }
 
 .search-btn:hover {
