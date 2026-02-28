@@ -867,7 +867,7 @@ const handleImageUpload = async (event) => {
   await previewImage(file)
 }
 
-// Core: send image to backend ML for analysis, then search Amazon directly
+// Core: send image to backend ML for analysis, then display results
 const processImageFile = async (file) => {
   loading.value = true
   hasSearched.value = true
@@ -876,7 +876,7 @@ const processImageFile = async (file) => {
   visibleCount.value = 12
   
   try {
-    // Step 1: Send image to our ML model for product identification
+    // Send image to our backend which handles ML extraction + deal search
     const formData = new FormData()
     formData.append('image', file)
     
@@ -892,47 +892,31 @@ const processImageFile = async (file) => {
     }
     
     const data = await response.json()
-    console.log('ML model result:', data)
+    console.log('Visual search result:', data)
     
-    // Extract the best search query from ML model
+    // Check if ML identified the product
     const mlQuery = data.search_queries?.[0] || data.extracted?.caption || ''
-    if (!mlQuery) {
-      throw new Error('Could not identify product. Try a clearer image.')
+    if (!mlQuery && (!data.deals || data.deals.length === 0)) {
+      throw new Error(data.message || 'Could not identify product. Try a clearer image.')
     }
     
     lastSearchQuery.value = 'Visual Search'
-    // Don't put ML query in search box — keep it clean
     
-    // Step 2: Search Amazon directly using the ML-extracted query (same as handleSearch)
-    console.log('Searching Amazon for:', mlQuery)
-    const amazonResponse = await fetch(
-      `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(mlQuery)}&page=1&country=US`,
-      {
-        headers: {
-          'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
-          'x-rapidapi-key': 'ad5affb386msh86b1de74187a3cep186fbejsn29e5c0f03e34'
-        }
-      }
-    )
-    const amazonData = await amazonResponse.json()
-    const products = amazonData?.data?.products || []
-    
+    // Use the deals already returned by the backend (ML extraction + Amazon search + CLIP re-ranking)
+    const products = data.deals || []
     deals.value = products.map((p, idx) => ({
-      id: p.asin || idx,
-      title: p.product_title,
-      price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
-      original_price: p.product_original_price ? p.product_original_price.replace(/[^0-9.]/g, '') : null,
-      image_url: p.product_photo,
-      source: 'Amazon',
-      merchant_name: 'Amazon',
-      url: p.product_url,
-      rating: p.product_star_rating,
-      reviews: p.product_num_ratings,
-      is_prime: p.is_prime,
-      badge: p.product_badge || (p.is_best_seller ? 'Best Seller' : (p.is_amazon_choice ? 'Amazon Choice' : null)),
-      discount_percent: p.product_original_price && p.product_price
-        ? Math.round(((parseFloat(p.product_original_price.replace(/[^0-9.]/g, '')) - parseFloat(p.product_price.replace(/[^0-9.]/g, ''))) / parseFloat(p.product_original_price.replace(/[^0-9.]/g, ''))) * 100)
-        : null
+      id: p.id || idx,
+      title: p.title,
+      price: typeof p.price === 'string' ? p.price.replace(/[^0-9.]/g, '') : p.price,
+      original_price: p.original_price ? (typeof p.original_price === 'string' ? p.original_price.replace(/[^0-9.]/g, '') : p.original_price) : null,
+      image_url: p.image_url || p.image,
+      source: p.source || 'Amazon',
+      merchant_name: p.seller || p.source || 'Amazon',
+      url: p.url,
+      rating: p.rating || null,
+      reviews: p.reviews_count || null,
+      badge: p.badge || null,
+      discount_percent: p.discount || p.discount_percent || null,
     }))
     
     activeGender.value = 'all'
