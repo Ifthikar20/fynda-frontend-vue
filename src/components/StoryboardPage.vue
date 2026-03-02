@@ -1,7 +1,5 @@
 <template>
   <div class="storyboard-page">
-    <!-- Main NavBar -->
-    <NavBar />
     
     <!-- Storyboard Toolbar -->
     <div class="storyboard-toolbar">
@@ -2021,8 +2019,16 @@ onUnmounted(() => {
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&family=Libre+Baskerville:wght@400;700&family=Cinzel:wght@400;500;600&family=EB+Garamond:wght@400;500;600&family=Bodoni+Moda:wght@400;500;600&family=Lora:wght@400;500;600&family=Crimson+Text:wght@400;600&display=swap');
 
 .storyboard-page {
-  min-height: 100vh;
-  background: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  z-index: 100;
+  overflow: hidden;
 }
 
 /* Storyboard Toolbar */
@@ -2030,9 +2036,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.75rem;
   background: #ffffff;
   border-bottom: 1px solid #e5e5e5;
+  flex-shrink: 0;
 }
 
 .back-btn {
@@ -2312,21 +2319,20 @@ onUnmounted(() => {
 /* Main Layout */
 .main-content {
   display: grid;
-  grid-template-columns: 240px 1fr 260px;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  height: calc(100vh - 60px);
+  grid-template-columns: 260px 1fr 280px;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
 /* Panels */
 .backgrounds-panel, .products-panel {
   background: #ffffff;
-  border-radius: 16px;
-  padding: 0.5rem;
+  border-radius: 0;
+  padding: 0.6rem;
   overflow-y: auto;
-  max-height: calc(100vh - 72px);
-  border: 1px solid #e5e5e5;
+  border-right: 1px solid #e5e5e5;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -2846,9 +2852,9 @@ onUnmounted(() => {
   gap: 0.5rem;
   min-height: 0;
   overflow: hidden;
-  padding: 0.5rem;
-  background: #eaeaea;
-  border-radius: 12px;
+  padding: 0.75rem;
+  background: #f0f0f0;
+  border-radius: 0;
 }
 
 .canvas-scale-wrapper {
@@ -3815,7 +3821,8 @@ onUnmounted(() => {
 
 /* Products Panel Width Adjustment */
 .products-panel {
-  max-height: calc(100vh - 72px);
+  border-right: none;
+  border-left: 1px solid #e5e5e5;
   overflow-y: auto;
 }
 
@@ -4089,5 +4096,30 @@ onUnmounted(() => {
 .modal-fade-enter-from .explore-modal,
 .modal-fade-leave-to .explore-modal {
   transform: translateY(20px);
+}
+
+/* ── Responsive: Tablet ─────────────────────── */
+@media (max-width: 1024px) {
+  .main-content {
+    grid-template-columns: 200px 1fr 220px;
+  }
+}
+
+/* ── Responsive: Small Tablet ─────────────────── */
+@media (max-width: 768px) {
+  .main-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+  }
+  .backgrounds-panel {
+    max-height: 140px;
+    border-right: none;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .products-panel {
+    max-height: 160px;
+    border-left: none;
+    border-top: 1px solid #e5e5e5;
+  }
 }
 </style>
