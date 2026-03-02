@@ -304,23 +304,6 @@
             <div v-if="item.showPin" class="item-pin"></div>
             <img :src="item.image_url" :alt="item.title" class="item-img" draggable="false" />
             
-            <!-- Price Tag Overlay -->
-            <span v-if="shareWithPrices && item.price" class="item-price-tag">
-              ${{ formatPrice(item.price) }}
-            </span>
-            
-            <!-- Product Link Badge -->
-            <a v-if="shareWithLinks && (item.product_url || item.url)" 
-               :href="item.product_url || item.url" 
-               target="_blank" rel="noopener"
-               class="item-link-badge"
-               @mousedown.stop
-               @click.stop
-               title="Open product page"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            </a>
-            
             <span class="item-remove" @mousedown.stop @click="removeItem(item.id)">×</span>
             <div class="resize-handle" @mousedown.stop="startResize($event, item)"></div>
             <!-- Remove Background Button (hidden after bg already removed) -->
@@ -1445,17 +1428,20 @@ const removeBackground = async (item) => {
   
   try {
     // Fetch the image and convert to a File/Blob
-    const response = await fetch(item.image_url)
-    const imageBlob = await response.blob()
+    const imgResponse = await fetch(item.image_url)
+    const imageBlob = await imgResponse.blob()
     
     // Build FormData for the API
     const formData = new FormData()
     formData.append('image', imageBlob, 'image.png')
     
-    // Call the server-side bg removal endpoint
-    const result = await api.post('/api/mobile/tools/remove-bg/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      timeout: 60000 // 60s timeout for large images
+    // Use plain fetch (NOT the authenticated api instance)
+    // The remove-bg endpoint is AllowAny — using api.post() triggers
+    // the auth interceptor which redirects to /login on 401
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+    const result = await fetch(`${apiUrl}/api/mobile/tools/remove-bg/`, {
+      method: 'POST',
+      body: formData,
     })
     
     // Handle rate limiting
@@ -1464,8 +1450,14 @@ const removeBackground = async (item) => {
       return
     }
     
-    if (result.data && result.data.image_base64) {
-      item.image_url = `data:image/png;base64,${result.data.image_base64}`
+    if (!result.ok) {
+      throw new Error(`Server error: ${result.status}`)
+    }
+    
+    const data = await result.json()
+    
+    if (data && data.image_base64) {
+      item.image_url = `data:image/png;base64,${data.image_base64}`
       item.bgRemoved = true
       showNotification('Background removed!')
     } else {
@@ -1473,12 +1465,7 @@ const removeBackground = async (item) => {
     }
   } catch (err) {
     console.error('Background removal failed:', err)
-    // Check if it's a 429 from axios
-    if (err.response?.status === 429) {
-      showNotification('Too many requests. Please wait and try again.')
-    } else {
-      showNotification('Background removal failed. Try again.')
-    }
+    showNotification('Background removal failed. Try again.')
   } finally {
     item.removingBg = false
   }

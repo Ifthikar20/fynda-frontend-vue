@@ -1,13 +1,5 @@
 <template>
   <div class="shared-board-page">
-    <!-- Minimal Header -->
-    <header class="shared-header">
-      <router-link to="/" class="logo-link">
-        <img src="../assets/outfi-logo.png" alt="outfi." class="logo" />
-      </router-link>
-      <router-link to="/register" class="cta-btn">Create Your Own</router-link>
-    </header>
-
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <div class="spinner"></div>
@@ -26,87 +18,89 @@
       <router-link to="/" class="home-btn">Go to Homepage</router-link>
     </div>
 
-    <!-- Fashion Board View — fills entire screen -->
-    <main v-else class="board-view">
-      <!-- Full-screen Card Frame -->
-      <div class="device-frame" ref="frameRef">
-        <!-- Dynamic Island / Notch hint -->
-        <div class="dynamic-island"></div>
-        
-        <!-- Canvas Content -->
-        <div 
-          class="shared-canvas"
-          :style="canvasInnerStyle"
-        >
-          <!-- Canvas Items -->
-          <component
-            v-for="item in board.items" 
-            :key="item.id"
-            :is="board.enableLinks && item.productUrl ? 'a' : 'div'"
-            :href="board.enableLinks && item.productUrl ? getProductLink(item) : undefined"
-            class="canvas-item"
-            :class="[
-              item.frame ? 'frame-' + item.frame : '',
-              { clickable: board.enableLinks && item.productUrl }
-            ]"
-            :style="{
-              left: item.x + '%',
-              top: item.y + '%',
-              width: item.width + '%',
-              height: item.height + '%',
-              zIndex: item.zIndex,
-              transform: item.rotation ? `rotate(${item.rotation}deg)` : 'none'
-            }"
-          >
-            <div v-if="item.showPin" class="item-pin"></div>
-            <img :src="item.image_url" :alt="item.title" />
-            <!-- Price Tag Overlay -->
-            <span v-if="board.showPrices && item.productPrice" class="price-tag">
-              ${{ formatPrice(item.productPrice) }}
-            </span>
-          </component>
+    <!-- Fashion Board — Canva-style full-screen -->
+    <div v-else class="board-wrapper" ref="wrapperRef">
+      <!-- The canvas fills the viewport, scaled to fit -->
+      <div 
+        class="board-canvas"
+        ref="canvasRef"
+        :style="scaledCanvasStyle"
+      >
+        <!-- Canvas Background -->
+        <div class="canvas-bg" :style="canvasBgStyle"></div>
 
-          <!-- Text Elements -->
-          <div 
-            v-for="text in board.textElements" 
-            :key="text.id"
-            class="text-element"
-            :style="{
-              left: text.x + '%',
-              top: text.y + '%',
-              fontFamily: text.fontFamily,
-              fontSize: scaledFontSize(text.fontSize) + 'px',
-              color: text.color,
-              zIndex: text.zIndex
-            }"
-          >
-            {{ text.content }}
-          </div>
-          
-          <!-- Stickers -->
-          <div 
-            v-for="sticker in (board.stickers || [])" 
-            :key="sticker.id"
-            class="sticker-element"
-            :style="{
-              left: sticker.x + '%',
-              top: sticker.y + '%',
-              fontSize: scaledFontSize(sticker.size) + 'px',
-              zIndex: sticker.zIndex,
-              transform: `rotate(${sticker.rotation || 0}deg)`
-            }"
-          >
-            {{ sticker.emoji }}
-          </div>
+        <!-- Canvas Items -->
+        <component
+          v-for="item in board.items" 
+          :key="item.id"
+          :is="board.enableLinks && item.productUrl ? 'a' : 'div'"
+          :href="board.enableLinks && item.productUrl ? getProductLink(item) : undefined"
+          class="canvas-item"
+          :class="[
+            item.frame ? 'frame-' + item.frame : '',
+            { clickable: board.enableLinks && item.productUrl }
+          ]"
+          :style="{
+            left: item.x + 'px',
+            top: item.y + 'px',
+            width: item.width + 'px',
+            height: item.height + 'px',
+            zIndex: item.zIndex,
+            transform: item.rotation ? `rotate(${item.rotation}deg)` : 'none'
+          }"
+        >
+          <div v-if="item.showPin" class="item-pin"></div>
+          <img :src="item.image_url" :alt="item.title" />
+          <!-- Price Tag Overlay -->
+          <span v-if="board.showPrices && item.productPrice" class="price-tag">
+            ${{ formatPrice(item.productPrice) }}
+          </span>
+        </component>
+
+        <!-- Text Elements -->
+        <div 
+          v-for="text in board.textElements" 
+          :key="text.id"
+          class="text-element"
+          :style="{
+            left: text.x + 'px',
+            top: text.y + 'px',
+            fontFamily: text.fontFamily,
+            fontSize: text.fontSize + 'px',
+            color: text.color,
+            zIndex: text.zIndex
+          }"
+        >
+          {{ text.content }}
+        </div>
+        
+        <!-- Stickers -->
+        <div 
+          v-for="sticker in (board.stickers || [])" 
+          :key="sticker.id"
+          class="sticker-element"
+          :style="{
+            left: sticker.x + 'px',
+            top: sticker.y + 'px',
+            fontSize: sticker.size + 'px',
+            zIndex: sticker.zIndex,
+            transform: `rotate(${sticker.rotation || 0}deg)`
+          }"
+        >
+          {{ sticker.emoji }}
         </div>
       </div>
 
-      <!-- Branding Footer -->
-      <div class="brand-watermark">
-        <span class="watermark-logo">outfi.</span>
-        <router-link to="/register" class="watermark-cta">Explore more on outfi.ai →</router-link>
+      <!-- Floating Outfi brand badge — bottom center -->
+      <div class="floating-brand">
+        <router-link to="/" class="brand-pill">
+          <span class="brand-text">outfi.</span>
+        </router-link>
       </div>
-    </main>
+
+      <!-- Floating CTA — top right -->
+      <router-link to="/register" class="floating-cta">Create Your Own</router-link>
+    </div>
   </div>
 </template>
 
@@ -116,7 +110,8 @@ import { useRoute } from 'vue-router'
 import api from '../utils/api'
 
 const route = useRoute()
-const frameRef = ref(null)
+const wrapperRef = ref(null)
+const canvasRef = ref(null)
 
 const loading = ref(true)
 const error = ref(null)
@@ -133,27 +128,34 @@ const board = ref({
 const owner = ref('')
 const viewCount = ref(0)
 
-// Track the rendered scale so we can scale fonts proportionally
-const renderScale = ref(1)
+// Scale factor: fit the original canvas into the viewport
+const scale = ref(1)
 
-const updateScale = () => {
-  if (!frameRef.value) return
-  const frameW = frameRef.value.clientWidth
-  renderScale.value = frameW / board.value.canvasWidth
+const computeScale = () => {
+  if (!wrapperRef.value) return
+  const vw = wrapperRef.value.clientWidth
+  const vh = wrapperRef.value.clientHeight
+  const cw = board.value.canvasWidth
+  const ch = board.value.canvasHeight
+
+  // Fit to fill — scale to the smaller ratio so the whole canvas is visible
+  scale.value = Math.min(vw / cw, vh / ch)
 }
 
-// Scale text / sticker font sizes proportionally to the frame
-const scaledFontSize = (original) => {
-  return Math.max(8, Math.round(original * renderScale.value))
-}
+// The canvas element is rendered at original pixel size, then CSS-scaled
+const scaledCanvasStyle = computed(() => ({
+  width: board.value.canvasWidth + 'px',
+  height: board.value.canvasHeight + 'px',
+  transform: `scale(${scale.value})`,
+  transformOrigin: 'center center',
+}))
 
-const canvasInnerStyle = computed(() => {
+const canvasBgStyle = computed(() => {
   const bg = board.value.background || {}
   return {
     ...bg,
-    width: '100%',
-    height: '100%',
-    position: 'relative',
+    position: 'absolute',
+    inset: 0,
   }
 })
 
@@ -190,33 +192,17 @@ onMounted(async () => {
       canvasWidth: cw,
       canvasHeight: ch,
       background: data.storyboard_data.background || { background: '#ffffff' },
-      items: (data.storyboard_data.items || []).map(item => ({
-        ...item,
-        // Convert absolute pixel positions to percentages for responsive scaling
-        x: (item.x / cw) * 100,
-        y: (item.y / ch) * 100,
-        width: (item.width / cw) * 100,
-        height: (item.height / ch) * 100,
-      })),
-      textElements: (data.storyboard_data.textElements || []).map(text => ({
-        ...text,
-        x: (text.x / cw) * 100,
-        y: (text.y / ch) * 100,
-        fontSize: text.fontSize,
-      })),
-      stickers: (data.storyboard_data.stickers || []).map(sticker => ({
-        ...sticker,
-        x: (sticker.x / cw) * 100,
-        y: (sticker.y / ch) * 100,
-      })),
+      // Keep original pixel positions — we scale the whole canvas with CSS transform
+      items: data.storyboard_data.items || [],
+      textElements: data.storyboard_data.textElements || [],
+      stickers: data.storyboard_data.stickers || [],
       enableLinks: data.storyboard_data.enableLinks || false,
       showPrices: data.storyboard_data.showPrices || false
     }
     
     // Store product data in sessionStorage for items with links
     if (board.value.enableLinks) {
-      const origItems = data.storyboard_data.items || []
-      origItems.forEach(item => {
+      board.value.items.forEach(item => {
         if (item.productUrl) {
           const productId = item.id || encodeURIComponent((item.title || '').substring(0, 30))
           sessionStorage.setItem(`fyndaProduct_${productId}`, JSON.stringify({
@@ -266,10 +252,10 @@ onMounted(async () => {
 
     // Setup scale tracking after DOM updates
     await nextTick()
-    updateScale()
-    if (frameRef.value) {
-      resizeObserver = new ResizeObserver(() => updateScale())
-      resizeObserver.observe(frameRef.value)
+    computeScale()
+    if (wrapperRef.value) {
+      resizeObserver = new ResizeObserver(() => computeScale())
+      resizeObserver.observe(wrapperRef.value)
     }
     
   } catch (err) {
@@ -292,59 +278,23 @@ onUnmounted(() => {
 
 <style scoped>
 /* ============================================
-   SHARED FASHION BOARD PAGE - Full Screen
+   SHARED FASHION BOARD — Canva-style full screen
    ============================================ */
+
+/* Page fills entire viewport — no scroll */
 .shared-board-page {
-  min-height: 100vh;
-  min-height: 100dvh; /* dynamic viewport for mobile */
-  background: linear-gradient(160deg, #0a0a0f 0%, #141420 40%, #1a1a2e 100%);
-  display: flex;
-  flex-direction: column;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
-}
-
-/* ---- Header ---- */
-.shared-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 1.25rem;
-  background: transparent;
-  flex-shrink: 0;
-  z-index: 10;
-}
-
-.logo {
-  height: 28px;
-  width: auto;
-  filter: brightness(0) invert(1);
-  opacity: 0.85;
-}
-
-.cta-btn {
-  padding: 0.45rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  text-decoration: none;
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  backdrop-filter: blur(8px);
-  transition: all 0.3s ease;
-}
-
-.cta-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
+  background: #1a1a2e;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* ---- Loading ---- */
 .loading-container {
-  flex: 1;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -368,7 +318,8 @@ onUnmounted(() => {
 
 /* ---- Error ---- */
 .error-container {
-  flex: 1;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -379,23 +330,9 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.7);
 }
 
-.error-container svg {
-  color: #ff6b6b;
-  opacity: 0.8;
-}
-
-.error-container h2 {
-  font-size: 1.3rem;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  font-weight: 600;
-}
-
-.error-container p {
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0;
-  font-size: 0.9rem;
-}
+.error-container svg { color: #ff6b6b; opacity: 0.8; }
+.error-container h2 { font-size: 1.3rem; color: rgba(255, 255, 255, 0.9); margin: 0; font-weight: 600; }
+.error-container p { color: rgba(255, 255, 255, 0.5); margin: 0; font-size: 0.9rem; }
 
 .home-btn {
   margin-top: 0.75rem;
@@ -414,69 +351,48 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.18);
 }
 
-/* ---- Main Board View — fills remaining screen ---- */
-.board-view {
-  flex: 1;
+/* ============================================
+   BOARD WRAPPER — fills the entire viewport
+   ============================================ */
+.board-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0;
-  min-height: 0; /* allow flex child to shrink */
   overflow: hidden;
+  background: linear-gradient(160deg, #0a0a0f 0%, #141420 40%, #1a1a2e 100%);
 }
 
-/* ---- Full-Screen Device Frame ---- */
-.device-frame {
+/* ============================================
+   BOARD CANVAS — rendered at original size, 
+   then CSS transform-scaled to fit viewport.
+   
+   This is the Canva approach: the canvas has
+   its own coordinate system and everything 
+   inside uses pixel positions unchanged.
+   ============================================ */
+.board-canvas {
   position: relative;
-  border-radius: 36px;
   overflow: hidden;
+  border-radius: 8px;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 4px 16px rgba(0, 0, 0, 0.4),
-    0 20px 60px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  animation: cardFloat 0.6s ease-out;
-
-  /* Fill all available space while maintaining aspect ratio */
-  width: 100%;
-  max-width: 100vw;
-  flex: 1;
-  min-height: 0;
-  aspect-ratio: var(--board-aspect);
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 8px 40px rgba(0, 0, 0, 0.6),
+    0 30px 80px rgba(0, 0, 0, 0.4);
+  /* Will-change for smooth transform scaling */
+  will-change: transform;
 }
 
-@keyframes cardFloat {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Dynamic Island */
-.dynamic-island {
+/* Canvas background fills the canvas */
+.canvas-bg {
   position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90px;
-  height: 26px;
-  background: #000000;
-  border-radius: 20px;
-  z-index: 50;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  inset: 0;
+  border-radius: inherit;
 }
 
-/* ---- Canvas ---- */
-.shared-canvas {
-  overflow: hidden;
-}
-
-/* Scale items from absolute px to percentage-based layout */
+/* ---- Canvas Items (absolute pixel positioning) ---- */
 .canvas-item {
   position: absolute;
   border-radius: 0;
@@ -485,8 +401,6 @@ onUnmounted(() => {
   border: none;
   display: block;
   text-decoration: none;
-  left: 0;
-  top: 0;
 }
 
 .canvas-item.clickable {
@@ -503,18 +417,19 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
-/* Price Tag Overlay */
+/* Price Tag */
 .price-tag {
   position: absolute;
   bottom: 6px;
   left: 6px;
   background: rgba(0, 0, 0, 0.78);
   color: #fff;
-  padding: 2px 7px;
+  padding: 3px 8px;
   border-radius: 10px;
-  font-size: 0.65rem;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
   backdrop-filter: blur(4px);
@@ -590,140 +505,90 @@ onUnmounted(() => {
   box-shadow: 6px 6px 0 rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.08);
 }
 
-/* ---- Branding Watermark ---- */
-.brand-watermark {
-  display: flex;
-  flex-direction: column;
+/* ============================================
+   FLOATING UI — overlaid on top of canvas
+   ============================================ */
+
+/* Brand pill at bottom center */
+.floating-brand {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+}
+
+.brand-pill {
+  display: inline-flex;
   align-items: center;
-  gap: 0.2rem;
-  padding: 0.4rem 1rem 0.3rem;
-  flex-shrink: 0;
-}
-
-.watermark-logo {
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.25);
-  letter-spacing: 0.08em;
-}
-
-.watermark-cta {
-  font-family: 'Inter', -apple-system, sans-serif;
-  font-size: 0.6rem;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.3);
+  padding: 6px 16px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
   text-decoration: none;
-  letter-spacing: 0.04em;
-  transition: color 0.25s ease;
+  transition: all 0.3s ease;
 }
 
-.watermark-cta:hover {
-  color: rgba(255, 255, 255, 0.6);
+.brand-pill:hover {
+  background: rgba(0, 0, 0, 0.7);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.brand-text {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.06em;
+}
+
+/* CTA button at top right */
+.floating-cta {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+  padding: 8px 18px;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+}
+
+.floating-cta:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
 }
 
 /* ============================================
-   RESPONSIVE — fill screen on every device
+   RESPONSIVE
    ============================================ */
-
-/* Large desktop */
-@media (min-width: 1200px) {
-  .device-frame {
-    max-width: 600px;
-    border-radius: 44px;
-  }
-}
-
-/* Tablet landscape */
-@media (min-width: 769px) and (max-width: 1199px) {
-  .device-frame {
-    max-width: 520px;
-    border-radius: 40px;
-  }
-}
-
-/* Tablet portrait */
-@media (min-width: 481px) and (max-width: 768px) {
-  .shared-header {
-    padding: 0.4rem 1rem;
-  }
-
-  .logo {
-    height: 24px;
-  }
-
-  .cta-btn {
-    font-size: 0.7rem;
-    padding: 0.35rem 0.75rem;
-  }
-
-  .device-frame {
-    max-width: 90vw;
-    border-radius: 32px;
-  }
-
-  .dynamic-island {
-    width: 72px;
-    height: 22px;
-    top: 8px;
-  }
-}
-
-/* Mobile — fill the entire screen */
 @media (max-width: 480px) {
-  .shared-header {
-    padding: 0.35rem 0.75rem;
+  .floating-cta {
+    top: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    font-size: 0.7rem;
   }
 
-  .logo {
-    height: 22px;
+  .floating-brand {
+    bottom: 10px;
   }
 
-  .cta-btn {
-    font-size: 0.68rem;
-    padding: 0.3rem 0.65rem;
-    border-radius: 8px;
+  .brand-pill {
+    padding: 4px 12px;
   }
 
-  .board-view {
-    padding: 0;
-  }
-
-  .device-frame {
-    max-width: 100vw;
-    width: 100vw;
-    border-radius: 0;
-    box-shadow: none;
-    flex: 1;
-  }
-
-  .dynamic-island {
-    width: 64px;
-    height: 20px;
-    top: 6px;
-  }
-
-  .brand-watermark {
-    padding: 0.3rem 0.5rem 0.25rem;
-  }
-}
-
-/* Very short screens (landscape phones) */
-@media (max-height: 600px) {
-  .shared-header {
-    padding: 0.25rem 0.75rem;
-  }
-
-  .logo {
-    height: 20px;
-  }
-
-  .dynamic-island {
-    display: none;
-  }
-
-  .brand-watermark {
-    padding: 0.2rem 0.5rem;
+  .brand-text {
+    font-size: 0.75rem;
   }
 }
 </style>
