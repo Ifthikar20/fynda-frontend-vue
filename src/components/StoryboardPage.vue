@@ -866,6 +866,9 @@ const aspectRatios = [
   { name: 'square', label: '1:1', width: 800, height: 800 },
   { name: 'portrait', label: '4:5', width: 640, height: 800 },
   { name: 'story', label: '9:16', width: 450, height: 800 },
+  { name: 'pinterest', label: 'Pin 2:3', width: 600, height: 900 },
+  { name: 'pinterest-long', label: 'Pin Long', width: 500, height: 1050 },
+  { name: 'mobile', label: 'Mobile', width: 414, height: 896 },
 ]
 
 // Classical Fonts
