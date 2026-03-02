@@ -1438,7 +1438,7 @@ const removeBackground = async (item) => {
     // Use plain fetch (NOT the authenticated api instance)
     // The remove-bg endpoint is AllowAny — using api.post() triggers
     // the auth interceptor which redirects to /login on 401
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+    const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://api.outfi.ai' : 'http://127.0.0.1:8000')
     const result = await fetch(`${apiUrl}/api/mobile/tools/remove-bg/`, {
       method: 'POST',
       body: formData,

@@ -5,9 +5,19 @@ import axios from 'axios'
 import { getAccessToken, getRefreshToken, setTokens } from '../stores/authStore'
 import tokenStorage from './tokenStorage'
 
+// Determine API base URL:
+// 1. Explicit VITE_API_URL env var (set in .env.production)
+// 2. Production build → always use api.outfi.ai
+// 3. Dev fallback → localhost
+const resolveBaseURL = () => {
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL
+    if (import.meta.env.PROD) return 'https://api.outfi.ai'
+    return 'http://127.0.0.1:8000'
+}
+
 // Create axios instance
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000',
+    baseURL: resolveBaseURL(),
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json'
