@@ -1071,24 +1071,20 @@ const searchProducts = async () => {
   if (!searchQuery.value.trim()) return
   loading.value = true
   try {
+    // Route through backend — keeps API key server-side
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
     const response = await fetch(
-      `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(searchQuery.value)}&page=1&country=US`,
-      {
-        headers: {
-          'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
-          'x-rapidapi-key': 'ad5affb386msh86b1de74187a3cep186fbejsn29e5c0f03e34'
-        }
-      }
+      `${apiUrl}/api/search/?q=${encodeURIComponent(searchQuery.value)}&limit=12`
     )
     const data = await response.json()
-    const items = data?.data?.products || []
+    const items = data?.deals || []
     products.value = items.slice(0, 12).map((p, idx) => ({
-      id: p.asin || idx,
-      title: p.product_title,
-      price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
-      image_url: p.product_photo,
-      source: 'Amazon',
-      url: p.product_url
+      id: p.id || idx,
+      title: p.title,
+      price: typeof p.price === 'string' ? p.price.replace(/[^0-9.]/g, '') : p.price,
+      image_url: p.image_url || p.image || p.thumbnail,
+      source: p.source || 'Amazon',
+      url: p.url
     }))
   } catch (error) {
     console.error('Product search failed:', error)
@@ -1429,8 +1425,22 @@ const addDecoration = (deco) => {
 }
 
 // Background Removal — server-side via API (no UI freeze)
+// Cooldown: 15s between remove-bg calls (CPU-intensive)
+const REMOVE_BG_COOLDOWN_MS = 15_000
+let lastRemoveBgTime = 0
+
 const removeBackground = async (item) => {
   if (item.removingBg) return
+  
+  // Enforce client-side cooldown
+  const now = Date.now()
+  const elapsed = now - lastRemoveBgTime
+  if (lastRemoveBgTime && elapsed < REMOVE_BG_COOLDOWN_MS) {
+    const remaining = Math.ceil((REMOVE_BG_COOLDOWN_MS - elapsed) / 1000)
+    showNotification(`Please wait ${remaining}s before removing another background`)
+    return
+  }
+  lastRemoveBgTime = now
   item.removingBg = true
   
   try {
@@ -1448,6 +1458,12 @@ const removeBackground = async (item) => {
       timeout: 60000 // 60s timeout for large images
     })
     
+    // Handle rate limiting
+    if (result.status === 429) {
+      showNotification('Too many requests. Please wait and try again.')
+      return
+    }
+    
     if (result.data && result.data.image_base64) {
       item.image_url = `data:image/png;base64,${result.data.image_base64}`
       item.bgRemoved = true
@@ -1457,7 +1473,12 @@ const removeBackground = async (item) => {
     }
   } catch (err) {
     console.error('Background removal failed:', err)
-    showNotification('Background removal failed. Try again.')
+    // Check if it's a 429 from axios
+    if (err.response?.status === 429) {
+      showNotification('Too many requests. Please wait and try again.')
+    } else {
+      showNotification('Background removal failed. Try again.')
+    }
   } finally {
     item.removingBg = false
   }

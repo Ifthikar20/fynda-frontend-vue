@@ -325,38 +325,34 @@ const fetchProducts = async (query) => {
   loading.value = true
   try {
     const searchTerm = query || currentConfig.value.query
+    // Route through backend — keeps API key server-side
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
     const response = await fetch(
-      `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(searchTerm)}&page=1&country=US`,
-      {
-        headers: {
-          'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
-          'x-rapidapi-key': 'ad5affb386msh86b1de74187a3cep186fbejsn29e5c0f03e34'
-        }
-      }
+      `${apiUrl}/api/search/?q=${encodeURIComponent(searchTerm)}&limit=20`
     )
     const data = await response.json()
-    const products = data?.data?.products || []
+    const products = data?.deals || []
     
     // Filter out non-fashion junk
     const junkWords = ['doll', 'toy', 'pet ', 'dog ', 'cat ', 'phone case', 'tablet', 'charger', 'cable', 'battery', 'kitchen', 'utensil', 'food', 'vitamin', 'supplement', 'garden', 'tool', 'hardware', 'car ', 'vehicle', 'fishing', 'camping stove']
     const filtered = products.filter(p => {
-      const title = (p.product_title || '').toLowerCase()
+      const title = (p.title || '').toLowerCase()
       return !junkWords.some(w => title.includes(w))
     })
     
     deals.value = filtered.map((p, idx) => ({
-      id: p.asin || idx,
-      title: p.product_title,
-      price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
-      original_price: p.product_original_price ? p.product_original_price.replace(/[^0-9.]/g, '') : null,
-      image_url: p.product_photo,
-      source: 'Amazon',
-      merchant_name: 'Amazon',
-      url: p.product_url,
-      rating: p.product_star_rating,
-      reviews: p.product_num_ratings,
+      id: p.id || idx,
+      title: p.title,
+      price: typeof p.price === 'string' ? p.price.replace(/[^0-9.]/g, '') : p.price,
+      original_price: p.original_price ? (typeof p.original_price === 'string' ? p.original_price.replace(/[^0-9.]/g, '') : p.original_price) : null,
+      image_url: p.image_url || p.image || p.thumbnail,
+      source: p.source || 'Amazon',
+      merchant_name: p.merchant_name || p.source || 'Amazon',
+      url: p.url,
+      rating: p.rating,
+      reviews: p.reviews_count || p.reviews,
       is_prime: p.is_prime,
-      badge: p.product_badge || (p.is_best_seller ? 'Best Seller' : (p.is_amazon_choice ? 'Amazon Choice' : null))
+      badge: p.badge || null,
     }))
   } catch (err) {
     console.error('Failed to fetch products:', err)

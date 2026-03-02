@@ -436,31 +436,26 @@ const fetchProduct = async (id) => {
         original_price: parsed.original_price
       }
 
-      // Fetch similar products from Amazon for the price comparison section
+      // Fetch similar products via backend (keeps API key server-side)
       try {
         const searchTerm = parsed.title ? parsed.title.split(' ').slice(0, 4).join(' ') : 'fashion'
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
         const response = await fetch(
-          `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(searchTerm)}&page=1&country=US`,
-          {
-            headers: {
-              'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
-              'x-rapidapi-key': 'ad5affb386msh86b1de74187a3cep186fbejsn29e5c0f03e34'
-            }
-          }
+          `${apiUrl}/api/search/?q=${encodeURIComponent(searchTerm)}&limit=20`
         )
         const data = await response.json()
-        const products = data?.data?.products || []
+        const products = data?.deals || []
         similarProducts.value = products
-          .filter(p => p.asin !== parsed.id && p.product_photo && p.product_price)
+          .filter(p => (p.id || p.asin) !== parsed.id && (p.image_url || p.image) && p.price)
           .slice(0, 20)
           .map((p, idx) => ({
-            id: p.asin || idx,
-            title: p.product_title,
-            price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
-            image_url: p.product_photo,
-            source: 'Amazon',
-            brand: 'Amazon',
-            url: p.product_url
+            id: p.id || idx,
+            title: p.title,
+            price: typeof p.price === 'string' ? p.price.replace(/[^0-9.]/g, '') : p.price,
+            image_url: p.image_url || p.image || p.thumbnail,
+            source: p.source || 'Amazon',
+            brand: p.merchant_name || p.source || 'Amazon',
+            url: p.url
           }))
       } catch (similarErr) {
         console.error('Failed to fetch similar products:', similarErr)

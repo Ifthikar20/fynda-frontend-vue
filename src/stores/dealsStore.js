@@ -97,7 +97,21 @@ const searchDeals = async (query) => {
     }
 }
 
+// Upload cooldown (prevent rapid-fire abuse)
+const UPLOAD_COOLDOWN_MS = 10_000 // 10 seconds between uploads
+let lastUploadTime = 0
+
 const visualSearch = async (imageBase64) => {
+    // Enforce cooldown
+    const now = Date.now()
+    const elapsed = now - lastUploadTime
+    if (lastUploadTime && elapsed < UPLOAD_COOLDOWN_MS) {
+        const remaining = Math.ceil((UPLOAD_COOLDOWN_MS - elapsed) / 1000)
+        state.error = `Please wait ${remaining}s before uploading another image`
+        return
+    }
+    lastUploadTime = now
+
     state.loading = true
     state.error = null
     state.hasSearched = true
@@ -122,6 +136,13 @@ const visualSearch = async (imageBase64) => {
             method: 'POST',
             body: formData
         })
+
+        // Handle rate limiting
+        if (response.status === 429) {
+            const data = await response.json().catch(() => ({}))
+            state.error = data.error || 'Too many uploads. Please wait and try again.'
+            return
+        }
 
         if (!response.ok) {
             throw new Error('Visual search request failed')

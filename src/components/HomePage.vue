@@ -867,8 +867,22 @@ const handleImageUpload = async (event) => {
   await previewImage(file)
 }
 
+// Upload cooldown (prevents rapid-fire abuse)
+const IMAGE_UPLOAD_COOLDOWN_MS = 10_000 // 10 seconds
+let lastImageUploadTime = 0
+
 // Core: send image to backend ML for analysis, then display results
 const processImageFile = async (file) => {
+  // Enforce client-side cooldown
+  const now = Date.now()
+  const elapsed = now - lastImageUploadTime
+  if (lastImageUploadTime && elapsed < IMAGE_UPLOAD_COOLDOWN_MS) {
+    const remaining = Math.ceil((IMAGE_UPLOAD_COOLDOWN_MS - elapsed) / 1000)
+    alert(`Please wait ${remaining}s before uploading another image`)
+    return
+  }
+  lastImageUploadTime = now
+
   loading.value = true
   hasSearched.value = true
   lastSearchQuery.value = 'Visual Search'
@@ -885,6 +899,12 @@ const processImageFile = async (file) => {
       method: 'POST',
       body: formData
     })
+    
+    // Handle rate limiting
+    if (response.status === 429) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.error || 'Too many uploads. Please wait and try again.')
+    }
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
@@ -1223,70 +1243,35 @@ const isClothing = (title) => {
 // Load trending deals — clothing only (via Amazon RapidAPI)
 const loadTrending = async () => {
   try {
-    const fashionQueries = [
-      'women dress summer', 'mens jacket', 'sneakers fashion',
-      'designer handbag women', 'denim jeans', 'womens blouse',
-      'mens blazer slim', 'heels shoes women', 'hoodie streetwear',
-      'womens skirt', 'mens polo shirt', 'crossbody bag'
-    ]
+    // Route through backend — keeps API key server-side
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+    const response = await fetch(`${apiUrl}/api/explore/?category=all-products&limit=30`)
+    const data = await response.json()
+    const products = data?.deals || []
     
-    // Pick 3 random queries for variety
-    const shuffled = fashionQueries.sort(() => 0.5 - Math.random())
-    const selected = shuffled.slice(0, 3)
-    
-    const responses = await Promise.allSettled(
-      selected.map(q =>
-        fetch(
-          `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(q)}&page=1&country=US`,
-          {
-            headers: {
-              'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
-              'x-rapidapi-key': 'ad5affb386msh86b1de74187a3cep186fbejsn29e5c0f03e34'
-            }
-          }
-        ).then(r => r.json())
-      )
-    )
-    
-    // Combine, map, and deduplicate
-    const allDeals = []
-    const seenIds = new Set()
-    
-    for (const res of responses) {
-      if (res.status === 'fulfilled') {
-        const products = res.value?.data?.products || []
-        for (const p of products) {
-          const id = p.asin || p.product_title
-          const title = p.product_title || ''
-          if (
-            !seenIds.has(id) && 
-            p.product_photo && 
-            isClothing(title) &&
-            isFashionOrBeauty({ title, image_url: p.product_photo })
-          ) {
-            seenIds.add(id)
-            const brand = extractBrand(title)
-            allDeals.push({
-              id: id,
-              title: title,
-              price: (p.product_price || '$0').replace(/[^0-9.]/g, ''),
-              original_price: p.product_original_price ? p.product_original_price.replace(/[^0-9.]/g, '') : null,
-              image_url: p.product_photo,
-              source: 'Amazon',
-              merchant_name: brand,
-              url: p.product_url,
-              rating: p.product_star_rating,
-              reviews: p.product_num_ratings,
-              is_prime: p.is_prime,
-              badge: p.product_badge || (p.is_best_seller ? 'Best Seller' : (p.is_amazon_choice ? 'Amazon Choice' : null)),
-              discount_percent: p.product_original_price && p.product_price
-                ? Math.round(((parseFloat(p.product_original_price.replace(/[^0-9.]/g, '')) - parseFloat(p.product_price.replace(/[^0-9.]/g, ''))) / parseFloat(p.product_original_price.replace(/[^0-9.]/g, ''))) * 100)
-                : null
-            })
-          }
+    // Map to the format expected by the UI
+    const allDeals = products
+      .filter(p => p.image_url || p.image || p.product_photo || p.thumbnail)
+      .filter(p => isClothing(p.title))
+      .filter(p => isFashionOrBeauty({ title: p.title, image_url: p.image_url || p.image }))
+      .map((p, idx) => {
+        const brand = extractBrand(p.title)
+        return {
+          id: p.id || idx,
+          title: p.title,
+          price: typeof p.price === 'string' ? p.price.replace(/[^0-9.]/g, '') : p.price,
+          original_price: p.original_price ? (typeof p.original_price === 'string' ? p.original_price.replace(/[^0-9.]/g, '') : p.original_price) : null,
+          image_url: p.image_url || p.image || p.thumbnail,
+          source: p.source || 'Amazon',
+          merchant_name: brand,
+          url: p.url,
+          rating: p.rating,
+          reviews: p.reviews_count || p.reviews,
+          is_prime: p.is_prime,
+          badge: p.badge || null,
+          discount_percent: p.discount_percent || null,
         }
-      }
-    }
+      })
     
     // Shuffle for variety
     trendingDeals.value = allDeals.sort(() => 0.5 - Math.random())

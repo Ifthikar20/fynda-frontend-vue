@@ -1,5 +1,5 @@
 <template>
-  <div class="shared-storyboard-page">
+  <div class="shared-board-page">
     <!-- Minimal Header -->
     <header class="shared-header">
       <router-link to="/" class="logo-link">
@@ -11,7 +11,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <div class="spinner"></div>
-      <p>Loading storyboard...</p>
+      <p>Loading fashion board...</p>
     </div>
 
     <!-- Error State -->
@@ -26,10 +26,10 @@
       <router-link to="/" class="home-btn">Go to Homepage</router-link>
     </div>
 
-    <!-- Storyboard View -->
-    <main v-else class="storyboard-view">
-      <!-- iPhone-style Card Frame -->
-      <div class="device-frame" :style="deviceFrameStyle">
+    <!-- Fashion Board View — fills entire screen -->
+    <main v-else class="board-view">
+      <!-- Full-screen Card Frame -->
+      <div class="device-frame" ref="frameRef">
         <!-- Dynamic Island / Notch hint -->
         <div class="dynamic-island"></div>
         
@@ -40,14 +40,14 @@
         >
           <!-- Canvas Items -->
           <component
-            v-for="item in storyboard.items" 
+            v-for="item in board.items" 
             :key="item.id"
-            :is="storyboard.enableLinks && item.productUrl ? 'a' : 'div'"
-            :href="storyboard.enableLinks && item.productUrl ? getProductLink(item) : undefined"
+            :is="board.enableLinks && item.productUrl ? 'a' : 'div'"
+            :href="board.enableLinks && item.productUrl ? getProductLink(item) : undefined"
             class="canvas-item"
             :class="[
               item.frame ? 'frame-' + item.frame : '',
-              { clickable: storyboard.enableLinks && item.productUrl }
+              { clickable: board.enableLinks && item.productUrl }
             ]"
             :style="{
               left: item.x + '%',
@@ -61,21 +61,21 @@
             <div v-if="item.showPin" class="item-pin"></div>
             <img :src="item.image_url" :alt="item.title" />
             <!-- Price Tag Overlay -->
-            <span v-if="storyboard.showPrices && item.productPrice" class="price-tag">
+            <span v-if="board.showPrices && item.productPrice" class="price-tag">
               ${{ formatPrice(item.productPrice) }}
             </span>
           </component>
 
           <!-- Text Elements -->
           <div 
-            v-for="text in storyboard.textElements" 
+            v-for="text in board.textElements" 
             :key="text.id"
             class="text-element"
             :style="{
               left: text.x + '%',
               top: text.y + '%',
               fontFamily: text.fontFamily,
-              fontSize: text.fontSize + 'px',
+              fontSize: scaledFontSize(text.fontSize) + 'px',
               color: text.color,
               zIndex: text.zIndex
             }"
@@ -85,13 +85,13 @@
           
           <!-- Stickers -->
           <div 
-            v-for="sticker in (storyboard.stickers || [])" 
+            v-for="sticker in (board.stickers || [])" 
             :key="sticker.id"
             class="sticker-element"
             :style="{
               left: sticker.x + '%',
               top: sticker.y + '%',
-              fontSize: sticker.size + 'px',
+              fontSize: scaledFontSize(sticker.size) + 'px',
               zIndex: sticker.zIndex,
               transform: `rotate(${sticker.rotation || 0}deg)`
             }"
@@ -111,15 +111,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../utils/api'
 
 const route = useRoute()
+const frameRef = ref(null)
 
 const loading = ref(true)
 const error = ref(null)
-const storyboard = ref({
+const board = ref({
   canvasWidth: 600,
   canvasHeight: 900,
   background: { background: '#ffffff' },
@@ -132,21 +133,22 @@ const storyboard = ref({
 const owner = ref('')
 const viewCount = ref(0)
 
-// Compute scaling so the card fits within the viewport
-const deviceFrameStyle = computed(() => {
-  const w = storyboard.value.canvasWidth
-  const h = storyboard.value.canvasHeight
-  const aspectRatio = w / h
+// Track the rendered scale so we can scale fonts proportionally
+const renderScale = ref(1)
 
-  return {
-    aspectRatio: `${w} / ${h}`,
-    maxWidth: aspectRatio >= 1 ? '90vw' : '420px',
-    width: '100%',
-  }
-})
+const updateScale = () => {
+  if (!frameRef.value) return
+  const frameW = frameRef.value.clientWidth
+  renderScale.value = frameW / board.value.canvasWidth
+}
+
+// Scale text / sticker font sizes proportionally to the frame
+const scaledFontSize = (original) => {
+  return Math.max(8, Math.round(original * renderScale.value))
+}
 
 const canvasInnerStyle = computed(() => {
-  const bg = storyboard.value.background || {}
+  const bg = board.value.background || {}
   return {
     ...bg,
     width: '100%',
@@ -165,6 +167,9 @@ const getProductLink = (item) => {
   return `/product/${productId}`
 }
 
+// Resize observer for dynamic scaling
+let resizeObserver = null
+
 onMounted(async () => {
   const token = route.params.token
   
@@ -181,7 +186,7 @@ onMounted(async () => {
     const cw = data.storyboard_data.canvasWidth || 600
     const ch = data.storyboard_data.canvasHeight || 900
 
-    storyboard.value = {
+    board.value = {
       canvasWidth: cw,
       canvasHeight: ch,
       background: data.storyboard_data.background || { background: '#ffffff' },
@@ -209,7 +214,7 @@ onMounted(async () => {
     }
     
     // Store product data in sessionStorage for items with links
-    if (storyboard.value.enableLinks) {
+    if (board.value.enableLinks) {
       const origItems = data.storyboard_data.items || []
       origItems.forEach(item => {
         if (item.productUrl) {
@@ -232,30 +237,71 @@ onMounted(async () => {
     // Set page title
     document.title = `${data.title || 'Fashion Board'} — outfi.`
     
+    // Dynamic OG meta tags for Pinterest / social sharing
+    const ogTags = {
+      'og:title': `${data.title || 'Fashion Board'} — outfi.`,
+      'og:description': `Fashion board by ${data.owner || 'a creator'} on outfi.ai — discover and share outfit inspiration.`,
+      'og:url': `https://outfi.ai/share/${route.params.token}`,
+      'og:site_name': 'Outfi',
+      'og:type': 'article',
+      'og:image': (data.storyboard_data.items?.[0]?.image_url) || 'https://outfi.ai/assets/outfi-og-banner.png',
+      'og:image:width': '600',
+      'og:image:height': '900',
+      'twitter:card': 'summary_large_image',
+      'twitter:title': `${data.title || 'Fashion Board'} — outfi.`,
+      'twitter:image': (data.storyboard_data.items?.[0]?.image_url) || 'https://outfi.ai/assets/outfi-og-banner.png',
+    }
+    
+    Object.entries(ogTags).forEach(([property, content]) => {
+      const isOg = property.startsWith('og:')
+      const attr = isOg ? 'property' : 'name'
+      let tag = document.querySelector(`meta[${attr}="${property}"]`)
+      if (!tag) {
+        tag = document.createElement('meta')
+        tag.setAttribute(attr, property)
+        document.head.appendChild(tag)
+      }
+      tag.setAttribute('content', content)
+    })
+
+    // Setup scale tracking after DOM updates
+    await nextTick()
+    updateScale()
+    if (frameRef.value) {
+      resizeObserver = new ResizeObserver(() => updateScale())
+      resizeObserver.observe(frameRef.value)
+    }
+    
   } catch (err) {
     if (err.response?.status === 404) {
       error.value = 'Share link not found'
     } else if (err.response?.status === 410) {
       error.value = 'This share link has expired'
     } else {
-      error.value = 'Failed to load storyboard'
+      error.value = 'Failed to load fashion board'
     }
   } finally {
     loading.value = false
   }
 })
+
+onUnmounted(() => {
+  if (resizeObserver) resizeObserver.disconnect()
+})
 </script>
 
 <style scoped>
 /* ============================================
-   SHARED STORYBOARD PAGE - iPhone Card Style
+   SHARED FASHION BOARD PAGE - Full Screen
    ============================================ */
-.shared-storyboard-page {
+.shared-board-page {
   min-height: 100vh;
+  min-height: 100dvh; /* dynamic viewport for mobile */
   background: linear-gradient(160deg, #0a0a0f 0%, #141420 40%, #1a1a2e 100%);
   display: flex;
   flex-direction: column;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow: hidden;
 }
 
 /* ---- Header ---- */
@@ -263,25 +309,27 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1.25rem;
   background: transparent;
+  flex-shrink: 0;
+  z-index: 10;
 }
 
 .logo {
-  height: 32px;
+  height: 28px;
   width: auto;
   filter: brightness(0) invert(1);
   opacity: 0.85;
 }
 
 .cta-btn {
-  padding: 0.5rem 1.1rem;
+  padding: 0.45rem 1rem;
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 10px;
   text-decoration: none;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.02em;
   backdrop-filter: blur(8px);
@@ -366,29 +414,36 @@ onMounted(async () => {
   background: rgba(255, 255, 255, 0.18);
 }
 
-/* ---- Main Storyboard View ---- */
-.storyboard-view {
+/* ---- Main Board View — fills remaining screen ---- */
+.board-view {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1rem 1rem 1.5rem;
-  gap: 1.25rem;
+  padding: 0;
+  min-height: 0; /* allow flex child to shrink */
+  overflow: hidden;
 }
 
-/* ---- iPhone-Style Device Frame ---- */
+/* ---- Full-Screen Device Frame ---- */
 .device-frame {
   position: relative;
-  border-radius: 44px;
+  border-radius: 36px;
   overflow: hidden;
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.08),
     0 4px 16px rgba(0, 0, 0, 0.4),
     0 20px 60px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  max-height: 85vh;
   animation: cardFloat 0.6s ease-out;
+
+  /* Fill all available space while maintaining aspect ratio */
+  width: 100%;
+  max-width: 100vw;
+  flex: 1;
+  min-height: 0;
+  aspect-ratio: var(--board-aspect);
 }
 
 @keyframes cardFloat {
@@ -430,7 +485,6 @@ onMounted(async () => {
   border: none;
   display: block;
   text-decoration: none;
-  /* Use percentage-based positioning */
   left: 0;
   top: 0;
 }
@@ -449,11 +503,6 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-/* Override position/size to use percentages */
-.canvas-item[style] {
-  /* Styles applied inline via :style binding */
 }
 
 /* Price Tag Overlay */
@@ -546,13 +595,14 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.5rem 1rem 0;
+  gap: 0.2rem;
+  padding: 0.4rem 1rem 0.3rem;
+  flex-shrink: 0;
 }
 
 .watermark-logo {
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.25);
   letter-spacing: 0.08em;
@@ -560,7 +610,7 @@ onMounted(async () => {
 
 .watermark-cta {
   font-family: 'Inter', -apple-system, sans-serif;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.3);
   text-decoration: none;
@@ -572,28 +622,44 @@ onMounted(async () => {
   color: rgba(255, 255, 255, 0.6);
 }
 
-/* ---- Responsive ---- */
-@media (max-width: 768px) {
+/* ============================================
+   RESPONSIVE — fill screen on every device
+   ============================================ */
+
+/* Large desktop */
+@media (min-width: 1200px) {
+  .device-frame {
+    max-width: 600px;
+    border-radius: 44px;
+  }
+}
+
+/* Tablet landscape */
+@media (min-width: 769px) and (max-width: 1199px) {
+  .device-frame {
+    max-width: 520px;
+    border-radius: 40px;
+  }
+}
+
+/* Tablet portrait */
+@media (min-width: 481px) and (max-width: 768px) {
   .shared-header {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 1rem;
   }
 
   .logo {
-    height: 26px;
+    height: 24px;
   }
 
   .cta-btn {
-    font-size: 0.72rem;
-    padding: 0.4rem 0.8rem;
-  }
-
-  .storyboard-view {
-    padding: 0.75rem 0.75rem 1rem;
+    font-size: 0.7rem;
+    padding: 0.35rem 0.75rem;
   }
 
   .device-frame {
+    max-width: 90vw;
     border-radius: 32px;
-    max-height: 80vh;
   }
 
   .dynamic-island {
@@ -603,10 +669,32 @@ onMounted(async () => {
   }
 }
 
-@media (max-width: 420px) {
+/* Mobile — fill the entire screen */
+@media (max-width: 480px) {
+  .shared-header {
+    padding: 0.35rem 0.75rem;
+  }
+
+  .logo {
+    height: 22px;
+  }
+
+  .cta-btn {
+    font-size: 0.68rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 8px;
+  }
+
+  .board-view {
+    padding: 0;
+  }
+
   .device-frame {
-    border-radius: 28px;
-    max-width: 100% !important;
+    max-width: 100vw;
+    width: 100vw;
+    border-radius: 0;
+    box-shadow: none;
+    flex: 1;
   }
 
   .dynamic-island {
@@ -615,8 +703,27 @@ onMounted(async () => {
     top: 6px;
   }
 
-  .storyboard-view {
-    padding: 0.5rem 0.4rem 0.75rem;
+  .brand-watermark {
+    padding: 0.3rem 0.5rem 0.25rem;
+  }
+}
+
+/* Very short screens (landscape phones) */
+@media (max-height: 600px) {
+  .shared-header {
+    padding: 0.25rem 0.75rem;
+  }
+
+  .logo {
+    height: 20px;
+  }
+
+  .dynamic-island {
+    display: none;
+  }
+
+  .brand-watermark {
+    padding: 0.2rem 0.5rem;
   }
 }
 </style>
