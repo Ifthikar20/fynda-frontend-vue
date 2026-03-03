@@ -430,7 +430,7 @@ onUnmounted(() => {
 /* ---- Canvas Items (absolute pixel positioning) ---- */
 .canvas-item {
   position: absolute;
-  border-radius: 0;
+  border-radius: 16px;
   overflow: hidden;
   box-shadow: none;
   border: none;

@@ -2049,7 +2049,7 @@ onUnmounted(() => {
   padding: 0.5rem 1rem;
   background: #f5f5f5;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 0.8rem;
   cursor: pointer;
   color: #333;
@@ -2077,7 +2077,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.4rem;
   padding: 0.45rem 0.9rem;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
@@ -2122,7 +2122,7 @@ onUnmounted(() => {
 
 .share-modal {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 20px;
   width: 90%;
   max-width: 480px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
@@ -2342,7 +2342,7 @@ onUnmounted(() => {
 .tool-card {
   background: #fafafa;
   border: 1px solid #ebebeb;
-  border-radius: 14px;
+  border-radius: 20px;
   padding: 0.75rem;
   transition: all 0.25s ease;
 }
@@ -2866,7 +2866,7 @@ onUnmounted(() => {
   position: absolute;
   top: 0;
   left: 0;
-  border-radius: 8px;
+  border-radius: 20px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0,0,0,0.06);
   overflow: hidden;
 }
@@ -2874,7 +2874,7 @@ onUnmounted(() => {
 .canvas-item {
   position: absolute;
   background: transparent;
-  border-radius: 0;
+  border-radius: 16px;
   overflow: hidden;
   cursor: move;
   box-shadow: none;
@@ -3467,7 +3467,7 @@ onUnmounted(() => {
   padding: 0.45rem 0.7rem;
   background: #f5f5f5;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 14px;
   margin-bottom: 0.75rem;
   transition: border-color 0.15s;
 }
@@ -3501,7 +3501,7 @@ onUnmounted(() => {
 
 .product-card {
   position: relative;
-  border-radius: 14px;
+  border-radius: 18px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.25s ease;
