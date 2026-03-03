@@ -28,6 +28,12 @@
           </svg>
           Share
         </button>
+        <button class="pinterest-btn" @click="openPinterestPublish" title="Publish to Pinterest">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 0 1 .083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/>
+          </svg>
+          Pinterest
+        </button>
       </div>
     </div>
 
@@ -86,6 +92,97 @@
                 </button>
               </div>
               <p class="share-info">Anyone with this link can view your fashion board. Link expires in 30 days.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Pinterest Publish Modal -->
+    <Teleport to="body">
+      <div v-if="showPinterestModal" class="share-modal-overlay" @click.self="showPinterestModal = false">
+        <div class="share-modal pinterest-modal">
+          <div class="share-modal-header">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#E60023" style="vertical-align: middle; margin-right: 6px;">
+                <path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 0 1 .083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/>
+              </svg>
+              Publish to Pinterest
+            </h3>
+            <button class="close-modal" @click="showPinterestModal = false">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="share-modal-body">
+            <!-- Not configured -->
+            <div v-if="!pinterestStatus.configured" class="pinterest-info-card">
+              <p>Pinterest API keys are not configured yet.</p>
+              <p class="share-info">Add <code>PINTEREST_APP_ID</code> and <code>PINTEREST_APP_SECRET</code> to your server environment.</p>
+            </div>
+
+            <!-- Not connected -->
+            <div v-else-if="!pinterestStatus.connected" class="pinterest-info-card">
+              <p>Connect your Pinterest account to publish fashion boards as Pins.</p>
+              <button class="pinterest-connect-btn" @click="connectPinterest">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                  <path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 0 1 .083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/>
+                </svg>
+                Connect Pinterest Account
+              </button>
+            </div>
+
+            <!-- Connected — Board selector + Publish form -->
+            <div v-else>
+              <p class="pinterest-connected-label">Connected as <strong>@{{ pinterestStatus.pinterest_username }}</strong></p>
+
+              <!-- Board selector -->
+              <div class="tool-card" style="margin-bottom: 0.75rem;">
+                <label class="panel-title mt">Select Board</label>
+                <div v-if="pinterestBoardsLoading" class="share-loading" style="padding: 0.5rem 0;">
+                  <div class="spinner-small"></div>
+                  <span>Loading boards...</span>
+                </div>
+                <select v-else v-model="selectedPinterestBoard" class="pinterest-select">
+                  <option value="">Choose a board...</option>
+                  <option v-for="board in pinterestBoards" :key="board.id" :value="board.id">
+                    {{ board.name }} ({{ board.pin_count }} pins)
+                  </option>
+                </select>
+              </div>
+
+              <!-- Title -->
+              <div class="tool-card" style="margin-bottom: 0.75rem;">
+                <label class="panel-title mt">Pin Title</label>
+                <input v-model="pinterestPinTitle" type="text" class="pinterest-input" placeholder="Fashion Board" maxlength="100" />
+              </div>
+
+              <!-- Description -->
+              <div class="tool-card" style="margin-bottom: 1rem;">
+                <label class="panel-title mt">Description</label>
+                <textarea v-model="pinterestPinDescription" class="pinterest-textarea" placeholder="Outfit inspiration curated on outfi.ai" maxlength="500" rows="3"></textarea>
+              </div>
+
+              <!-- Publish button -->
+              <button 
+                class="pinterest-publish-btn" 
+                :disabled="!selectedPinterestBoard || pinterestPublishing"
+                @click="publishToPinterest"
+              >
+                <div v-if="pinterestPublishing" class="spinner-small" style="border-top-color: #fff;"></div>
+                <span v-else>Publish Pin</span>
+              </button>
+
+              <!-- Success/Error message -->
+              <div v-if="pinterestPublishResult" class="pinterest-result" :class="pinterestPublishResult.success ? 'success' : 'error'">
+                {{ pinterestPublishResult.message }}
+                <a v-if="pinterestPublishResult.pin_url" :href="pinterestPublishResult.pin_url" target="_blank" class="pinterest-pin-link">View Pin →</a>
+              </div>
+
+              <!-- Disconnect -->
+              <button class="pinterest-disconnect-btn" @click="disconnectPinterest">Disconnect Pinterest</button>
             </div>
           </div>
         </div>
@@ -1877,6 +1974,129 @@ const linkCopied = ref(false)
 const shareWithLinks = ref(true)
 const shareWithPrices = ref(true)
 
+// Pinterest publish state
+const showPinterestModal = ref(false)
+const pinterestStatus = ref({ configured: false, connected: false, pinterest_username: '' })
+const pinterestBoards = ref([])
+const pinterestBoardsLoading = ref(false)
+const selectedPinterestBoard = ref('')
+const pinterestPinTitle = ref('')
+const pinterestPinDescription = ref('')
+const pinterestPublishing = ref(false)
+const pinterestPublishResult = ref(null)
+
+// Pinterest methods
+const checkPinterestStatus = async () => {
+  try {
+    const response = await api.get('/api/pinterest/status/')
+    pinterestStatus.value = response.data
+  } catch (err) {
+    pinterestStatus.value = { configured: false, connected: false, pinterest_username: '' }
+  }
+}
+
+const openPinterestPublish = async () => {
+  pinterestPublishResult.value = null
+  showPinterestModal.value = true
+  await checkPinterestStatus()
+  if (pinterestStatus.value.connected) {
+    loadPinterestBoards()
+  }
+}
+
+const connectPinterest = async () => {
+  try {
+    const response = await api.get('/api/pinterest/auth/')
+    const authUrl = response.data.auth_url
+    
+    // Open OAuth popup
+    const popup = window.open(authUrl, 'pinterest-oauth', 'width=600,height=700,scrollbars=yes')
+    
+    // Listen for the callback message
+    const messageHandler = async (event) => {
+      if (event.data && event.data.type === 'pinterest-oauth-callback') {
+        window.removeEventListener('message', messageHandler)
+        if (event.data.status === 'success') {
+          await checkPinterestStatus()
+          if (pinterestStatus.value.connected) {
+            loadPinterestBoards()
+          }
+        } else {
+          pinterestPublishResult.value = { success: false, message: event.data.message || 'Connection failed' }
+        }
+      }
+    }
+    window.addEventListener('message', messageHandler)
+  } catch (err) {
+    pinterestPublishResult.value = { success: false, message: 'Failed to start Pinterest connection' }
+  }
+}
+
+const loadPinterestBoards = async () => {
+  pinterestBoardsLoading.value = true
+  try {
+    const response = await api.get('/api/pinterest/boards/')
+    pinterestBoards.value = response.data.boards || []
+  } catch (err) {
+    pinterestBoards.value = []
+  } finally {
+    pinterestBoardsLoading.value = false
+  }
+}
+
+const publishToPinterest = async () => {
+  if (!selectedPinterestBoard.value) return
+  
+  pinterestPublishing.value = true
+  pinterestPublishResult.value = null
+  
+  try {
+    // First, ensure we have a shared link (need the token for the publish endpoint)
+    if (!currentShareUrl.value) {
+      await generateShareLink()
+    }
+    
+    // Extract token from share URL
+    const shareToken = currentShareUrl.value.split('/share/').pop()?.replace('/', '')
+    
+    if (!shareToken) {
+      pinterestPublishResult.value = { success: false, message: 'Please share your board first, then publish to Pinterest.' }
+      return
+    }
+    
+    const response = await api.post('/api/pinterest/publish/', {
+      storyboard_token: shareToken,
+      board_id: selectedPinterestBoard.value,
+      title: pinterestPinTitle.value || boardTitle.value || 'Fashion Board',
+      description: pinterestPinDescription.value || 'Outfit inspiration curated on outfi.ai',
+    })
+    
+    pinterestPublishResult.value = {
+      success: true,
+      message: 'Pin published successfully! 🎉',
+      pin_url: response.data.pin_url,
+    }
+  } catch (err) {
+    pinterestPublishResult.value = {
+      success: false,
+      message: err.response?.data?.error || 'Failed to publish pin. Please try again.',
+    }
+  } finally {
+    pinterestPublishing.value = false
+  }
+}
+
+const disconnectPinterest = async () => {
+  try {
+    await api.delete('/api/pinterest/disconnect/')
+    pinterestStatus.value = { configured: true, connected: false, pinterest_username: '' }
+    pinterestBoards.value = []
+    selectedPinterestBoard.value = ''
+  } catch (err) {
+    // ignore
+  }
+}
+
 // Explore modals
 const showBgModal = ref(false)
 const showTextureModal = ref(false)
@@ -2099,6 +2319,158 @@ onUnmounted(() => {
 
 .save-btn:hover { background: linear-gradient(135deg, #8b5cf6, #7c3aed); box-shadow: 0 4px 12px rgba(124,58,237,0.4); }
 .share-btn:hover { background: #eee; color: #111; border-color: #ccc; }
+
+/* Pinterest button */
+.pinterest-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #E60023;
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(230,0,35,0.25);
+}
+.pinterest-btn:hover {
+  background: #c7001e;
+  box-shadow: 0 4px 12px rgba(230,0,35,0.4);
+}
+
+/* Pinterest modal extras */
+.pinterest-info-card {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  color: #555;
+}
+.pinterest-info-card code {
+  background: #f5f5f5;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+.pinterest-connect-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.4rem;
+  background: #E60023;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 1rem;
+}
+.pinterest-connect-btn:hover { background: #c7001e; transform: scale(1.03); }
+
+.pinterest-connected-label {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 0.75rem;
+}
+
+.pinterest-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  background: #fff;
+  color: #333;
+  outline: none;
+  margin-top: 0.4rem;
+}
+.pinterest-select:focus { border-color: #E60023; }
+
+.pinterest-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  outline: none;
+  margin-top: 0.4rem;
+  box-sizing: border-box;
+}
+.pinterest-input:focus { border-color: #E60023; }
+
+.pinterest-textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  margin-top: 0.4rem;
+  box-sizing: border-box;
+}
+.pinterest-textarea:focus { border-color: #E60023; }
+
+.pinterest-publish-btn {
+  width: 100%;
+  padding: 0.7rem;
+  background: #E60023;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.pinterest-publish-btn:hover:not(:disabled) { background: #c7001e; }
+.pinterest-publish-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.pinterest-result {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+.pinterest-result.success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+.pinterest-result.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+.pinterest-pin-link {
+  display: inline-block;
+  margin-top: 0.3rem;
+  color: #E60023;
+  font-weight: 600;
+  text-decoration: none;
+}
+.pinterest-pin-link:hover { text-decoration: underline; }
+
+.pinterest-disconnect-btn {
+  display: block;
+  margin: 1rem auto 0;
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.pinterest-disconnect-btn:hover { color: #E60023; }
 
 /* Share Modal Popup */
 .share-modal-overlay {
