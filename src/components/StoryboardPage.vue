@@ -1075,14 +1075,14 @@ const searchProducts = async () => {
   }
 }
 
-// Canvas operations — products appear at 200px for visibility
+// Canvas operations — products appear at 350px for visibility
 const addToCanvas = (product) => {
   const canvas = canvasRef.value
   if (!canvas) return
   
-  const size = 200
-  const x = Math.random() * (canvasWidth.value - size - 20) + 10
-  const y = Math.random() * (canvasHeight.value - size - 20) + 10
+  const size = 350
+  const x = Math.random() * (canvasWidth.value - size - 40) + 20
+  const y = Math.random() * (canvasHeight.value - size - 40) + 20
   
   canvasItems.value.push({
     ...product,
@@ -1111,10 +1111,10 @@ const handleDrop = (e) => {
     canvasItems.value.push({
       ...product,
       id: Date.now() + Math.random(),
-      x: (e.clientX - rect.left) / scale - 100,
-      y: (e.clientY - rect.top) / scale - 100,
-      width: 200,
-      height: 200,
+      x: (e.clientX - rect.left) / scale - 175,
+      y: (e.clientY - rect.top) / scale - 175,
+      width: 350,
+      height: 350,
       zIndex: canvasItems.value.length + 1
     })
     
@@ -1209,7 +1209,7 @@ const handleImageUpload = (event) => {
       // Calculate size to fit canvas while maintaining aspect ratio
       let width = img.width
       let height = img.height
-      const maxSize = 300
+      const maxSize = 450
       
       if (width > maxSize || height > maxSize) {
         if (width > height) {
@@ -1946,8 +1946,8 @@ onMounted(() => {
       const productData = JSON.parse(route.query.product)
       if (productData && productData.image_url) {
         // Add the product to canvas
-        const x = (canvasWidth.value - 200) / 2
-        const y = (canvasHeight.value - 200) / 2
+        const x = (canvasWidth.value - 350) / 2
+        const y = (canvasHeight.value - 350) / 2
         
         canvasItems.value.push({
           id: Date.now() + Math.random(),
@@ -1957,8 +1957,8 @@ onMounted(() => {
           url: productData.url || productData.product_url || '',
           product_url: productData.url || productData.product_url || '',
           x, y,
-          width: 200,
-          height: 200,
+          width: 350,
+          height: 350,
           zIndex: 1
         })
         
@@ -2852,7 +2852,7 @@ onUnmounted(() => {
   gap: 0.5rem;
   min-height: 0;
   overflow: hidden;
-  padding: 0.75rem;
+  padding: 1.25rem;
   background: #f0f0f0;
   border-radius: 0;
 }
