@@ -1,6 +1,9 @@
 <template>
   <div class="storyboard-page">
     
+    <!-- Site NavBar -->
+    <NavBar />
+
     <!-- Storyboard Toolbar -->
     <div class="storyboard-toolbar">
       <button class="back-btn" @click="goBack">
@@ -713,6 +716,22 @@
         </div>
       </transition>
     </Teleport>
+
+    <!-- Footer -->
+    <footer class="storyboard-footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="footer-logo">outfi.</span>
+          <span class="footer-tagline">Curate your style</span>
+        </div>
+        <div class="footer-links">
+          <router-link to="/">Explore</router-link>
+          <router-link to="/storyboard">Fashion Board</router-link>
+          <a href="https://outfi.ai" target="_blank">About</a>
+        </div>
+        <p class="footer-copy">&copy; {{ new Date().getFullYear() }} Outfi. All rights reserved.</p>
+      </div>
+    </footer>
   </div>
 </template>
 
@@ -1534,7 +1553,7 @@ const removeBackground = async (item) => {
     // The remove-bg endpoint is AllowAny — using api.post() triggers
     // the auth interceptor which redirects to /login on 401
     const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://api.outfi.ai' : 'http://127.0.0.1:8000')
-    const result = await fetch(`${apiUrl}/api/mobile/tools/remove-bg/`, {
+    const result = await fetch(`${apiUrl}/api/tools/remove-bg/`, {
       method: 'POST',
       body: formData,
     })
@@ -2239,16 +2258,60 @@ onUnmounted(() => {
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&family=Libre+Baskerville:wght@400;700&family=Cinzel:wght@400;500;600&family=EB+Garamond:wght@400;500;600&family=Bodoni+Moda:wght@400;500;600&family=Lora:wght@400;500;600&family=Crimson+Text:wght@400;600&display=swap');
 
 .storyboard-page {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
   background: #1e1e1e;
-  z-index: 100;
-  overflow: hidden;
+  overflow-x: hidden;
+}
+
+/* Footer */
+.storyboard-footer {
+  background: #151515;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 1.5rem 2rem;
+  flex-shrink: 0;
+}
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.footer-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+.footer-logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.footer-tagline {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+}
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+}
+.footer-links a {
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+  font-size: 0.8rem;
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: #fff; }
+
+.footer-copy {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.3);
+  margin: 0;
 }
 
 /* Storyboard Toolbar */
