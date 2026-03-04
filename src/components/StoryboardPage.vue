@@ -423,6 +423,58 @@
               <div class="scan-line"></div>
               <span class="scan-label">Scanning...</span>
             </div>
+
+            <!-- Price Range Meter (appears when item is selected + has price) -->
+            <div 
+              v-if="selectedItem === item.id && item.price && parseFloat(item.price) > 0"
+              class="price-meter-panel"
+              @mousedown.stop
+            >
+              <div v-if="priceAnalysisLoading" class="price-meter-loading">
+                <div class="spinner-small"></div>
+                <span>Analyzing price...</span>
+              </div>
+              <div v-else-if="priceAnalysis && priceAnalysis.compared_count > 0" class="price-meter-content">
+                <div class="price-meter-header">
+                  <span class="price-meter-verdict" :class="'verdict-' + priceAnalysis.verdict">
+                    {{ priceAnalysis.verdict_label }}
+                  </span>
+                  <span class="price-meter-count">vs {{ priceAnalysis.compared_count }} products</span>
+                </div>
+                <!-- Gauge bar -->
+                <div class="price-gauge">
+                  <div class="gauge-track">
+                    <div class="gauge-fill-great" style="width: 25%"></div>
+                    <div class="gauge-fill-good" style="width: 15%"></div>
+                    <div class="gauge-fill-fair" style="width: 25%"></div>
+                    <div class="gauge-fill-above" style="width: 20%"></div>
+                    <div class="gauge-fill-over" style="width: 15%"></div>
+                  </div>
+                  <div class="gauge-marker" :style="{ left: priceAnalysis.percentile + '%' }">
+                    <div class="gauge-marker-pin"></div>
+                    <span class="gauge-marker-label">${{ formatPrice(priceAnalysis.product_price) }}</span>
+                  </div>
+                </div>
+                <!-- Stats row -->
+                <div class="price-stats-row">
+                  <span class="price-stat">
+                    <span class="stat-label">Low</span>
+                    <span class="stat-value">${{ formatPrice(priceAnalysis.min_price) }}</span>
+                  </span>
+                  <span class="price-stat">
+                    <span class="stat-label">Avg</span>
+                    <span class="stat-value">${{ formatPrice(priceAnalysis.avg_price) }}</span>
+                  </span>
+                  <span class="price-stat">
+                    <span class="stat-label">High</span>
+                    <span class="stat-value">${{ formatPrice(priceAnalysis.max_price) }}</span>
+                  </span>
+                </div>
+              </div>
+              <div v-else class="price-meter-empty">
+                <span>Not enough data to compare</span>
+              </div>
+            </div>
           </div>
           
           <!-- Text Elements -->
@@ -736,7 +788,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../stores/authStore'
 import api from '../utils/api'
@@ -1051,6 +1103,47 @@ const canvasScale = ref(1)
 const canvasItems = ref([])
 const textElements = ref([])
 const selectedItem = ref(null)
+const priceAnalysis = ref(null)
+const priceAnalysisLoading = ref(false)
+const priceAnalysisCache = {}
+
+// Watch selectedItem to trigger price analysis
+watch(selectedItem, async (newId) => {
+  if (!newId) {
+    priceAnalysis.value = null
+    return
+  }
+  const item = canvasItems.value.find(i => i.id === newId)
+  if (!item || !item.price || parseFloat(item.price) <= 0 || !item.title) {
+    priceAnalysis.value = null
+    return
+  }
+  
+  // Check cache first
+  const cacheKey = `${item.title}__${item.price}`
+  if (priceAnalysisCache[cacheKey]) {
+    priceAnalysis.value = priceAnalysisCache[cacheKey]
+    return
+  }
+  
+  priceAnalysisLoading.value = true
+  priceAnalysis.value = null
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://api.outfi.ai' : 'http://127.0.0.1:8000')
+    const response = await fetch(
+      `${apiUrl}/api/price-analysis/?product=${encodeURIComponent(item.title)}&price=${item.price}`
+    )
+    if (response.ok) {
+      const data = await response.json()
+      priceAnalysis.value = data
+      priceAnalysisCache[cacheKey] = data
+    }
+  } catch (err) {
+    console.error('Price analysis failed:', err)
+  } finally {
+    priceAnalysisLoading.value = false
+  }
+})
 const searchQuery = ref('')
 const products = ref([])
 const loading = ref(false)
@@ -3459,6 +3552,150 @@ onUnmounted(() => {
 
 .remove-bg-btn:hover {
   background: rgba(0, 0, 0, 0.9);
+}
+
+/* ====================== */
+/* Price Range Meter      */
+/* ====================== */
+.price-meter-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(12px);
+  border-radius: 14px;
+  padding: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15), 0 2px 6px rgba(0,0,0,0.08);
+  z-index: 500;
+  pointer-events: auto;
+}
+
+.price-meter-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.spinner-small {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #e0e0e0;
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.price-meter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.price-meter-verdict {
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 8px;
+}
+
+.verdict-great_deal { background: #dcfce7; color: #166534; }
+.verdict-good_price { background: #e0f2fe; color: #0369a1; }
+.verdict-fair { background: #fef3c7; color: #92400e; }
+.verdict-above_average { background: #ffedd5; color: #9a3412; }
+.verdict-overpriced { background: #fee2e2; color: #991b1b; }
+.verdict-unknown { background: #f3f4f6; color: #6b7280; }
+
+.price-meter-count {
+  font-size: 0.65rem;
+  color: #999;
+}
+
+/* Gauge */
+.price-gauge {
+  position: relative;
+  margin: 0.75rem 0 0.5rem;
+  height: 24px;
+}
+
+.gauge-track {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.gauge-fill-great { background: #22c55e; }
+.gauge-fill-good { background: #3b82f6; }
+.gauge-fill-fair { background: #eab308; }
+.gauge-fill-above { background: #f97316; }
+.gauge-fill-over { background: #ef4444; }
+
+.gauge-marker {
+  position: absolute;
+  top: -2px;
+  transform: translateX(-50%);
+}
+
+.gauge-marker-pin {
+  width: 10px;
+  height: 10px;
+  background: #111;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.gauge-marker-label {
+  position: absolute;
+  top: 13px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+/* Stats row */
+.price-stats-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+}
+
+.price-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 0.6rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.stat-value {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.price-meter-empty {
+  text-align: center;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  color: #aaa;
 }
 
 /* BG Removal Loading Overlay */
