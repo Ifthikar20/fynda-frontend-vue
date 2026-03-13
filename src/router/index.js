@@ -95,12 +95,11 @@ const routes = [
         component: () => import('../components/SharedStoryboardPage.vue'),
         meta: { public: true }
     },
-    // Protected routes - require auth
+    // Product detail - public (backend API is AllowAny)
     {
         path: '/product/:id',
         name: 'ProductDetail',
         component: ProductDetailPage,
-        meta: { requiresAuth: true }
     },
     {
         // Redirect legacy outfit routes to storyboard
@@ -123,12 +122,11 @@ const routes = [
         component: ProfilePage,
         meta: { requiresAuth: true }
     },
-    // Brand pages - require auth
+    // Brand pages - public
     {
         path: '/brand/:brand',
         name: 'Brand',
         component: BrandPage,
-        meta: { requiresAuth: true }
     },
     {
         path: '/compare',

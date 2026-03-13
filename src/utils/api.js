@@ -134,9 +134,7 @@ api.interceptors.response.use(
 
             if (!refreshToken) {
                 isRefreshing = false
-                // Redirect to login - clear obfuscated auth data
                 tokenStorage.clearAll()
-                window.location.href = '/login'
                 return Promise.reject(error)
             }
 
@@ -161,9 +159,8 @@ api.interceptors.response.use(
             } catch (refreshError) {
                 processQueue(refreshError, null)
 
-                // Clear obfuscated auth and redirect to login
+                // Refresh failed — clear auth state but don't force-redirect
                 tokenStorage.clearAll()
-                window.location.href = '/login'
 
                 return Promise.reject(refreshError)
             } finally {
