@@ -101,6 +101,13 @@ const routes = [
         name: 'ProductDetail',
         component: ProductDetailPage,
     },
+    // Phia-style product tracking — data encoded in query params
+    {
+        path: '/products',
+        name: 'ProductTracking',
+        component: ProductDetailPage,
+        meta: { tracking: true }
+    },
     {
         // Redirect legacy outfit routes to storyboard
         path: '/outfit-lab',

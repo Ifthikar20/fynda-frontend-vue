@@ -16,37 +16,33 @@
         <!-- Left: Product Info -->
         <div class="product-info-section">
           <div class="product-info-card">
+            <!-- Store Name (Phia-style) -->
+            <span class="store-name" v-if="product.merchant_name || product.source" @click="goToBrand(product.merchant_name || product.source)">
+              {{ product.merchant_name || product.source }}
+            </span>
             <h1 class="product-title">{{ product.title }}</h1>
             <p class="product-meta">
               <span class="product-price">${{ formatPrice(product.price) }}</span>
               <span class="product-brand" v-if="product.brand" @click="goToBrand(product.brand)">• {{ product.brand }}</span>
             </p>
 
-
-            <!-- Price Comparison - Vertical Meter (only shown with real data) -->
+            <!-- Price Comparison - Horizontal Meter (Phia-style) -->
             <div v-if="similarProducts.length > 0" class="price-meter">
               <div class="meter-header">
-                <span class="meter-title">Price Range</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20"/><path d="M5 20V10"/><path d="M10 20V4"/><path d="M15 20V14"/><path d="M20 20V8"/></svg>
+                <span class="meter-sentiment" :class="priceLevel">{{ priceSentimentLabel }} price</span>
               </div>
-              <div class="meter-content">
-                <div class="meter-bar-container">
-                  <div class="meter-bar">
-                    <div class="meter-marker" :style="{ bottom: pricePosition + '%' }"></div>
-                  </div>
-                  <div class="meter-labels">
-                    <span class="meter-label high">${{ formatPrice(priceRange.high) }}</span>
-                    <span class="meter-label mid">${{ formatPrice((priceRange.low + priceRange.high) / 2) }}</span>
-                    <span class="meter-label low">${{ formatPrice(priceRange.low) }}</span>
-                  </div>
-                </div>
-                <div class="meter-info">
-                  <div class="current-price-tag" :class="priceLevel">
-                    <span class="price-amount">${{ formatPrice(product.price) }}</span>
-                    <span class="price-level">{{ priceLevel }}</span>
-                  </div>
-                  <p class="meter-description">We compared to {{ similarProducts.length }} other products</p>
-                </div>
+              <div class="meter-price-label">
+                <span>${{ formatPrice(product.price) }} Is {{ priceSentimentLabel }}</span>
               </div>
+              <div class="meter-bar-horizontal">
+                <div class="meter-dot" :style="{ left: pricePosition + '%' }"></div>
+              </div>
+              <div class="meter-range-labels">
+                <span>${{ formatPrice(priceRange.low) }}</span>
+                <span>${{ formatPrice(priceRange.high) }}</span>
+              </div>
+              <p class="meter-description">Similar items cost between ${{ formatPrice(priceRange.low) }} secondhand to ${{ formatPrice(priceRange.high) }} new.</p>
             </div>
 
             <!-- Shop Button (with affiliate tracking) -->
@@ -96,6 +92,23 @@
           </div>
         </div>
       </section>
+
+      <!-- Sticky "Compare with" Card (Phia-style) -->
+      <div class="sticky-compare" v-if="showStickyCard && product.title">
+        <button class="sticky-close" @click="showStickyCard = false">×</button>
+        <span class="sticky-label">Compare with</span>
+        <div class="sticky-product">
+          <img :src="product.image_url" :alt="product.title" class="sticky-img" />
+          <div class="sticky-info">
+            <span class="sticky-store">{{ product.merchant_name || product.source }}</span>
+            <span class="sticky-title">{{ product.title }}</span>
+            <span class="sticky-price">
+              ${{ formatPrice(product.price) }}
+              <span class="sticky-sentiment" :class="priceLevel" v-if="similarProducts.length > 0">• This Price Is {{ priceSentimentLabel }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
 
       <!-- Similar Products Section -->
       <section class="similar-section">
@@ -155,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../stores/authStore'
 import api from '../utils/api'
@@ -177,6 +190,7 @@ const sortBy = ref('featured')
 const upvotedProducts = ref({})
 const isInCloset = ref(false)
 const isInCompare = ref(false)
+const showStickyCard = ref(false)
 
 // Computed
 const priceRange = computed(() => {
@@ -203,6 +217,13 @@ const priceLevel = computed(() => {
   if (pos < 33) return 'low'
   if (pos < 66) return 'typical'
   return 'high'
+})
+
+const priceSentimentLabel = computed(() => {
+  const level = priceLevel.value
+  if (level === 'low') return 'Low'
+  if (level === 'typical') return 'Typical'
+  return 'High'
 })
 
 // Awin Affiliate Link Configuration
@@ -406,6 +427,53 @@ const checkCompareStatus = () => {
   isInCompare.value = compareList.some(item => item.id === product.value.id)
 }
 
+// Parse product from URL query params (Phia-style /products?link=...&sn=...)
+const loadFromQueryParams = async () => {
+  const q = route.query
+  if (!q.sn) return false // no product name = not a tracking URL
+  
+  loading.value = true
+  product.value = {
+    id: q.productId || 'tracked-' + Date.now(),
+    title: q.sn || 'Product',
+    price: parseFloat(q.sp) || 0,
+    brand: q.pbn || '',
+    merchant_name: q.sdn || q.sri || '',
+    source: q.sri || q.sdn || '',
+    image_url: q.siu || '',
+    url: q.link || '#',
+    original_price: null
+  }
+  
+  // Fetch similar products based on product name
+  try {
+    const searchTerm = (q.sn || '').split(' ').slice(0, 4).join(' ')
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+    const response = await fetch(
+      `${apiUrl}/api/search/?q=${encodeURIComponent(searchTerm)}&limit=20`
+    )
+    const data = await response.json()
+    const deals = data?.deals || []
+    similarProducts.value = deals
+      .filter(p => (p.image_url || p.image) && p.price)
+      .slice(0, 20)
+      .map((p, idx) => ({
+        id: p.id || idx,
+        title: p.title,
+        price: typeof p.price === 'string' ? p.price.replace(/[^0-9.]/g, '') : p.price,
+        image_url: p.image_url || p.image || p.thumbnail,
+        source: p.source || 'Amazon',
+        brand: p.merchant_name || p.source || 'Amazon',
+        url: p.url
+      }))
+  } catch (err) {
+    console.error('Failed to fetch similar products:', err)
+  }
+  
+  loading.value = false
+  return true
+}
+
 const fetchProduct = async (id) => {
   loading.value = true
   try {
@@ -494,14 +562,31 @@ const fetchProduct = async (id) => {
   }
 }
 
-// Watch for route changes (immediate: true handles the initial load)
+// Scroll handler for sticky compare card
+const handleScroll = () => {
+  showStickyCard.value = window.scrollY > 500
+}
+
+// Route-based initialization
 watch(() => route.params.id, (newId) => {
   if (newId) fetchProduct(newId)
+}, { immediate: true })
+
+// Also watch for query-param tracking route
+watch(() => route.query, async (newQuery) => {
+  if (route.meta.tracking && newQuery.sn) {
+    await loadFromQueryParams()
+  }
 }, { immediate: true })
 
 onMounted(() => {
   checkClosetStatus()
   checkCompareStatus()
+  window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
@@ -763,114 +848,173 @@ onMounted(() => {
   text-decoration: underline;
 }
 
-/* Vertical Price Meter */
+/* Horizontal Price Meter (Phia-style) */
 .price-meter {
-  background: #f9f9f9;
+  background: #fff;
+  border: 1px solid #e5e5e5;
   border-radius: 12px;
-  padding: 1rem;
+  padding: 1rem 1.25rem;
   margin-bottom: 1.25rem;
 }
 
 .meter-header {
-  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+  color: #555;
 }
 
-.meter-title {
+.meter-header svg {
+  color: #888;
+}
+
+.meter-sentiment {
   font-weight: 600;
   font-size: 0.9rem;
+}
+
+.meter-sentiment.low { color: #10b981; }
+.meter-sentiment.typical { color: #f59e0b; }
+.meter-sentiment.high { color: #ef4444; }
+
+.meter-price-label {
+  font-size: 0.85rem;
+  font-weight: 500;
   color: #1a1a1a;
+  margin-bottom: 0.6rem;
 }
 
-.meter-content {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.meter-bar-container {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.meter-bar {
-  width: 8px;
-  height: 100px;
-  background: linear-gradient(to top, #10b981 0%, #6366f1 50%, #8b5cf6 100%);
-  border-radius: 4px;
+.meter-bar-horizontal {
   position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #10b981 0%, #10b981 30%, #f59e0b 50%, #f97316 70%, #ef4444 100%);
+  margin-bottom: 0.4rem;
 }
 
-.meter-marker {
+.meter-dot {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 16px;
-  height: 16px;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
   background: #fff;
   border: 3px solid #1a1a1a;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  transition: left 0.4s ease;
 }
 
-.meter-labels {
+.meter-range-labels {
   display: flex;
-  flex-direction: column;
   justify-content: space-between;
-  height: 100px;
   font-size: 0.75rem;
-  color: #666;
+  color: #999;
+  margin-bottom: 0.65rem;
 }
-
-.meter-label.high { color: #8b5cf6; }
-.meter-label.low { color: #10b981; }
-
-.meter-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.current-price-tag {
-  display: inline-flex;
-  flex-direction: column;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
-}
-
-.current-price-tag.low {
-  background: #ecfdf5;
-}
-
-.current-price-tag.typical {
-  background: #f5f3ff;
-}
-
-.current-price-tag.high {
-  background: #faf5ff;
-}
-
-.price-amount {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1a1a1a;
-}
-
-.price-level {
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.current-price-tag.low .price-level { color: #10b981; }
-.current-price-tag.typical .price-level { color: #6366f1; }
-.current-price-tag.high .price-level { color: #8b5cf6; }
 
 .meter-description {
   font-size: 0.8rem;
   color: #888;
+  line-height: 1.4;
 }
+
+/* Sticky Compare Card (Phia-style) */
+.sticky-compare {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  width: 260px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  z-index: 100;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.sticky-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.65rem;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #999;
+  line-height: 1;
+}
+
+.sticky-close:hover { color: #333; }
+
+.sticky-label {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: #1a1a1a;
+  margin-bottom: 0.65rem;
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.sticky-product {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sticky-img {
+  width: 100%;
+  height: 160px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.sticky-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sticky-store {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #888;
+}
+
+.sticky-title {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sticky-price {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.sticky-sentiment {
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.sticky-sentiment.low { color: #10b981; }
+.sticky-sentiment.typical { color: #f59e0b; }
+.sticky-sentiment.high { color: #ef4444; }
 
 /* Shop Button */
 .shop-btn {
