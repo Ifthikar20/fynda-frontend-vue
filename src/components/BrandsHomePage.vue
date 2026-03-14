@@ -133,45 +133,95 @@ const sentinel = ref(null)
 const visibleCount = ref(40)
 let observer = null
 
-// Curated brand items for the masonry grid
-const allItems = ref([
-  { id: 1, title: 'Silk Slip Dress — Champagne', brand: 'Reformation', image: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=400&q=80', saved: false, url: null },
-  { id: 2, title: 'Vintage Leather Jacket', brand: 'AllSaints', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&q=80', saved: false, url: null },
-  { id: 3, title: 'Chunky Platform Sneakers', brand: 'Nike', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80', saved: false, url: null },
-  { id: 4, title: 'Gold Hoop Earrings', brand: 'Mejuri', image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&q=80', saved: false, url: null },
-  { id: 5, title: 'Oversized Blazer — Charcoal', brand: 'Zara', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=80', saved: false, url: null },
-  { id: 6, title: 'Summer Streetwear Look', brand: 'Fashion Nova', image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80', saved: false, url: null },
-  { id: 7, title: 'Leather Crossbody Bag — Tan', brand: 'Madewell', image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&q=80', saved: false, url: null },
-  { id: 8, title: 'Elegant Evening Gown', brand: 'Revolve', image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400&q=80', saved: false, url: null },
-  { id: 9, title: 'Retro Sunglasses', brand: 'Ray-Ban', image: 'https://images.unsplash.com/photo-1508296695146-257a814070b4?w=400&q=80', saved: false, url: null },
-  { id: 10, title: 'Minimalist Watch — Rose Gold', brand: 'MVMT', image: 'https://images.unsplash.com/photo-1518002171953-a080ee817e1f?w=400&q=80', saved: false, url: null },
-  { id: 11, title: 'Festival Boho Outfit', brand: 'Free People', image: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400&q=80', saved: false, url: null },
-  { id: 12, title: 'Wide-Leg Linen Pants', brand: 'COS', image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&q=80', saved: false, url: null },
-  { id: 13, title: 'Running Shoes — Black', brand: 'Adidas', image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80', saved: false, url: null },
-  { id: 14, title: 'Denim Jacket — Classic Blue', brand: 'Levi\'s', image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=80', saved: false, url: null },
-  { id: 15, title: 'Casual Knit Sweater', brand: 'Everlane', image: 'https://images.unsplash.com/photo-1434389677669-e08b4cda3a20?w=400&q=80', saved: false, url: null },
-  { id: 16, title: 'Y2K Crop Top', brand: 'Princess Polly', image: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400&q=80', saved: false, url: null },
-  { id: 17, title: 'Power Suit — Navy', brand: 'Theory', image: 'https://images.unsplash.com/photo-1544957992-20514f595d6f?w=400&q=80', saved: false, url: null },
-  { id: 18, title: 'Canvas Tote Bag', brand: 'Madewell', image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&q=80', saved: false, url: null },
-  { id: 19, title: 'Athleisure Set — Sage', brand: 'Gymshark', image: 'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=400&q=80', saved: false, url: null },
-  { id: 20, title: 'Beach Vacation Style', brand: 'Aritzia', image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&q=80', saved: false, url: null },
-  { id: 21, title: 'Smart Cashmere Coat', brand: 'COS', image: 'https://images.unsplash.com/photo-1544923246-77307dd270df?w=400&q=80', saved: false, url: null },
-  { id: 22, title: 'Floral Maxi Dress', brand: 'Anthropologie', image: 'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=400&q=80', saved: false, url: null },
-  { id: 23, title: 'Vintage Thrift Find', brand: 'ThriftUp', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&q=80', saved: false, url: null },
-  { id: 24, title: 'Layered Fall Outfit', brand: 'Uniqlo', image: 'https://images.unsplash.com/photo-1475180098004-ca77a66827be?w=400&q=80', saved: false, url: null },
-  { id: 25, title: 'Statement Necklace — Gold', brand: 'Ana Luisa', image: 'https://images.unsplash.com/photo-1515562141589-67f0d0e6e9e1?w=400&q=80', saved: false, url: null },
-  { id: 26, title: 'Slim Fit Oxford Shirt', brand: 'H&M', image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&q=80', saved: false, url: null },
-  { id: 27, title: "Men's Casual Friday", brand: 'Bonobos', image: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=400&q=80', saved: false, url: null },
-  { id: 28, title: 'Shopping Day OOTD', brand: 'Urban Outfitters', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&q=80', saved: false, url: null },
-  { id: 29, title: 'Cozy Knit Season', brand: 'Aritzia', image: 'https://images.unsplash.com/photo-1495385794356-15371f348c31?w=400&q=80', saved: false, url: null },
-  { id: 30, title: 'Pastel Dream Outfit', brand: 'Revolve', image: 'https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=400&q=80', saved: false, url: null },
-  { id: 31, title: 'Sneaker Culture', brand: 'Nike', image: 'https://images.unsplash.com/photo-1581044777550-4cfa60707998?w=400&q=80', saved: false, url: null },
-  { id: 32, title: 'Accessories That Pop', brand: 'BaubleBar', image: 'https://images.unsplash.com/photo-1518577915332-c2a19f149a75?w=400&q=80', saved: false, url: null },
-  { id: 33, title: 'Olive Chinos — Relaxed Fit', brand: 'Zara', image: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=400&q=80', saved: false, url: null },
-  { id: 34, title: 'Graphic Hoodie — Oversized', brand: 'Adidas', image: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?w=400&q=80', saved: false, url: null },
-  { id: 35, title: 'Runway Ready Look', brand: 'Vogue Edit', image: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&q=80', saved: false, url: null },
-  { id: 36, title: 'Cargo Joggers — Black', brand: 'Nike', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&q=80', saved: false, url: null },
-])
+// Real products from API (replaces hardcoded mock data)
+const allItems = ref([])
+
+// Non-fashion keywords to exclude
+const NON_FASHION_KEYWORDS = [
+  'laptop', 'phone', 'tablet', 'headphone', 'speaker', 'camera', 'tv',
+  'monitor', 'keyboard', 'mouse', 'charger', 'cable', 'printer', 'router',
+  'gaming', 'console', 'controller', 'kitchen', 'pan', 'pot', 'blender',
+  'toaster', 'microwave', 'oven', 'fridge', 'drill', 'hammer', 'screwdriver',
+  'car', 'tire', 'motor oil', 'dog food', 'cat food', 'pet bed', 'lego', 'puzzle',
+]
+
+const CLOTHING_KEYWORDS = [
+  'dress', 'shirt', 'blouse', 'top', 'tee', 't-shirt', 'tank',
+  'jacket', 'coat', 'blazer', 'hoodie', 'sweater', 'cardigan', 'pullover', 'sweatshirt',
+  'jeans', 'pants', 'trousers', 'shorts', 'skirt', 'leggings', 'joggers', 'chinos',
+  'sneakers', 'shoes', 'boots', 'heels', 'sandals', 'loafers', 'flats', 'pumps',
+  'handbag', 'purse', 'tote', 'clutch', 'backpack', 'crossbody', 'satchel',
+  'scarf', 'hat', 'beanie', 'cap', 'belt', 'tie', 'gloves',
+  'suit', 'romper', 'jumpsuit', 'bodysuit', 'overalls',
+  'bikini', 'swimsuit', 'swimwear', 'lingerie',
+  'vest', 'parka', 'windbreaker', 'poncho',
+  'polo', 'henley', 'flannel', 'denim', 'corset',
+  'sunglasses', 'watch', 'bracelet', 'necklace', 'earrings', 'ring',
+  'socks', 'stockings', 'tights',
+]
+
+const isClothing = (title) => {
+  const lower = (title || '').toLowerCase()
+  return CLOTHING_KEYWORDS.some(kw => lower.includes(kw))
+}
+
+const isFashionItem = (title) => {
+  const lower = (title || '').toLowerCase()
+  return !NON_FASHION_KEYWORDS.some(kw => lower.includes(kw))
+}
+
+const extractBrand = (title) => {
+  if (!title) return 'Brand'
+  const words = title.trim().split(/\s+/)
+  if (words.length === 0) return 'Brand'
+  const descriptors = [
+    'mens', "men's", 'womens', "women's", 'unisex', 'kids', 'casual', 'classic',
+    'vintage', 'slim', 'regular', 'relaxed', 'oversized', 'fitted', 'loose',
+    'long', 'short', 'mid', 'high', 'low', 'mini', 'maxi', 'plus',
+    'cotton', 'silk', 'linen', 'wool', 'polyester', 'denim', 'leather', 'fleece',
+    '2024', '2025', '2026', 'new', 'pack', 'set', 'piece',
+  ]
+  let brandWords = []
+  for (const word of words) {
+    const lower = word.toLowerCase().replace(/[^a-z]/g, '')
+    if (descriptors.includes(lower)) break
+    brandWords.push(word)
+    if (brandWords.length >= 3) break
+  }
+  return brandWords.join(' ').replace(/[,\-]$/, '') || words[0]
+}
+
+// Load real products from API
+const loadProducts = async () => {
+  loading.value = true
+  try {
+    const response = await fetch(`${API_URL}/api/explore/?category=all-products&limit=40`)
+    const data = await response.json()
+    const products = data?.deals || []
+    
+    allItems.value = products
+      .filter(p => p.image_url || p.image || p.thumbnail)
+      .filter(p => isClothing(p.title))
+      .filter(p => isFashionItem(p.title))
+      .map((p, idx) => ({
+        id: p.id || idx,
+        title: p.title,
+        brand: p.merchant_name || extractBrand(p.title),
+        image: p.image_url || p.image || p.thumbnail,
+        image_url: p.image_url || p.image || p.thumbnail,
+        price: typeof p.price === 'string' ? p.price.replace(/[^0-9.]/g, '') : p.price,
+        saved: false,
+        url: p.url,
+        source: p.source || 'Amazon',
+        merchant_name: p.merchant_name || extractBrand(p.title),
+      }))
+      .sort(() => 0.5 - Math.random()) // Shuffle for variety
+  } catch (error) {
+    console.error('Failed to load products:', error)
+  } finally {
+    loading.value = false
+  }
+}
 
 // Suggestion list: brands + common fashion phrases
 const suggestionPool = [
@@ -322,11 +372,10 @@ const clearSearch = () => {
 }
 
 const openItem = (item) => {
-  if (item.url) {
-    window.open(item.url, '_blank')
-  } else {
-    router.push(`/?q=${encodeURIComponent(item.title)}`)
-  }
+  // Store product data for the detail page
+  localStorage.setItem('fyndaViewProduct', JSON.stringify(item))
+  const productId = item.id || encodeURIComponent((item.title || '').substring(0, 30))
+  router.push(`/product/${productId}`)
 }
 
 const openDeal = (deal) => {
@@ -357,6 +406,7 @@ const setupInfiniteScroll = () => {
 }
 
 onMounted(() => {
+  loadProducts()
   setupInfiniteScroll()
 })
 

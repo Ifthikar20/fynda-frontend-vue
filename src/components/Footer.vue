@@ -98,7 +98,6 @@ const currentYear = computed(() => new Date().getFullYear())
 <style scoped>
 .footer {
   background: transparent;
-  border-top: 1px solid #eee;
   margin-top: 32px;
   width: 100vw;
   margin-left: calc(-50vw + 50%);
@@ -115,7 +114,6 @@ const currentYear = computed(() => new Date().getFullYear())
   justify-content: space-between;
   gap: 36px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e8e8e8;
 }
 
 .footer-brand {
@@ -191,7 +189,6 @@ const currentYear = computed(() => new Date().getFullYear())
 
 .footer-seo {
   padding: 14px 0 2px;
-  border-top: 1px solid #e8e8e8;
   margin-top: 14px;
 }
 
