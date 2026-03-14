@@ -144,12 +144,6 @@
         <!-- Gradient Overlay -->
         <div class="hero-overlay"></div>
         
-        <!-- Bottom Content -->
-        <div class="hero-bottom">
-          <h2 class="hero-headline">Style. <span>Curated.</span></h2>
-          <p class="hero-copy">We find you better deals on the styles you love — automatically.</p>
-        </div>
-        
         <!-- Floating Deal Cards (Phia-style) -->
         
         <!-- Card 1: Bag Price Drop -->
@@ -559,8 +553,8 @@ const loginWithApple = () => {
 
 .form-group input:focus {
   outline: none;
-  border-color: #C9A96E;
-  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.12);
+  border-color: #1a1a1a;
+  box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.08);
 }
 
 .form-group input:disabled {
@@ -700,14 +694,14 @@ const loginWithApple = () => {
 }
 
 .signin-link {
-  color: #C9A96E;
+  color: #1a1a1a;
   font-weight: 600;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .signin-link:hover {
-  color: #b8944e;
+  color: #444;
   text-decoration: underline;
 }
 
@@ -767,7 +761,7 @@ const loginWithApple = () => {
 }
 
 .hero-headline span {
-  color: #C9A96E;
+  color: #fff;
 }
 
 .hero-copy {
