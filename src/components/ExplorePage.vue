@@ -376,6 +376,18 @@ const trendingItems = [
     title: 'Oversized Blazers',
     query: 'oversized blazer',
     image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=80'
+  },
+  {
+    id: 7,
+    title: 'Wedding Collections',
+    query: 'wedding dress bridal',
+    image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&q=80'
+  },
+  {
+    id: 8,
+    title: 'Homewear for Men',
+    query: 'mens loungewear homewear',
+    image: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=400&q=80'
   }
 ]
 

@@ -164,6 +164,8 @@
         </div>
       </section>
     </main>
+
+    <Footer />
   </div>
 </template>
 
@@ -173,6 +175,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../stores/authStore'
 import api from '../utils/api'
 import NavBar from './NavBar.vue'
+import Footer from './Footer.vue'
 
 const route = useRoute()
 const router = useRouter()

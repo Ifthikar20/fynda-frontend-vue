@@ -99,6 +99,8 @@
       <!-- Load More Sentinel -->
       <div ref="sentinel" class="sentinel"></div>
     </main>
+
+    <Footer />
   </div>
 </template>
 
@@ -108,6 +110,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSEO } from '../composables/useSEO'
 import NavBar from './NavBar.vue'
+import Footer from './Footer.vue'
 
 useSEO({
   title: 'Home — Discover Brands & Products',
