@@ -195,24 +195,32 @@
     <main class="main-content">
       <!-- Left: Creative Tools Panel -->
       <aside class="backgrounds-panel" ref="leftPanelRef">
-        <!-- Image Upload Section -->
+        <!-- Image Upload Section (open by default) -->
         <div class="tool-card">
-          <h3 class="panel-title">Upload Image</h3>
-          <label class="upload-zone">
-            <input type="file" accept="image/*" @change="handleImageUpload" hidden />
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
-            <span>Click to upload image</span>
-          </label>
+          <h3 class="panel-title panel-toggle" @click="togglePanel('upload')">
+            Upload Image
+            <svg class="toggle-chevron" :class="{ open: openPanels.upload }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </h3>
+          <div v-show="openPanels.upload">
+            <label class="upload-zone">
+              <input type="file" accept="image/*" @change="handleImageUpload" hidden />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span>Click to upload image</span>
+            </label>
+          </div>
         </div>
         
         <!-- Add Text Section -->
         <div class="tool-card">
-          <h3 class="panel-title">Add Text</h3>
-          <div class="text-tools">
+          <h3 class="panel-title panel-toggle" @click="togglePanel('text')">
+            Add Text
+            <svg class="toggle-chevron" :class="{ open: openPanels.text }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </h3>
+          <div v-show="openPanels.text" class="text-tools">
             <select v-model="selectedFont" class="font-select">
               <option v-for="font in classicalFonts" :key="font.value" :value="font.value">
                 {{ font.name }}
@@ -238,8 +246,11 @@
         
         <!-- Templates Section -->
         <div class="tool-card">
-          <h3 class="panel-title">Templates</h3>
-          <div class="templates-grid">
+          <h3 class="panel-title panel-toggle" @click="togglePanel('templates')">
+            Templates
+            <svg class="toggle-chevron" :class="{ open: openPanels.templates }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </h3>
+          <div v-show="openPanels.templates" class="templates-grid">
             <div 
               v-for="template in layoutTemplates" 
               :key="template.id"
@@ -254,49 +265,37 @@
         
         <!-- Backgrounds Section -->
         <div class="tool-card">
-          <h3 class="panel-title">Backgrounds</h3>
-          <div class="backgrounds-grid">
-            <div 
-              v-for="bg in backgrounds.slice(0, 4)" 
-              :key="bg.id"
-              class="bg-card"
-              :class="{ active: selectedBackground === bg.id }"
-              @click="selectBackground(bg)"
-            >
-              <div class="bg-preview" :style="bg.style"></div>
-              <span class="bg-name">{{ bg.name }}</span>
+          <h3 class="panel-title panel-toggle" @click="togglePanel('backgrounds')">
+            Backgrounds
+            <svg class="toggle-chevron" :class="{ open: openPanels.backgrounds }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </h3>
+          <div v-show="openPanels.backgrounds">
+            <div class="backgrounds-grid">
+              <div 
+                v-for="bg in backgrounds.slice(0, 4)" 
+                :key="bg.id"
+                class="bg-card"
+                :class="{ active: selectedBackground === bg.id }"
+                @click="selectBackground(bg)"
+              >
+                <div class="bg-preview" :style="bg.style"></div>
+                <span class="bg-name">{{ bg.name }}</span>
+              </div>
             </div>
+            <button class="explore-btn" @click="showBgModal = true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+              Explore All ({{ backgrounds.length }})
+            </button>
           </div>
-          <button class="explore-btn" @click="showBgModal = true">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-            Explore All ({{ backgrounds.length }})
-          </button>
-        </div>
-        
-        <div class="tool-card">
-          <h3 class="panel-title">Textures</h3>
-          <div class="textures-grid">
-            <div 
-              v-for="texture in textures.slice(0, 4)" 
-              :key="texture.id"
-              class="texture-card"
-              :class="{ active: selectedTexture === texture.id }"
-              :style="texture.style"
-              @click="selectTexture(texture)"
-            >
-              <span class="texture-name">{{ texture.name }}</span>
-            </div>
-          </div>
-          <button class="explore-btn" @click="showTextureModal = true">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-            Explore All ({{ textures.length }})
-          </button>
         </div>
         
         <!-- Frames Section -->
         <div class="tool-card">
-          <h3 class="panel-title">Frames</h3>
-          <div class="frames-grid">
+          <h3 class="panel-title panel-toggle" @click="togglePanel('frames')">
+            Frames
+            <svg class="toggle-chevron" :class="{ open: openPanels.frames }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </h3>
+          <div v-show="openPanels.frames" class="frames-grid">
             <div 
               v-for="frame in imageFrames" 
               :key="frame.id"
@@ -310,29 +309,14 @@
           </div>
         </div>
         
-        <!-- Fabric Swatches Section -->
-        <div class="tool-card">
-          <h3 class="panel-title">Fabric Swatches</h3>
-          <div class="swatches-grid">
-            <div 
-              v-for="swatch in stickers.filter(s => s.type === 'fabric')" 
-              :key="swatch.id"
-              class="swatch-card"
-              :style="{ backgroundImage: 'url(' + swatch.image + ')', backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: swatch.color }"
-              :title="swatch.name"
-              @click="addSwatch(swatch)"
-            >
-              <span class="swatch-label">{{ swatch.name }}</span>
-            </div>
-          </div>
-        </div>
-        
         <!-- Pantone Color Chips — only shows when items on canvas -->
         <Transition name="chip-fade">
         <div class="tool-card" v-if="canvasItems.length > 0 && boardColors.length > 0">
-          <h3 class="panel-title">🎨 Extracted Colors</h3>
-          <div class="pantone-grid">
-            <!-- Dynamic colors extracted from board images -->
+          <h3 class="panel-title panel-toggle" @click="togglePanel('colors')">
+            Extracted Colors
+            <svg class="toggle-chevron" :class="{ open: openPanels.colors }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </h3>
+          <div v-show="openPanels.colors" class="pantone-grid">
             <div 
               v-for="chip in boardColors" 
               :key="chip.id"
@@ -348,22 +332,6 @@
           </div>
         </div>
         </Transition>
-        
-        <!-- Decorations Section -->
-        <div class="tool-card">
-          <h3 class="panel-title">Decorations</h3>
-          <div class="decorations-grid">
-            <div 
-              v-for="deco in decorations" 
-              :key="deco.id"
-              class="decoration-card"
-              :title="deco.name"
-              @click="addDecoration(deco)"
-            >
-              <div class="decoration-preview" v-html="deco.svg"></div>
-            </div>
-          </div>
-        </div>
       </aside>
 
       <!-- Center: Canvas -->
@@ -804,6 +772,19 @@ const rightPanelRef = ref(null)
 
 // Onboarding state
 const showOnboarding = ref(false)
+
+// Collapsible left-panel state — only Upload open by default
+const openPanels = ref({
+  upload: true,
+  text: false,
+  templates: false,
+  backgrounds: false,
+  frames: false,
+  colors: false,
+})
+const togglePanel = (key) => {
+  openPanels.value[key] = !openPanels.value[key]
+}
 const onboardingStep = ref(1)
 
 const onboardingTooltipStyle = computed(() => {
@@ -2888,6 +2869,38 @@ onUnmounted(() => {
   color: #666;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.panel-title.panel-toggle {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+  padding: 0.35rem 0;
+  user-select: none;
+}
+
+.panel-title.panel-toggle:hover {
+  color: #333;
+}
+
+.toggle-chevron {
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.toggle-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Add spacing when panel content is visible */
+.panel-toggle + div,
+.panel-toggle + .text-tools,
+.panel-toggle + .templates-grid,
+.panel-toggle + .frames-grid,
+.panel-toggle + .pantone-grid {
+  padding-top: 0.5rem;
 }
 
 .panel-title.mt {
