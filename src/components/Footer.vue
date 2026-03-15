@@ -4,7 +4,7 @@
       <div class="footer-main">
         <div class="footer-brand">
           <router-link to="/" class="footer-logo">
-            <span class="logo-text">outfi.</span>
+            <img src="../assets/outfi-logo.png" alt="outfi." class="footer-logo-img" />
           </router-link>
           <p class="footer-tagline">AI-powered deal discovery across all major marketplaces and social media.</p>
         </div>
@@ -128,6 +128,11 @@ const currentYear = computed(() => new Date().getFullYear())
   font-size: 16px;
   margin-bottom: 6px;
   text-decoration: none;
+}
+
+.footer-logo-img {
+  height: 22px;
+  width: auto;
 }
 
 .logo-icon {
