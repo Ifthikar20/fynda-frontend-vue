@@ -701,7 +701,7 @@ const goBrand = (brand) => {
 .editors-card {
   position: relative;
   height: 340px;
-  border-radius: 12px;
+  border-radius: 28px;
   overflow: hidden;
   background-size: cover;
   background-position: center;
@@ -754,17 +754,15 @@ const goBrand = (brand) => {
 .category-card {
   position: relative;
   height: 260px;
-  border-radius: 12px;
+  border-radius: 28px;
   overflow: hidden;
   background-size: cover;
   background-position: center;
   cursor: pointer;
-  filter: grayscale(100%);
   transition: all 0.3s ease;
 }
 
 .category-card:hover {
-  filter: grayscale(0%);
   transform: scale(1.02);
 }
 
@@ -795,7 +793,7 @@ const goBrand = (brand) => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   background: #f5f0ea;
-  border-radius: 16px;
+  border-radius: 28px;
   overflow: hidden;
   min-height: 300px;
 }
@@ -873,7 +871,7 @@ const goBrand = (brand) => {
 }
 
 .trending-card {
-  border-radius: 12px;
+  border-radius: 24px;
   overflow: hidden;
   border: 1px solid #eee;
   cursor: pointer;
@@ -988,7 +986,7 @@ const goBrand = (brand) => {
 .brand-card {
   position: relative;
   height: 200px;
-  border-radius: 10px;
+  border-radius: 24px;
   overflow: hidden;
   background-size: cover;
   background-position: center;

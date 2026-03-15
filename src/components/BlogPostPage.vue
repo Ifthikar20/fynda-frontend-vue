@@ -254,6 +254,7 @@ export default {
   width: 100%;
   max-height: 500px;
   overflow: hidden;
+  border-radius: 0 0 28px 28px;
 }
 
 .post-hero img {
@@ -412,8 +413,8 @@ export default {
 .cta-section {
   background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
   color: white;
-  padding: 2rem;
-  border-radius: 12px;
+  padding: 2.5rem;
+  border-radius: 28px;
   text-align: center;
 }
 

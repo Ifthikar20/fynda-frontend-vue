@@ -77,68 +77,83 @@
       </div>
     </div>
     
-    <!-- Right Side - Hero Image with Product Cards -->
+    <!-- Right Side - Colored Feature Cards -->
     <div class="login-right">
-      <div class="hero-image-container">
-        <img 
-          src="../assets/signin-hero.png" 
-          alt="Fashion" 
-          class="hero-image"
-        />
-        
-        <!-- Floating Product Card -->
-        <div class="floating-card main-card">
-          <div class="card-header">
-            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100&q=80" alt="Product" class="product-thumb" />
-            <div class="card-header-info">
-              <span class="product-name">Nike Air Max 90</span>
-              <span class="product-price">$890 • Nike</span>
-            </div>
-          </div>
-          
-          <div class="price-comparison">
-            <div class="comparison-header">
-              <span class="sparkle-badge">New</span>
-              <span>Lower prices found</span>
-            </div>
-            <div class="price-bar">
-              <div class="price-indicator" style="left: 70%">
-                <span class="indicator-label">$699 is high</span>
+      <div class="feature-cards-scroll">
+        <!-- Card 1: Price Tracking (Peach) -->
+        <div class="feature-card">
+          <div class="feature-bg" style="background: #fdd8b5;">
+            <div class="feature-inner-card">
+              <div class="inner-header">
+                <span class="inner-title">Price Drops</span>
+                <span class="inner-count">3 alerts</span>
               </div>
-            </div>
-            <div class="price-range">
-              <span>$370</span>
-              <span>$640</span>
-            </div>
-          </div>
-          
-          <div class="top-results">
-            <span class="results-label">Top results</span>
-            
-            <div class="result-item">
-              <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=60&q=80" alt="" class="result-thumb" />
-              <div class="result-info">
-                <span class="result-name">Nike Air Max 90</span>
-                <span class="result-store">StockX</span>
+              <div class="inner-item">
+                <img src="../assets/product-leather-bag.png" alt="Leather Bag" class="inner-thumb" />
+                <div class="inner-info">
+                  <span class="inner-name">Leather Crossbody Bag</span>
+                  <span class="inner-store">Vestiaire Collective</span>
+                </div>
+                <span class="inner-badge green">-32%</span>
               </div>
-              <div class="result-price">
-                <span class="price">$312</span>
-                <span class="discount">65% less</span>
+              <div class="inner-item">
+                <img src="../assets/product-trench-coat.png" alt="Trench Coat" class="inner-thumb" />
+                <div class="inner-info">
+                  <span class="inner-name">Camel Trench Coat</span>
+                  <span class="inner-store">The Real Real</span>
+                </div>
+                <span class="inner-badge green">-40%</span>
               </div>
-            </div>
-            
-            <div class="result-item">
-              <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=60&q=80" alt="" class="result-thumb" />
-              <div class="result-info">
-                <span class="result-name">Air Max Sneakers</span>
-                <span class="result-store">GOAT</span>
-              </div>
-              <div class="result-price">
-                <span class="price">$350</span>
-                <span class="discount">60% less</span>
+              <div class="inner-item">
+                <img src="../assets/product-white-sneakers.png" alt="Sneakers" class="inner-thumb" />
+                <div class="inner-info">
+                  <span class="inner-name">White Leather Sneakers</span>
+                  <span class="inner-store">Nordstrom Rack</span>
+                </div>
+                <span class="inner-badge green">-39%</span>
               </div>
             </div>
           </div>
+          <h3 class="feature-title">Track Price Drops</h3>
+          <p class="feature-desc">Get notified when items you love go on sale across every marketplace.</p>
+        </div>
+
+        <!-- Card 2: Find Deals (Sage) -->
+        <div class="feature-card">
+          <div class="feature-bg" style="background: #d4e4a2;">
+            <div class="feature-inner-card">
+              <div class="inner-header">
+                <span class="inner-title">Best Deals</span>
+                <span class="inner-count">→</span>
+              </div>
+              <div class="inner-item">
+                <div class="inner-thumb placeholder" style="background: #e8d5f5;"></div>
+                <div class="inner-info">
+                  <span class="inner-name">Designer Tote — Canvas</span>
+                  <span class="inner-store">eBay</span>
+                </div>
+                <span class="inner-price">$67</span>
+              </div>
+              <div class="inner-item">
+                <div class="inner-thumb placeholder" style="background: #f5e6d0;"></div>
+                <div class="inner-info">
+                  <span class="inner-name">Oversized Wool Blazer</span>
+                  <span class="inner-store">Poshmark</span>
+                </div>
+                <span class="inner-price">$94</span>
+              </div>
+              <div class="inner-item">
+                <div class="inner-thumb placeholder" style="background: #d0eef5;"></div>
+                <div class="inner-info">
+                  <span class="inner-name">Running Shoes — Black</span>
+                  <span class="inner-store">Amazon</span>
+                </div>
+                <span class="inner-price">$52</span>
+              </div>
+            </div>
+          </div>
+          <h3 class="feature-title">Find the Best Deals</h3>
+          <p class="feature-desc">Easily search and compare prices across every platform in one click.</p>
         </div>
       </div>
     </div>
@@ -449,197 +464,161 @@ const loginWithApple = () => {
   color: #000;
 }
 
-/* Right Side */
+/* ---------- RIGHT PANEL: Colored Feature Cards ---------- */
 .login-right {
   flex: 1;
-  background: linear-gradient(135deg, #f5f0eb 0%, #e8e0d8 100%);
+  background: #f5f5f5;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-  position: relative;
-  overflow: hidden;
+  padding: 2.5rem 2rem;
+  overflow-y: auto;
 }
 
-.hero-image-container {
-  position: relative;
+.feature-cards-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  max-width: 420px;
   width: 100%;
-  max-width: 600px;
-  height: 80vh;
 }
 
-.hero-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 24px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+.feature-card {
+  text-align: center;
+  animation: cardSlideUp 0.6s ease-out both;
 }
 
-/* Floating Card */
-.floating-card {
-  position: absolute;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.12);
-  padding: 1.25rem;
-  width: 280px;
+.feature-card:nth-child(2) {
+  animation-delay: 0.15s;
 }
 
-.main-card {
-  top: 10%;
-  right: -20px;
+@keyframes cardSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.card-header {
+.feature-bg {
+  border-radius: 28px;
+  padding: 3rem 2rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
+  justify-content: center;
+  min-height: 280px;
+}
+
+.feature-inner-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.1rem 1.25rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 300px;
+}
+
+.inner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.7rem;
   border-bottom: 1px solid #f0f0f0;
 }
 
-.product-thumb {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-.card-header-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.product-name {
-  font-weight: 600;
-  font-size: 0.95rem;
+.inner-title {
+  font-size: 0.9rem;
+  font-weight: 700;
   color: #1a1a1a;
 }
 
-.product-price {
-  font-size: 0.8rem;
-  color: #888;
+.inner-count {
+  font-size: 0.78rem;
+  color: #999;
+  font-weight: 500;
 }
 
-/* Price Comparison */
-.price-comparison {
-  margin-bottom: 1rem;
-}
-
-.comparison-header {
+.inner-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #1a1a1a;
-  margin-bottom: 0.75rem;
-}
-
-.sparkle-badge {
-  background: #f0fdf4;
-  color: #22c55e;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.price-bar {
-  height: 6px;
-  background: linear-gradient(90deg, #22c55e 0%, #facc15 50%, #ef4444 100%);
-  border-radius: 3px;
-  position: relative;
-  margin-bottom: 0.35rem;
-}
-
-.price-indicator {
-  position: absolute;
-  top: -20px;
-}
-
-.indicator-label {
-  background: #fef2f2;
-  color: #ef4444;
-  font-size: 0.7rem;
-  font-weight: 500;
-  padding: 2px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-
-.price-range {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: #888;
-}
-
-/* Top Results */
-.top-results {
-  border-top: 1px solid #f0f0f0;
-  padding-top: 0.75rem;
-}
-
-.results-label {
-  display: block;
-  font-size: 0.75rem;
-  color: #888;
-  margin-bottom: 0.75rem;
-}
-
-.result-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  gap: 0.7rem;
   padding: 0.5rem 0;
-  border-bottom: 1px solid #f8f8f8;
 }
 
-.result-item:last-child {
-  border-bottom: none;
+.inner-item + .inner-item {
+  border-top: 1px solid #f7f7f7;
 }
 
-.result-thumb {
+.inner-thumb {
   width: 40px;
   height: 40px;
-  border-radius: 6px;
+  border-radius: 10px;
   object-fit: cover;
+  flex-shrink: 0;
+  background: #f5f5f5;
 }
 
-.result-info {
+.inner-thumb.placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.inner-info {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
-.result-name {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #1a1a1a;
-}
-
-.result-store {
-  font-size: 0.75rem;
-  color: #888;
-}
-
-.result-price {
-  text-align: right;
-}
-
-.result-price .price {
-  display: block;
+.inner-name {
+  font-size: 0.82rem;
   font-weight: 600;
-  font-size: 0.9rem;
   color: #1a1a1a;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.result-price .discount {
+.inner-store {
   font-size: 0.7rem;
-  color: #22c55e;
+  color: #aaa;
+  line-height: 1.3;
+}
+
+.inner-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.inner-badge.green {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.inner-price {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  flex-shrink: 0;
+}
+
+.feature-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 1rem 0 0.3rem;
+}
+
+.feature-desc {
+  font-size: 0.85rem;
+  color: #888;
+  line-height: 1.5;
+  max-width: 320px;
+  margin: 0 auto;
 }
 
 /* Responsive */
