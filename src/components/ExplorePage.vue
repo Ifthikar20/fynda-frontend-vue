@@ -228,9 +228,9 @@ const brandsLoading = ref(true)
 const sortBy = ref('trending')
 
 const sortOptions = [
-  { label: '🔥 Trending', value: 'trending' },
-  { label: '❤️ Most Liked', value: 'most_liked' },
-  { label: '✨ Newest', value: 'newest' },
+  { label: 'Trending', value: 'trending' },
+  { label: 'Most Liked', value: 'most_liked' },
+  { label: 'Newest', value: 'newest' },
 ]
 
 const brandCovers = {
