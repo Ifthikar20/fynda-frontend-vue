@@ -132,57 +132,83 @@
       </div>
     </div>
     
-    <!-- Right Side - Lifestyle Hero Panel -->
+    <!-- Right Side - Colored Feature Cards -->
     <div class="signup-right">
-      <div class="hero-panel">
-        <img 
-          src="../assets/signup-hero.png" 
-          alt="Fashion lifestyle" 
-          class="hero-image"
-        />
-        
-        <!-- Gradient Overlay -->
-        <div class="hero-overlay"></div>
-        
-        <!-- Floating Deal Cards (Phia-style) -->
-        
-        <!-- Card 1: Bag Price Drop -->
-        <div class="floating-card card-bag">
-          <img src="../assets/product-leather-bag.png" alt="Leather Bag" class="deal-thumb" />
-          <div class="deal-info">
-            <span class="deal-name">Leather Crossbody Bag</span>
-            <span class="deal-store">Vestiaire Collective</span>
+      <div class="feature-cards-scroll">
+        <!-- Card 1: Price Tracking (Peach) -->
+        <div class="feature-card">
+          <div class="feature-bg" style="background: #fdd8b5;">
+            <div class="feature-inner-card">
+              <div class="inner-header">
+                <span class="inner-title">Price Drops</span>
+                <span class="inner-count">3 alerts</span>
+              </div>
+              <div class="inner-item">
+                <img src="../assets/product-leather-bag.png" alt="Leather Bag" class="inner-thumb" />
+                <div class="inner-info">
+                  <span class="inner-name">Leather Crossbody Bag</span>
+                  <span class="inner-store">Vestiaire Collective</span>
+                </div>
+                <span class="inner-badge green">-32%</span>
+              </div>
+              <div class="inner-item">
+                <img src="../assets/product-trench-coat.png" alt="Trench Coat" class="inner-thumb" />
+                <div class="inner-info">
+                  <span class="inner-name">Camel Trench Coat</span>
+                  <span class="inner-store">The Real Real</span>
+                </div>
+                <span class="inner-badge green">-40%</span>
+              </div>
+              <div class="inner-item">
+                <img src="../assets/product-white-sneakers.png" alt="Sneakers" class="inner-thumb" />
+                <div class="inner-info">
+                  <span class="inner-name">White Leather Sneakers</span>
+                  <span class="inner-store">Nordstrom Rack</span>
+                </div>
+                <span class="inner-badge green">-39%</span>
+              </div>
+            </div>
           </div>
-          <div class="deal-pricing">
-            <span class="price-new">$129</span>
-            <span class="price-discount">32% less</span>
-          </div>
+          <h3 class="feature-title">Track Price Drops</h3>
+          <p class="feature-desc">Get notified when items you love go on sale across every marketplace.</p>
         </div>
-        
-        <!-- Card 2: Coat Sale -->
-        <div class="floating-card card-coat">
-          <img src="../assets/product-trench-coat.png" alt="Trench Coat" class="deal-thumb" />
-          <div class="deal-info">
-            <span class="deal-name">Camel Trench Coat</span>
-            <span class="deal-store">The Real Real</span>
+
+        <!-- Card 2: Find Deals (Sage) -->
+        <div class="feature-card">
+          <div class="feature-bg" style="background: #d4e4a2;">
+            <div class="feature-inner-card">
+              <div class="inner-header">
+                <span class="inner-title">Best Deals</span>
+                <span class="inner-count">→</span>
+              </div>
+              <div class="inner-item">
+                <div class="inner-thumb placeholder" style="background: #e8d5f5;"></div>
+                <div class="inner-info">
+                  <span class="inner-name">Designer Tote — Canvas</span>
+                  <span class="inner-store">eBay</span>
+                </div>
+                <span class="inner-price">$67</span>
+              </div>
+              <div class="inner-item">
+                <div class="inner-thumb placeholder" style="background: #f5e6d0;"></div>
+                <div class="inner-info">
+                  <span class="inner-name">Oversized Wool Blazer</span>
+                  <span class="inner-store">Poshmark</span>
+                </div>
+                <span class="inner-price">$94</span>
+              </div>
+              <div class="inner-item">
+                <div class="inner-thumb placeholder" style="background: #d0eef5;"></div>
+                <div class="inner-info">
+                  <span class="inner-name">Running Shoes — Black</span>
+                  <span class="inner-store">Amazon</span>
+                </div>
+                <span class="inner-price">$52</span>
+              </div>
+            </div>
           </div>
-          <div class="deal-pricing">
-            <span class="price-new">$192</span>
-            <span class="price-discount">40% less</span>
-          </div>
-        </div>
-        
-        <!-- Card 3: Sneakers Weekly Deal -->
-        <div class="floating-card card-sneakers">
-          <img src="../assets/product-white-sneakers.png" alt="Sneakers" class="deal-thumb" />
-          <div class="deal-info">
-            <span class="deal-name">White Leather Sneakers</span>
-            <span class="deal-store">Nordstrom Rack</span>
-          </div>
-          <div class="deal-pricing">
-            <span class="price-new">$89</span>
-            <span class="price-discount">39% less</span>
-          </div>
+          <h3 class="feature-title">Find the Best Deals</h3>
+          <p class="feature-desc">Easily search and compare prices across every platform in one click.</p>
         </div>
       </div>
     </div>
@@ -705,195 +731,176 @@ const loginWithApple = () => {
   text-decoration: underline;
 }
 
-/* ---------- RIGHT PANEL ---------- */
+/* ---------- RIGHT PANEL: Colored Feature Cards ---------- */
 .signup-right {
   flex: 1;
-  position: relative;
-  overflow: hidden;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 2rem;
+  overflow-y: auto;
 }
 
-.hero-panel {
-  position: relative;
+.feature-cards-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  max-width: 420px;
   width: 100%;
-  height: 100%;
 }
 
-.hero-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+/* Each feature card container */
+.feature-card {
+  text-align: center;
+  animation: cardSlideUp 0.6s ease-out both;
 }
 
-/* Gradient overlay on bottom */
-.hero-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 55%;
-  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 50%, transparent 100%);
-  pointer-events: none;
+.feature-card:nth-child(2) {
+  animation-delay: 0.15s;
 }
 
-/* Bottom Text */
-.hero-bottom {
-  position: absolute;
-  bottom: 2.5rem;
-  left: 2.5rem;
-  right: 2.5rem;
-  color: #fff;
-  z-index: 2;
-  animation: fadeUp 0.8s 0.4s ease-out both;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(18px); }
+@keyframes cardSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.hero-headline {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 2.5rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.02em;
-}
-
-.hero-headline span {
-  color: #fff;
-}
-
-.hero-copy {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.8);
-  line-height: 1.6;
-  max-width: 340px;
-}
-
-/* ---------- FLOATING DEAL CARDS (Phia-style) ---------- */
-.floating-card {
-  position: absolute;
+/* Colored background with big curves */
+.feature-bg {
+  border-radius: 28px;
+  padding: 3rem 2rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.85rem;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  z-index: 3;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06);
-  min-width: 240px;
+  justify-content: center;
+  min-height: 280px;
 }
 
-/* Product thumbnail */
-.deal-thumb {
-  width: 52px;
-  height: 52px;
+/* White inner card */
+.feature-inner-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.1rem 1.25rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 300px;
+}
+
+.inner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.inner-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.inner-count {
+  font-size: 0.78rem;
+  color: #999;
+  font-weight: 500;
+}
+
+/* Item rows */
+.inner-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem 0;
+}
+
+.inner-item + .inner-item {
+  border-top: 1px solid #f7f7f7;
+}
+
+.inner-thumb {
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
   object-fit: cover;
+  flex-shrink: 0;
   background: #f5f5f5;
+}
+
+.inner-thumb.placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   flex-shrink: 0;
 }
 
-/* Product info */
-.deal-info {
+.inner-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1px;
   min-width: 0;
 }
 
-.deal-name {
-  font-size: 0.85rem;
+.inner-name {
+  font-size: 0.82rem;
   font-weight: 600;
   color: #1a1a1a;
-  line-height: 1.25;
+  line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.deal-store {
-  font-size: 0.72rem;
-  color: #888;
+.inner-store {
+  font-size: 0.7rem;
+  color: #aaa;
   line-height: 1.3;
 }
 
-/* Price + Discount */
-.deal-pricing {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
+.inner-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
   flex-shrink: 0;
 }
 
-.price-new {
-  font-size: 0.95rem;
+.inner-badge.green {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.inner-price {
+  font-size: 0.88rem;
   font-weight: 700;
   color: #1a1a1a;
-  line-height: 1.2;
+  flex-shrink: 0;
 }
 
-.price-discount {
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: #22c55e;
-  line-height: 1.3;
+/* Feature title + desc below card */
+.feature-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 1rem 0 0.3rem;
 }
 
-/* Card Positions + Staggered entrance */
-.card-bag {
-  top: 8%;
-  right: 5%;
-  animation: floatIn 0.7s 0.5s ease-out both, floatLoop 5s 1.3s ease-in-out infinite;
-}
-
-.card-coat {
-  top: 40%;
-  left: 4%;
-  animation: floatIn 0.7s 0.9s ease-out both, floatLoop 6s 1.7s ease-in-out infinite;
-}
-
-.card-sneakers {
-  bottom: 20%;
-  right: 4%;
-  animation: floatIn 0.7s 1.3s ease-out both, floatLoop 5.5s 2.1s ease-in-out infinite;
-}
-
-@keyframes floatIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.94); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes floatLoop {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-6px); }
+.feature-desc {
+  font-size: 0.85rem;
+  color: #888;
+  line-height: 1.5;
+  max-width: 320px;
+  margin: 0 auto;
 }
 
 /* ---------- RESPONSIVE ---------- */
 @media (max-width: 1024px) {
-  .hero-headline {
-    font-size: 2rem;
+  .feature-bg {
+    padding: 2.5rem 1.5rem;
+    min-height: 240px;
   }
-  .floating-card {
-    padding: 0.5rem 0.7rem;
-    min-width: 200px;
-    gap: 0.5rem;
-  }
-  .deal-thumb {
-    width: 44px;
-    height: 44px;
-  }
-  .deal-name {
-    font-size: 0.78rem;
-  }
-  .price-new {
-    font-size: 0.85rem;
+  .feature-inner-card {
+    max-width: 280px;
   }
 }
 
