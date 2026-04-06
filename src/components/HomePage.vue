@@ -5,14 +5,14 @@
     <main class="main-content">
       <!-- Hero Section -->
       <section class="hero-section" :class="{ 'hero-chat-mode': aiMode }">
-        <!-- Mode Toggle -->
-        <div class="mode-toggle">
+        <!-- Mode Toggle (temporarily disabled) -->
+        <!-- <div class="mode-toggle">
           <span :class="{ active: !aiMode }" @click="aiMode = false">Classic</span>
           <button class="toggle-track" :class="{ on: aiMode }" @click="aiMode = !aiMode">
             <span class="toggle-thumb"></span>
           </button>
           <span :class="{ active: aiMode }" @click="aiMode = true">AI Chat</span>
-        </div>
+        </div> -->
 
         <!-- Classic hero title (hidden in chat mode after first message) -->
         <div v-if="!aiMode || chatMessages.length === 0" class="hero-rotating">
@@ -519,8 +519,8 @@ const highlightMatch = (text, query) => {
   return text.replace(regex, '<strong>$1</strong>')
 }
 
-// AI Chat state
-const aiMode = ref(localStorage.getItem('fynda_ai_mode') === 'true')
+// AI Chat state (temporarily disabled)
+const aiMode = ref(false)
 const chatMessages = ref([])
 const chatLoading = ref(false)
 const chatMessagesEl = ref(null)
@@ -741,14 +741,7 @@ watch(visibleCount, () => {
   })
 })
 
-// Persist AI mode toggle
-watch(aiMode, (val) => {
-  localStorage.setItem('fynda_ai_mode', val ? 'true' : 'false')
-  if (!val) {
-    chatMessages.value = []
-    chatLoading.value = false
-  }
-})
+// AI mode toggle watcher — temporarily disabled
 
 // Format price
 const formatPrice = (price) => {
@@ -997,109 +990,7 @@ const handleSearch = async () => {
     incrementSearchCount()
   }
 
-  // AI Chat mode — call backend chat endpoint
-  if (aiMode.value) {
-    const userMessage = searchQuery.value.trim()
-    chatMessages.value.push({ role: 'user', text: userMessage })
-    searchQuery.value = ''
-    chatLoading.value = true
-    
-    // Scroll chat to bottom
-    nextTick(() => {
-      if (chatMessagesEl.value) {
-        chatMessagesEl.value.scrollTop = chatMessagesEl.value.scrollHeight
-      }
-    })
-    
-    try {
-      // Step 1: Get AI response + extracted search query from backend
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
-      const history = chatMessages.value
-        .slice(-20)
-        .map(m => ({ role: m.role, text: m.text }))
-      
-      const chatResponse = await fetch(`${apiUrl}/api/chat/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage, history }),
-      })
-      const chatData = await chatResponse.json()
-      const aiText = chatData.response || 'Let me find that for you.'
-      const extractedQuery = chatData.search_query  // null if GPT is asking a follow-up
-      const maxPrice = chatData.max_price || null
-      
-      // If GPT is just asking a follow-up question (no search_query), show text only
-      if (!extractedQuery) {
-        chatMessages.value.push({
-          role: 'assistant',
-          text: aiText,
-          products: [],
-        })
-      } else {
-        // GPT has enough info — search for products
-        const searchResponse = await fetch(
-          `${apiUrl}/api/search/?q=${encodeURIComponent(extractedQuery)}&limit=20`
-        )
-        const searchData = await searchResponse.json()
-        const products = (searchData?.deals || []).map((p, idx) => ({
-          id: p.id || idx,
-          title: p.title,
-          price: p.price,
-          original_price: p.original_price || null,
-          image_url: p.image_url,
-          source: p.source || 'Outfi',
-          merchant_name: p.merchant_name || p.source || 'Outfi',
-          url: p.url,
-          rating: p.rating || null,
-          reviews: p.reviews_count || null,
-          badge: p.badge || null,
-          discount_percent: p.discount_percent || null,
-          brand: p.brand || null,
-        }))
-        
-        // Apply price filter if GPT extracted a max_price
-        const filteredProducts = maxPrice
-          ? products.filter(p => {
-              const price = parseFloat(p.price)
-              return !isNaN(price) && price <= maxPrice
-            })
-          : products
-        
-        // Add AI response + products to chat
-        chatMessages.value.push({
-          role: 'assistant',
-          text: aiText,
-          products: filteredProducts.slice(0, 6),
-        })
-        
-        // Populate the main results grid below
-        if (filteredProducts.length > 0) {
-          deals.value = filteredProducts
-          hasSearched.value = true
-          lastSearchQuery.value = extractedQuery
-          activeGender.value = 'all'
-          activeSize.value = 'All'
-          sortBy.value = 'relevance'
-          visibleCount.value = 12
-        }
-      }
-    } catch (error) {
-      console.error('Chat failed:', error)
-      chatMessages.value.push({
-        role: 'assistant',
-        text: 'Sorry, something went wrong. Please try again.',
-        products: [],
-      })
-    } finally {
-      chatLoading.value = false
-      nextTick(() => {
-        if (chatMessagesEl.value) {
-          chatMessagesEl.value.scrollTop = chatMessagesEl.value.scrollHeight
-        }
-      })
-    }
-    return
-  }
+  // AI Chat mode — temporarily disabled to save AI tokens
 
   // Classic mode — direct Amazon search
   loading.value = true
