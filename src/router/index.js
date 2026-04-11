@@ -207,9 +207,9 @@ const routes = [
         name: 'BlogPost',
         component: BlogPostPage
     },
-    // Internal staff-only analytics dashboard
+    // Internal staff-only analytics dashboard (obfuscated route)
     {
-        path: '/analytics',
+        path: '/internal/d/f7a2c',
         name: 'Analytics',
         component: () => import('../components/AnalyticsPage.vue'),
         meta: { requiresAuth: true, requiresStaff: true }

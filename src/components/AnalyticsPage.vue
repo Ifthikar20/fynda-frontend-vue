@@ -1,100 +1,140 @@
 <template>
   <div class="analytics-page">
-    <header class="page-header">
-      <div>
-        <h1>Analytics</h1>
-        <p class="meta">{{ generatedLabel }}</p>
-      </div>
-      <div class="actions">
-        <button class="btn" :disabled="loading" @click="load">
-          {{ loading ? 'Refreshing…' : 'Refresh' }}
-        </button>
-      </div>
-    </header>
+    <!-- PIN Verification Gate -->
+    <div v-if="!analyticsToken && !data" class="pin-gate">
+      <div class="pin-card">
+        <div class="pin-icon">🔐</div>
+        <h2>Analytics Access</h2>
+        <p class="pin-desc">Enter your 6-digit analytics PIN to continue.</p>
 
-    <div v-if="error" class="error">
-      {{ error }}
+        <div v-if="pinError" class="pin-error">{{ pinError }}</div>
+
+        <form @submit.prevent="verifyPin" class="pin-form">
+          <div class="pin-input-group">
+            <input
+              v-for="i in 6"
+              :key="i"
+              :ref="el => { if (el) pinInputs[i - 1] = el }"
+              type="password"
+              inputmode="numeric"
+              maxlength="1"
+              class="pin-digit"
+              :value="pinDigits[i - 1]"
+              @input="onPinInput($event, i - 1)"
+              @keydown="onPinKeydown($event, i - 1)"
+              @paste="onPinPaste"
+              :disabled="pinLoading"
+            />
+          </div>
+          <button type="submit" class="pin-submit" :disabled="pinLoading || pinValue.length !== 6">
+            {{ pinLoading ? 'Verifying…' : 'Verify PIN' }}
+          </button>
+        </form>
+
+        <p class="pin-hint">
+          PIN not working? Contact your admin to reset it.
+        </p>
+      </div>
     </div>
 
-    <template v-if="data">
-      <section class="tiles">
-        <div class="tile">
-          <div class="label">Total users</div>
-          <div class="value">{{ fmt(data.users.total) }}</div>
+    <!-- Analytics Dashboard (shown after PIN verification) -->
+    <template v-if="analyticsToken || data">
+      <header class="page-header">
+        <div>
+          <h1>Analytics</h1>
+          <p class="meta">{{ generatedLabel }}</p>
         </div>
-        <div class="tile">
-          <div class="label">Active</div>
-          <div class="value">{{ fmt(data.users.active) }}</div>
+        <div class="actions">
+          <button class="btn" :disabled="loading" @click="load">
+            {{ loading ? 'Refreshing…' : 'Refresh' }}
+          </button>
         </div>
-        <div class="tile">
-          <div class="label">Last 24h</div>
-          <div class="value">{{ fmt(data.users.signups_24h) }}</div>
-          <div class="sub">new signups</div>
-        </div>
-        <div class="tile">
-          <div class="label">Last 7 days</div>
-          <div class="value">{{ fmt(data.users.signups_7d) }}</div>
-          <div class="sub">new signups</div>
-        </div>
-        <div class="tile">
-          <div class="label">Last 30 days</div>
-          <div class="value">{{ fmt(data.users.signups_30d) }}</div>
-          <div class="sub">new signups</div>
-        </div>
-        <div class="tile">
-          <div class="label">Staff</div>
-          <div class="value">{{ fmt(data.users.staff) }}</div>
-        </div>
-      </section>
+      </header>
 
-      <section class="panel">
-        <h2>Daily signups (last 30 days)</h2>
-        <canvas ref="chartEl"></canvas>
-      </section>
+      <div v-if="error" class="error">
+        {{ error }}
+      </div>
 
-      <section class="row">
-        <div class="panel">
-          <h2>Signup source</h2>
-          <table>
-            <thead>
-              <tr><th>Provider</th><th class="num">Users</th></tr>
-            </thead>
-            <tbody>
-              <tr v-for="p in data.users.by_provider" :key="p.provider">
-                <td>{{ p.provider }}</td>
-                <td class="num">{{ fmt(p.count) }}</td>
-              </tr>
-              <tr v-if="!data.users.by_provider.length">
-                <td colspan="2" class="muted">No data</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <template v-if="data">
+        <section class="tiles">
+          <div class="tile">
+            <div class="label">Total users</div>
+            <div class="value">{{ fmt(data.users.total) }}</div>
+          </div>
+          <div class="tile">
+            <div class="label">Active</div>
+            <div class="value">{{ fmt(data.users.active) }}</div>
+          </div>
+          <div class="tile">
+            <div class="label">Last 24h</div>
+            <div class="value">{{ fmt(data.users.signups_24h) }}</div>
+            <div class="sub">new signups</div>
+          </div>
+          <div class="tile">
+            <div class="label">Last 7 days</div>
+            <div class="value">{{ fmt(data.users.signups_7d) }}</div>
+            <div class="sub">new signups</div>
+          </div>
+          <div class="tile">
+            <div class="label">Last 30 days</div>
+            <div class="value">{{ fmt(data.users.signups_30d) }}</div>
+            <div class="sub">new signups</div>
+          </div>
+          <div class="tile">
+            <div class="label">Staff</div>
+            <div class="value">{{ fmt(data.users.staff) }}</div>
+          </div>
+        </section>
 
-        <div class="panel">
-          <h2>Engagement</h2>
-          <table>
-            <thead>
-              <tr><th>Metric</th><th class="num">Count</th></tr>
-            </thead>
-            <tbody>
-              <tr v-for="(v, k) in data.engagement" :key="k">
-                <td>{{ k.replace(/_/g, ' ') }}</td>
-                <td class="num">{{ fmt(v) }}</td>
-              </tr>
-              <tr v-if="!Object.keys(data.engagement).length">
-                <td colspan="2" class="muted">No data</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+        <section class="panel">
+          <h2>Daily signups (last 30 days)</h2>
+          <canvas ref="chartEl"></canvas>
+        </section>
+
+        <section class="row">
+          <div class="panel">
+            <h2>Signup source</h2>
+            <table>
+              <thead>
+                <tr><th>Provider</th><th class="num">Users</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="p in data.users.by_provider" :key="p.provider">
+                  <td>{{ p.provider }}</td>
+                  <td class="num">{{ fmt(p.count) }}</td>
+                </tr>
+                <tr v-if="!data.users.by_provider.length">
+                  <td colspan="2" class="muted">No data</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <h2>Engagement</h2>
+            <table>
+              <thead>
+                <tr><th>Metric</th><th class="num">Count</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="(v, k) in data.engagement" :key="k">
+                  <td>{{ k.replace(/_/g, ' ') }}</td>
+                  <td class="num">{{ fmt(v) }}</td>
+                </tr>
+                <tr v-if="!Object.keys(data.engagement).length">
+                  <td colspan="2" class="muted">No data</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </template>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { Chart, registerables } from 'chart.js'
 import api from '../utils/api'
@@ -111,12 +151,79 @@ const error = ref('')
 const chartEl = ref(null)
 let chart = null
 
+// PIN verification state
+const analyticsToken = ref(null)
+const pinDigits = reactive(['', '', '', '', '', ''])
+const pinInputs = ref([])
+const pinLoading = ref(false)
+const pinError = ref('')
+
+const pinValue = computed(() => pinDigits.join(''))
+
 const fmt = (n) => (n == null ? '—' : Number(n).toLocaleString())
 
 const generatedLabel = computed(() => {
   if (!data.value) return 'loading…'
   return 'updated ' + new Date(data.value.generated_at).toLocaleString()
 })
+
+// ─── PIN input handlers ────────────────────────────────────────────────
+
+function onPinInput(event, index) {
+  const val = event.target.value.replace(/\D/g, '')
+  pinDigits[index] = val ? val[0] : ''
+  event.target.value = pinDigits[index]
+
+  // Auto-advance to next input
+  if (val && index < 5) {
+    nextTick(() => pinInputs.value[index + 1]?.focus())
+  }
+}
+
+function onPinKeydown(event, index) {
+  if (event.key === 'Backspace' && !pinDigits[index] && index > 0) {
+    pinDigits[index - 1] = ''
+    nextTick(() => pinInputs.value[index - 1]?.focus())
+  }
+}
+
+function onPinPaste(event) {
+  event.preventDefault()
+  const pasted = (event.clipboardData?.getData('text') || '').replace(/\D/g, '').slice(0, 6)
+  for (let i = 0; i < 6; i++) {
+    pinDigits[i] = pasted[i] || ''
+  }
+  const focusIndex = Math.min(pasted.length, 5)
+  nextTick(() => pinInputs.value[focusIndex]?.focus())
+}
+
+// ─── PIN verification ──────────────────────────────────────────────────
+
+async function verifyPin() {
+  if (pinValue.value.length !== 6) return
+
+  pinLoading.value = true
+  pinError.value = ''
+
+  try {
+    const res = await api.post('/api/auth/analytics/verify-pin/', {
+      pin: pinValue.value,
+    })
+    analyticsToken.value = res.data.analytics_token
+    // Load data immediately after PIN verification
+    await load()
+  } catch (e) {
+    const msg = e.response?.data?.error || 'Verification failed.'
+    pinError.value = msg
+    // Clear PIN inputs on failure
+    for (let i = 0; i < 6; i++) pinDigits[i] = ''
+    nextTick(() => pinInputs.value[0]?.focus())
+  } finally {
+    pinLoading.value = false
+  }
+}
+
+// ─── Data loading ──────────────────────────────────────────────────────
 
 async function load() {
   // Defensive: shouldn't reach here without staff, but bounce just in case
@@ -125,15 +232,28 @@ async function load() {
     return
   }
 
+  if (!analyticsToken.value) return
+
   loading.value = true
   error.value = ''
   try {
-    const res = await api.get('/api/auth/analytics/data/')
+    const res = await api.get('/api/auth/analytics/data/', {
+      headers: { 'X-Analytics-Token': analyticsToken.value },
+    })
     data.value = res.data
     await nextTick()
     renderChart()
   } catch (e) {
     if (e.response?.status === 403) {
+      // Analytics token expired — show PIN gate again
+      const errorMsg = e.response?.data?.error || ''
+      if (errorMsg.includes('expired') || errorMsg.includes('session')) {
+        analyticsToken.value = null
+        data.value = null
+        pinError.value = 'Session expired. Please re-enter your PIN.'
+        for (let i = 0; i < 6; i++) pinDigits[i] = ''
+        return
+      }
       error.value = 'You need staff permissions to view analytics.'
     } else if (e.response?.status === 401) {
       error.value = 'Session expired. Please sign in again.'
@@ -184,7 +304,11 @@ watch(() => data.value, () => {
   if (data.value) nextTick(renderChart)
 })
 
-onMounted(load)
+onMounted(() => {
+  // Focus first PIN input on mount
+  nextTick(() => pinInputs.value[0]?.focus())
+})
+
 onBeforeUnmount(() => {
   if (chart) chart.destroy()
 })
@@ -200,6 +324,134 @@ onBeforeUnmount(() => {
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
+
+/* ─── PIN Gate ────────────────────────────────────────────────── */
+
+.pin-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+}
+
+.pin-card {
+  background: #171a21;
+  border: 1px solid #262b36;
+  border-radius: 16px;
+  padding: 40px 36px;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pin-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.pin-card h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #e6e8ee;
+}
+
+.pin-desc {
+  color: #8a93a6;
+  font-size: 13px;
+  margin: 0 0 24px;
+}
+
+.pin-error {
+  background: #3a1820;
+  border: 1px solid #6b2030;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: #ffb3c1;
+  font-size: 13px;
+  margin-bottom: 18px;
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.pin-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.pin-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.pin-digit {
+  width: 44px;
+  height: 52px;
+  background: #0f1115;
+  border: 2px solid #262b36;
+  border-radius: 10px;
+  color: #e6e8ee;
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  caret-color: #ff5fa2;
+}
+
+.pin-digit:focus {
+  border-color: #ff5fa2;
+  box-shadow: 0 0 0 3px rgba(255, 95, 162, 0.15);
+}
+
+.pin-digit:disabled {
+  opacity: 0.5;
+}
+
+.pin-submit {
+  background: linear-gradient(135deg, #ff5fa2, #e04590);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 32px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  width: 100%;
+  max-width: 200px;
+}
+
+.pin-submit:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.pin-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pin-hint {
+  color: #5a6070;
+  font-size: 11px;
+  margin: 20px 0 0;
+}
+
+/* ─── Dashboard ───────────────────────────────────────────────── */
 
 .page-header {
   display: flex;
