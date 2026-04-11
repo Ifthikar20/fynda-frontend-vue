@@ -31,7 +31,7 @@ jobs:
 
       - name: Build
         env:
-          VITE_API_URL: https://api.fynda.shop
+          VITE_API_URL: https://api.outfi.ai
         run: npm run build
 
       - name: Setup SSH
@@ -67,5 +67,5 @@ jobs:
       - name: Verify Deployment
         run: |
           sleep 5
-          curl --fail --max-time 15 https://fynda.shop || echo "Site check pending..."
+          curl --fail --max-time 15 https://outfi.ai || echo "Site check pending..."
           echo "✅ Frontend deployed successfully!"
