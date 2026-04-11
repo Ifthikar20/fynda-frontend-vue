@@ -134,11 +134,11 @@
 </template>
 
 <script setup>
+// Analytics Dashboard v2 — PIN-gated access
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { Chart, registerables } from 'chart.js'
-import api from '../utils/api'
-import { useAuth } from '../stores/authStore'
+import { useAuth, getAccessToken, getRefreshToken, setTokens } from '../stores/authStore'
 
 Chart.register(...registerables)
 
@@ -150,6 +150,58 @@ const loading = ref(false)
 const error = ref('')
 const chartEl = ref(null)
 let chart = null
+
+// API base URL (same as api.js)
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://api.outfi.ai' : 'http://127.0.0.1:8000')
+
+// Refresh access token using the refresh token
+async function refreshAccessToken() {
+  const refresh = getRefreshToken()
+  if (!refresh) return null
+
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/token/refresh/`, {
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh }),
+    })
+
+    if (!res.ok) return null
+
+    const data = await res.json()
+    setTokens({ access: data.access, refresh: data.refresh || refresh })
+    return data.access
+  } catch {
+    return null
+  }
+}
+
+// Make an authenticated fetch, retrying once with refreshed token on 401
+async function authFetch(url, options = {}) {
+  let token = getAccessToken()
+  if (!token) return null
+
+  const makeRequest = (t) =>
+    fetch(url, {
+      ...options,
+      mode: 'cors',
+      credentials: 'include',
+      headers: { ...options.headers, 'Authorization': `Bearer ${t}` },
+    })
+
+  let res = await makeRequest(token)
+
+  // If 401, try refreshing the token and retry once
+  if (res.status === 401) {
+    const newToken = await refreshAccessToken()
+    if (!newToken) return null
+    res = await makeRequest(newToken)
+  }
+
+  return res
+}
 
 // PIN verification state
 const analyticsToken = ref(null)
@@ -206,18 +258,35 @@ async function verifyPin() {
   pinError.value = ''
 
   try {
-    const res = await api.post('/api/auth/analytics/verify-pin/', {
-      pin: pinValue.value,
+    const res = await authFetch(`${API_BASE}/api/auth/analytics/verify-pin/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: pinValue.value }),
     })
-    analyticsToken.value = res.data.analytics_token
-    // Load data immediately after PIN verification
-    await load()
+
+    if (!res) {
+      pinError.value = 'Session expired. Please log in again.'
+      return
+    }
+
+    const payload = await res.json()
+
+    if (!res.ok) {
+      pinError.value = payload?.error || payload?.detail || `Verification failed (${res.status}).`
+      for (let i = 0; i < 6; i++) pinDigits[i] = ''
+      nextTick(() => pinInputs.value[0]?.focus())
+      return
+    }
+
+    if (payload.analytics_token) {
+      analyticsToken.value = payload.analytics_token
+      await load()
+    } else {
+      pinError.value = payload?.error || 'No session token received.'
+    }
   } catch (e) {
-    const msg = e.response?.data?.error || 'Verification failed.'
-    pinError.value = msg
-    // Clear PIN inputs on failure
-    for (let i = 0; i < 6; i++) pinDigits[i] = ''
-    nextTick(() => pinInputs.value[0]?.focus())
+    pinError.value = 'Network error. Please try again.'
+    console.error('[Analytics] PIN verification error:', e)
   } finally {
     pinLoading.value = false
   }
@@ -226,9 +295,16 @@ async function verifyPin() {
 // ─── Data loading ──────────────────────────────────────────────────────
 
 async function load() {
-  // Defensive: shouldn't reach here without staff, but bounce just in case
+  // Refresh profile to get latest is_staff flag (in case it was promoted after login)
   if (!state.user?.is_staff) {
-    router.replace({ name: 'Home' })
+    try {
+      const { fetchProfile } = useAuth()
+      await fetchProfile()
+    } catch { /* ignore */ }
+  }
+
+  if (!state.user?.is_staff) {
+    error.value = 'Staff permissions required. Please log out and log back in.'
     return
   }
 
@@ -237,29 +313,35 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const res = await api.get('/api/auth/analytics/data/', {
+    const res = await authFetch(`${API_BASE}/api/auth/analytics/data/`, {
       headers: { 'X-Analytics-Token': analyticsToken.value },
     })
-    data.value = res.data
+
+    if (!res.ok) {
+      const errPayload = await res.json().catch(() => ({}))
+      if (res.status === 403) {
+        const errorMsg = errPayload?.error || ''
+        if (errorMsg.includes('expired') || errorMsg.includes('session')) {
+          analyticsToken.value = null
+          data.value = null
+          pinError.value = 'Session expired. Please re-enter your PIN.'
+          for (let i = 0; i < 6; i++) pinDigits[i] = ''
+          return
+        }
+        error.value = 'You need staff permissions to view analytics.'
+      } else if (res.status === 401) {
+        error.value = 'Session expired. Please sign in again.'
+      } else {
+        error.value = `Failed to load analytics (${res.status}).`
+      }
+      return
+    }
+
+    data.value = await res.json()
     await nextTick()
     renderChart()
   } catch (e) {
-    if (e.response?.status === 403) {
-      // Analytics token expired — show PIN gate again
-      const errorMsg = e.response?.data?.error || ''
-      if (errorMsg.includes('expired') || errorMsg.includes('session')) {
-        analyticsToken.value = null
-        data.value = null
-        pinError.value = 'Session expired. Please re-enter your PIN.'
-        for (let i = 0; i < 6; i++) pinDigits[i] = ''
-        return
-      }
-      error.value = 'You need staff permissions to view analytics.'
-    } else if (e.response?.status === 401) {
-      error.value = 'Session expired. Please sign in again.'
-    } else {
-      error.value = 'Failed to load analytics: ' + (e.message || 'unknown error')
-    }
+    error.value = 'Failed to load analytics: ' + (e.message || 'unknown error')
   } finally {
     loading.value = false
   }

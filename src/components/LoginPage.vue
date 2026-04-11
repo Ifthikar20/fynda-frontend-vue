@@ -183,7 +183,8 @@ const handleLogin = async () => {
   loading.value = false
   
   if (result.success) {
-    router.push('/')
+    const redirect = route.query.redirect
+    router.push(redirect || '/')
   } else {
     error.value = result.error
   }
