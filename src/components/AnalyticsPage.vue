@@ -128,6 +128,41 @@
             </table>
           </div>
         </section>
+
+        <section class="panel">
+          <h2>All users ({{ fmt(data.users.list?.length || 0) }})</h2>
+          <div class="users-table-wrap">
+            <table class="users-table">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Name</th>
+                  <th>Provider</th>
+                  <th>Status</th>
+                  <th>Joined</th>
+                  <th>Last login</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="u in data.users.list || []" :key="u.id">
+                  <td class="email">{{ u.email }}</td>
+                  <td>{{ u.name || '—' }}</td>
+                  <td>{{ u.provider }}</td>
+                  <td>
+                    <span v-if="u.is_staff" class="badge badge-staff">staff</span>
+                    <span v-if="!u.is_active" class="badge badge-inactive">inactive</span>
+                    <span v-if="u.is_active && !u.is_staff" class="badge badge-active">active</span>
+                  </td>
+                  <td>{{ fmtDate(u.created_at) }}</td>
+                  <td>{{ u.last_login ? fmtDate(u.last_login) : '—' }}</td>
+                </tr>
+                <tr v-if="!(data.users.list || []).length">
+                  <td colspan="6" class="muted">No users</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </template>
     </template>
   </div>
@@ -213,6 +248,13 @@ const pinError = ref('')
 const pinValue = computed(() => pinDigits.join(''))
 
 const fmt = (n) => (n == null ? '—' : Number(n).toLocaleString())
+
+const fmtDate = (iso) => {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return '—'
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
 
 const generatedLabel = computed(() => {
   if (!data.value) return 'loading…'
@@ -660,5 +702,49 @@ th.num {
 }
 .muted {
   color: #8a93a6;
+}
+
+/* ─── Users table ────────────────────────────────────────────── */
+.users-table-wrap {
+  overflow-x: auto;
+  margin: 0 -4px;
+}
+.users-table {
+  width: 100%;
+  min-width: 720px;
+}
+.users-table th,
+.users-table td {
+  white-space: nowrap;
+}
+.users-table td.email {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: #e6e8ee;
+}
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+}
+.badge-active {
+  background: #14351f;
+  color: #7ee0a0;
+  border: 1px solid #1f5030;
+}
+.badge-staff {
+  background: #3a1f52;
+  color: #d4a3ff;
+  border: 1px solid #5b2d82;
+}
+.badge-inactive {
+  background: #3a1820;
+  color: #ffb3c1;
+  border: 1px solid #6b2030;
 }
 </style>
