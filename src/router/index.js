@@ -19,6 +19,14 @@ import CategoryLandingPage from '../components/CategoryLandingPage.vue'
 import BlogPage from '../components/BlogPage.vue'
 import BlogPostPage from '../components/BlogPostPage.vue'
 
+// Internal analytics — statically imported (not a lazy chunk).
+// Rationale: as a lazy chunk, its filename changes on every build. If a
+// client holds a stale index.html that references an old AnalyticsPage-*.js
+// hash, the dynamic import 404s and the route mounts to a blank page.
+// Bundling it into the main chunk means "if the app loaded at all, this
+// page can load" — no chunk-load race between HTML and JS after deploys.
+import AnalyticsPage from '../components/AnalyticsPage.vue'
+
 // Static pages
 import AboutPage from '../components/pages/AboutPage.vue'
 import PrivacyPage from '../components/pages/PrivacyPage.vue'
@@ -34,15 +42,6 @@ const isAuthenticated = () => {
     return tokenStorage.hasSession()
 }
 
-// Check if the stored user is a staff member (used by /analytics)
-const isStaff = () => {
-    try {
-        const user = tokenStorage.getUser()
-        return !!user?.is_staff
-    } catch {
-        return false
-    }
-}
 
 const routes = [
     // Public routes - no auth required
@@ -207,12 +206,17 @@ const routes = [
         name: 'BlogPost',
         component: BlogPostPage
     },
-    // Internal staff-only analytics dashboard (obfuscated route)
+    // Internal staff-only analytics dashboard (obfuscated route).
+    // Staff enforcement lives in the backend (IsAdminUser on verify-pin and
+    // analytics/data endpoints). The client guard only checks that the user
+    // is logged in — the PIN + backend permission is the real gate. This
+    // avoids silent redirects when the stored user object is missing/stale
+    // is_staff.
     {
         path: '/internal/d/f7a2c',
         name: 'Analytics',
-        component: () => import('../components/AnalyticsPage.vue'),
-        meta: { requiresAuth: true, requiresStaff: true }
+        component: AnalyticsPage,
+        meta: { requiresAuth: true }
     }
 ]
 
@@ -234,7 +238,6 @@ router.beforeEach((to, from, next) => {
     captureUtm(to.query, to.path)
 
     const requiresAuth = to.meta.requiresAuth
-    const requiresStaff = to.meta.requiresStaff
     const guestOnly = to.meta.guest
     const loggedIn = isAuthenticated()
 
@@ -243,17 +246,42 @@ router.beforeEach((to, from, next) => {
         return next({ name: 'Login', query: { redirect: to.fullPath } })
     }
 
-    // If route requires staff and user is not staff, bounce to home
-    if (requiresStaff && !isStaff()) {
-        return next({ name: 'Home' })
-    }
-
     // If route is for guests only (login/register) and user is logged in
     if (guestOnly && loggedIn) {
         return next({ name: 'Home' })
     }
 
     next()
+})
+
+// Safety net for stale lazy chunks after a deploy.
+// Vue Router surfaces a dynamic import failure (e.g. because the old
+// index.html referenced an asset hash that no longer exists on origin) as
+// an onError event with a "Failed to fetch dynamically imported module"
+// message. In that case the SPA would otherwise mount to a blank page.
+// We hard-reload once to pick up fresh index.html + fresh chunk hashes,
+// and use sessionStorage to avoid a reload loop if the failure is
+// something else (e.g. a real runtime error in the chunk itself).
+router.onError((err, to) => {
+    const msg = String(err?.message || err || '')
+    const isChunkLoadError =
+        msg.includes('Failed to fetch dynamically imported module') ||
+        msg.includes('Importing a module script failed') ||
+        msg.includes('error loading dynamically imported module')
+
+    if (!isChunkLoadError) return
+
+    const reloadKey = 'spa_chunk_reload_at'
+    const last = Number(sessionStorage.getItem(reloadKey) || 0)
+    const now = Date.now()
+    // Only auto-reload if we haven't already tried in the last 10s.
+    if (now - last < 10_000) {
+        console.error('[Router] Chunk load error after reload — giving up:', err)
+        return
+    }
+    sessionStorage.setItem(reloadKey, String(now))
+    console.warn('[Router] Stale chunk detected, forcing reload for', to?.fullPath)
+    window.location.replace(to?.fullPath || window.location.pathname)
 })
 
 export default router
