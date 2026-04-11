@@ -34,6 +34,16 @@ const isAuthenticated = () => {
     return tokenStorage.hasSession()
 }
 
+// Check if the stored user is a staff member (used by /analytics)
+const isStaff = () => {
+    try {
+        const user = tokenStorage.getUser()
+        return !!user?.is_staff
+    } catch {
+        return false
+    }
+}
+
 const routes = [
     // Public routes - no auth required
     {
@@ -196,6 +206,13 @@ const routes = [
         path: '/blog/:slug',
         name: 'BlogPost',
         component: BlogPostPage
+    },
+    // Internal staff-only analytics dashboard
+    {
+        path: '/analytics',
+        name: 'Analytics',
+        component: () => import('../components/AnalyticsPage.vue'),
+        meta: { requiresAuth: true, requiresStaff: true }
     }
 ]
 
@@ -217,12 +234,18 @@ router.beforeEach((to, from, next) => {
     captureUtm(to.query, to.path)
 
     const requiresAuth = to.meta.requiresAuth
+    const requiresStaff = to.meta.requiresStaff
     const guestOnly = to.meta.guest
     const loggedIn = isAuthenticated()
 
     // If route requires auth and user not logged in
     if (requiresAuth && !loggedIn) {
         return next({ name: 'Login', query: { redirect: to.fullPath } })
+    }
+
+    // If route requires staff and user is not staff, bounce to home
+    if (requiresStaff && !isStaff()) {
+        return next({ name: 'Home' })
     }
 
     // If route is for guests only (login/register) and user is logged in
